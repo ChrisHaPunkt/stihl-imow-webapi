@@ -75,7 +75,7 @@ to see all available versions.
 
 | Name             | Mail Address                | GitHub Profile                                |
 |------------------|-----------------------------|-----------------------------------------------|
-| Christian Heinrichs | chris.heinrichs.mail@gmail.com          | [ChrisHaPunkt](https://github.com/ChrisHaPunkt)     |
+| Christian Heinrichs | chris@homeset.de          | [ChrisHaPunkt](https://github.com/ChrisHaPunkt)     |
 
 ## License
 
