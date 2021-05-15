@@ -1,0 +1,5 @@
+requests~=2.25.1
+beautifulsoup4~=4.9.3
+furl~=2.1.2
+setuptools~=56.2.0
+pytest~=6.2.4
