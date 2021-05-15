@@ -12,7 +12,7 @@ with open("requirements/release.txt", mode='r', encoding='utf-8') as requirement
     packages = requirements.read().splitlines()
 
 setup(
-    name="imow-webapi",
+    name="stihlimow",
     version=version,
     author="ChrisHaPunkt",
     description="A library to authenticate and interact with STIHL iMow mowers using their WebAPI",
