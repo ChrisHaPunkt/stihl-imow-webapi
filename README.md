@@ -36,30 +36,20 @@ pip install imow-webapi
 
 And have fun!
 
-### Dev Notes
-
-Run unit tests locally:
-
-```bash
-pytest --verbosity=2 -s [--token "REDACTED"]
-```
-
-Add the `-k test_*` option if you want to test only a single function.
-
 ## Usage
 
-Import the module and instantiate the `AnonFile()` constructor. Setting the download directory in `path` is optional.
-Using the API `token` in the constructor is optional as well. A valid `token` registers all file uploads online, i.e. a
-list of all uploaded files is made accessible to any user that [signs into your account](https://imow-webapis.com/login)
+Import the module and instantiate the `IMowApi()` constructor with credentials.
 .
 
 ```python
 from imow.api import IMowApi
 
-api = IMowApi()
+if __name__ == '__main__':
+    api = IMowApi("email@account.stihl", "supersecret")
+    mower = api.receive_mowers()[0]
+    print(f'{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}')
 
-# receive a list of the available mowers in your account
-print(api.receive_mowers())
+
 
 ```
 
@@ -78,7 +68,7 @@ and run `pytest -s tests/test_integration*` or `pytest -s`.
 
 ## Versioning
 
-Navigate to [tags on this repository](https://github.com/ChrisHaPunkt/imow-webapi/tags)
+Navigate to [tags on this repository](https://github.com/ChrisHaPunkt/imow-webapi/releases)
 to see all available versions.
 
 ## Authors
