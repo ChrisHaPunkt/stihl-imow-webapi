@@ -2,7 +2,7 @@
 import unittest
 
 from imow.api import IMowApi
-from imow.common.mower import Mower, MowerState
+from imow.common.currentmowerstate import CurrentMowerState, MowerTaskState
 
 TOKEN = 'xx508xx63817x752xx74004x30705xx92x58349x5x78f5xx34xxxxx51'
 MOWER_NAME = "MyMower"
@@ -25,14 +25,14 @@ class TestIMowApiUnit(unittest.TestCase):
             IMowApi()
 
     def test_unknown_mower_state(self):
-        result = Mower(dict())
+        result = CurrentMowerState(dict())
         result.status["mainState"] = 123
-        self.assertIsInstance(result.get_current_state(), int, msg="Expected Mower class returned int(123)")
-        self.assertEqual(result.get_current_state(), 123, msg="Expected Mower class returned int(123)")
+        self.assertIsInstance(result.get_current_taskstate(), int, msg="Expected Mower class returned int(123)")
+        self.assertEqual(result.get_current_taskstate(), 123, msg="Expected Mower class returned int(123)")
 
     def test_known_mower_state(self):
-        result = Mower(dict())
+        result = CurrentMowerState(dict())
         result.status["mainState"] = 7
-        self.assertIsInstance(result.get_current_state(), MowerState, msg="Expected Mower class returned int(123)")
-        self.assertEqual(result.get_current_state(), MowerState.INSIDE_DOCK_CHARGING,
+        self.assertIsInstance(result.get_current_taskstate(), MowerTaskState, msg="Expected Mower class returned int(123)")
+        self.assertEqual(result.get_current_taskstate(), MowerTaskState.INSIDE_DOCK_CHARGING,
                          msg="Expected Mower class returned MowerState.INSIDE_DOCK_CHARGING")

@@ -1,21 +1,39 @@
+import http
+import json
 import logging
 
-from imow.common.mowerstate import MowerState
+from imow.api import IMowApi
+from imow.common.actions import IMowActions
+from imow.common.mowertaskstate import MowerTaskState
 
 logger = logging.getLogger('imow')
 
 
-class Mower:
+class CurrentMowerState:
 
-    def __init__(self, dictionary):
-        self.__dict__.update(map(lambda kv: (kv[0].replace(' ', '_'), kv[1]), dictionary.items()))
+    def __init__(self, upstream: dict, api: IMowApi):
+        self.api = api
+        self.update(upstream)
 
-    def get_current_state(self) -> (MowerState, int):
+    def update(self, upstream: dict = None):
+        if not upstream:
+            upstream = json.loads(self.api.api_request(f"https://api.imow.stihl.com/mowers/{self.id}/", "GET").text)
+        self.__dict__.update(map(lambda kv: (kv[0].replace(' ', '_'), kv[1]), upstream.items()))
+
+    def get_current_taskstate(self) -> (MowerTaskState, int):
         try:
-            return MowerState(self.status.get("mainState"))
+            return MowerTaskState(self.status.get("mainState"))
         except ValueError as ve:
             logger.warning(f'{self.status.get("mainState")} is not yet a known MowerState to this Class.')
             return self.status.get("mainState")
+
+    def intent(self, imow_action: IMowActions, startpoint: any = "0", duration: int = 30):
+
+        self.api.intent(imow_action=imow_action, startpoint=startpoint, duration=duration, mower_action_id=self.externalId)
+
+    def get_status(self) -> dict:
+        self.update()
+        return self.status
 
     accountId: str = {str}
     asmEnabled: bool = {bool}
@@ -53,7 +71,7 @@ class Mower:
     name: str = {str}  # 'Mährlin'
     protectionLevel: bool = {int}  # 1
     rainSensorMode: bool = {int}  # 1
-    smartLogic: dict = {dict:13}
+    smartLogic: dict = {dict: 13}
     # {'dynamicMowingplan': False, 'mower': None, 'mowingArea': 100, 'mowingAreaInFeet': 1000, 'mowingAreaInMeter': 100,
     # 'mowingGrowthAdjustment': 0, 'mowingTime': 60, 'mowingTimeManual': False, 'performedActivityTime': 3,
     # 'smartNotifications': False, 'suggestedActivityTime': 135, 'totalActivityActiveTime': 0,

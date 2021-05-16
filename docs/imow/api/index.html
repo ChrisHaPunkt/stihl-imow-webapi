@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>imow.api API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>imow.api</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">from __future__ import annotations
+
+import http
+import json
+import logging
+import sys
+from datetime import datetime, timedelta
+from urllib.parse import quote
+
+import requests
+from bs4 import BeautifulSoup
+from furl import furl
+
+from imow.common.actions import IMowActions
+from imow.common.exceptions import LoginError
+from imow.common.mower import Mower, MowerState
+from imow.common.package_descriptions import *
+
+logger = logging.getLogger(&#39;imow&#39;)
+
+try:
+    assert sys.version_info &gt;= (int(python_major), int(python_minor))
+except AssertionError:
+    raise RuntimeError(
+        f&#34;{package_name!r} requires Python {python_major}.{python_minor}+ (You have Python {sys.version})&#34;)
+
+
+class IMowApi:
+
+    def __init__(self, email: str = None, password: str = None, token: str = None) -&gt; None:
+
+        if (email is None or password is None) and token is None:
+            raise LookupError(&#34;No email, password or token provided&#34;)
+
+        self.http_session = None
+        self.csrf_token = None
+        self.requestId = None
+        self.access_token = None
+        self.token_expires = None
+        if token:
+            logger.debug(&#34;New instance: Use Token&#34;)
+            self.access_token = token
+        if not self.access_token:
+            logger.debug(&#34;New instance: Authenticate with email and password&#34;)
+            self.get_token(email, password)
+
+    def get_token(self, email: str = &#34;&#34;, password: str = &#34;&#34;, force_reauth=False) -&gt; [str, datetime]:
+        &#34;&#34;&#34;
+        look for a token, if present, return. Else authenticate and store new token
+        :param email: stihl webapp login email non-url-encoded
+        :param password: stihl webapp login password
+        :param force_reauth: Force a re-authentication with username and password
+        :return: the access token
+        &#34;&#34;&#34;
+
+        if not self.access_token or force_reauth:
+            if force_reauth:
+                self.http_session = None
+                self.csrf_token = None
+                self.requestId = None
+                self.access_token = None
+                self.token_expires = None
+
+            self.__authenticate(email, password)
+            logger.debug(&#34;Get Token: Re-Authenticate&#34;)
+
+        return self.access_token, self.token_expires
+
+    def __authenticate(self, email: str, password: str) -&gt; [str, str, requests.Response]:
+        &#34;&#34;&#34;
+        try the authentication request with fetched csrf and requestId payload
+        :param email: stihl webapp login email non-url-encoded
+        :param password: stihl webapp login password
+        :return: the newly created access token, and expire time besides the legacy response
+        &#34;&#34;&#34;
+        self.__fetch_new_csrf_token_and_request_id()
+        url = &#34;https://oauth2.imow.stihl.com/authentication/authenticate/?lang=de&#34;
+        encoded_mail = quote(email)
+        payload = f&#39;mail={encoded_mail}&amp;password={password}&amp;csrf-token={self.csrf_token}&amp;requestId={self.requestId}&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/x-www-form-urlencoded&#39;,
+        }
+        response = self.__api_request(url, &#34;POST&#34;, payload=payload, headers=headers)
+        if not response.status_code == http.HTTPStatus.OK:
+            logger.error(f&#34;Authenticate: {response.status_code} {response.reason}&#34;)
+            raise ConnectionError(f&#34;{response.status_code} {response.reason}&#34;)
+
+        response_url_query_args = furl(response.url).fragment.args
+        if &#34;access_token&#34; not in response_url_query_args:
+            raise LoginError(&#34;STIHL iMow did not return an access_token, check your credentials&#34;)
+
+        self.access_token = response_url_query_args[&#34;access_token&#34;]
+        self.token_expires = datetime.now() + timedelta(seconds=int(response_url_query_args[&#34;expires_in&#34;]))
+        return self.access_token, self.token_expires, response
+
+    def __fetch_new_csrf_token_and_request_id(self) -&gt; [str, str]:
+        &#34;&#34;&#34;
+        Fetch a new csrf_token and requestId to do the authentication as expected by the api
+        csrf_token and requestId are used as payload within authentication
+        &#34;&#34;&#34;
+
+        # URL needs whole redirect query parameter
+        url = &#34;https://oauth2.imow.stihl.com/authentication/?lang=de_DE&amp;authorizationRedirectUrl=https%3A%2F%2Foauth2&#34; \
+              &#34;.imow.stihl.com%2Fauthorization%2F%3Fresponse_type%3Dtoken%26client_id%3D9526273B-1477-47C6-801C&#34; \
+              &#34;-4356F58EF883%26redirect_uri%3Dhttps%253A%252F%252Fapp.imow.stihl.com%252F%2523%252Fauthorize%26state&#34;
+
+        response = self.__api_request(url, &#34;GET&#34;)
+
+        soup = BeautifulSoup(response.text, &#39;html.parser&#39;)
+        try:
+            upstream_csrf_token = soup.find(&#34;input&#34;, {&#39;name&#39;: &#39;csrf-token&#39;}).get(&#39;value&#39;)
+            upstream_request_id = soup.find(&#34;input&#34;, {&#39;name&#39;: &#39;requestId&#39;}).get(&#39;value&#39;)
+        except AttributeError:
+            raise ProcessLookupError(&#34;Did not found necessary csrf token and/or request id in html source&#34;)
+
+        self.csrf_token = upstream_csrf_token
+        self.requestId = upstream_request_id
+        logger.debug(&#34;CSRF: new token and request id &lt;Redacted&gt;&#34;)
+        return self.csrf_token, self.requestId
+
+    def __api_request(self, url, method, payload=None, headers=None) -&gt; requests.Response:
+        &#34;&#34;&#34;
+        Do a standardized request against the stihl imow webapi, with predefined headers
+        :param url: The target URL
+        :param method: The Method to use
+        :param payload: optional payload
+        :param headers: optional update headers
+        :return: the requests.Response
+        &#34;&#34;&#34;
+        if not self.http_session:
+            self.http_session = requests.Session()
+
+        if payload is None:
+            payload = {}
+
+        headers_obj = {
+            &#39;User-Agent&#39;: &#39;Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0&#39;,
+            &#39;Accept&#39;: &#39;application/json, text/plain, */*&#39;,
+            &#39;Accept-Language&#39;: &#39;de,en-US;q=0.7,en;q=0.3&#39;,
+            &#39;Authorization&#39;: f&#39;Bearer {self.access_token if self.access_token else &#34;&#34;}&#39;,
+            &#39;Origin&#39;: &#39;https://app.imow.stihl.com&#39;,
+            &#39;DNT&#39;: &#39;1&#39;,
+            &#39;Connection&#39;: &#39;keep-alive&#39;,
+            &#39;Referer&#39;: &#39;https://app.imow.stihl.com/&#39;,
+            &#39;Pragma&#39;: &#39;no-cache&#39;,
+            &#39;Cache-Control&#39;: &#39;no-cache&#39;,
+            &#39;TE&#39;: &#39;Trailers&#39;,
+            &#39;Content-Type&#39;: &#39;application/json&#39;
+        }
+        if headers:
+            headers_obj.update(headers)
+
+        response = self.http_session.request(method, url, headers=headers_obj, data=payload)
+        self.http_session.close()
+        if response.status_code not in (http.HTTPStatus.OK, http.HTTPStatus.CREATED, http.HTTPStatus.ACCEPTED):
+            logger.error(f&#34;API Request: failed {response.status_code} {response.reason}&#34;)
+            raise ConnectionError(f&#34;{response.status_code} {response.reason}&#34;)
+        else:
+            return response
+
+    def intent(self, imow_action: IMowActions, mower_name: str = &#34;&#34;, mower_id: str = &#34;&#34;, mower_action_id: str = &#34;&#34;,
+               startpoint: any = &#34;0&#34;,
+               duration: int = 30):
+        &#34;&#34;&#34;
+        Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
+        the action Value is &lt;MowerExternalId&gt; or &lt;MowerExternalId,DurationInMunitesDividedBy10,StartPoint&gt; if
+        startMowing is chosen
+
+        :param imow_action: Anything from imow.common.actions
+        :param mower_name: sth to identify which mower is used
+        :param mower_id: sth to identify which mower is used
+        :param mower_action_id:
+            necessary identifier for the mowers for actions.
+            This is looked up, if only mower_name or mower_id is provided
+
+        :param startpoint: point from which the mowing shall start, default to 0
+        :param duration: minutes of intended mowing defaults, to 30 minutes
+        :return:
+        &#34;&#34;&#34;
+        if not mower_action_id and not mower_id and not mower_name:
+            raise AttributeError(&#34;Need some mower to work on. Please specify mower_[name|id|action_id]&#34;)
+        if not mower_action_id and mower_name:
+            mower_action_id = self.get_mower_action_id_from_name(mower_name)
+        if not mower_action_id and mower_id:
+            mower_action_id = self.get_mower_action_id_from_id(mower_id)
+
+        if len(mower_action_id) &lt; 16:
+            raise AttributeError(
+                f&#34;Invalid mower_action_id, need exactly 16 chars, got {len(mower_action_id)} in {mower_action_id}&#34;)
+        url = &#34;https://api.imow.stihl.com/mower-actions/&#34;
+
+        action_value = f&#34;{mower_action_id},{str(int(duration / 10))},{str(startpoint)}&#34; \
+            if imow_action == IMowActions.START_MOWING else mower_action_id
+
+        action_object = {
+            &#34;actionName&#34;: imow_action.value,
+            &#34;actionValue&#34;: action_value
+            # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,DurationInMunitesDividedBy10,StartPoint&gt;
+        }
+        logger.debug(f&#34;Intend: {action_object}&#34;)
+
+        payload = json.dumps(action_object)
+
+        response = self.__api_request(url, &#34;POST&#34;, payload=payload)
+        if not response.status_code == http.HTTPStatus.CREATED:
+            raise ConnectionError(f&#34;{response.status_code} {response.reason}&#34;)
+        else:
+            logger.debug(f&#39;Sent mower {mower_action_id} to {imow_action}&#39;)
+            return response
+
+    def get_status_by_name(self, mower_name: str) -&gt; dict:
+        logger.debug(f&#34;get_status_by_name: {mower_name}&#34;)
+        for mower in self.receive_mowers():
+            if mower.name == mower_name:
+                return mower.status
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
+
+    def get_status_by_id(self, mower_id=(str, int)) -&gt; dict:
+        if not type(mower_id) == str:
+            mower_id = str(mower_id)
+        logger.debug(f&#34;get_status_by_id: {mower_id}&#34;)
+        try:
+            return self.receive_mower_by_id(mower_id).status
+        except ConnectionError:
+            raise LookupError(f&#34;Mower with id {mower_id} not found in upstream&#34;)
+
+    def get_status_by_action_id(self, mower_action_id: str) -&gt; dict:
+        logger.debug(f&#34;get_status_by_action_id: {mower_action_id}&#34;)
+        for mower in self.receive_mowers():
+            if mower.externalId == mower_action_id:
+                return mower.status
+        raise LookupError(f&#34;Mower with externalId {mower_action_id} not found in upstream&#34;)
+
+    def get_mower_action_id_from_name(self, mower_name: str) -&gt; str:
+        logger.debug(f&#34;get_mower_action_id_from_name: {mower_name}&#34;)
+        for mower in self.receive_mowers():
+            if mower.name == mower_name:
+                return mower.externalId
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
+
+    def get_mower_action_id_from_id(self, mower_id: str) -&gt; str:
+        logger.debug(f&#34;get_mower_action_id_from_id: {mower_id}&#34;)
+        try:
+            return self.receive_mower_by_id(mower_id).externalId
+        except ConnectionError:
+            raise LookupError(f&#34;Mower with id {mower_id} not found in upstream&#34;)
+
+    def get_mower_id_from_name(self, mower_name: str) -&gt; str:
+        logger.debug(f&#34;get_mower_id_from_name: {mower_name}&#34;)
+        for mower in self.receive_mowers():
+            if mower.name == mower_name:
+                return mower.id
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
+
+    def receive_mowers(self) -&gt; list[Mower]:
+        logger.debug(f&#34;receive_mowers:&#34;)
+        mowers = []
+        for mower in json.loads(self.__api_request(&#34;https://api.imow.stihl.com/mowers/&#34;, &#34;GET&#34;).text):
+            mowers.append(Mower(mower))
+        logger.debug(mowers)
+        return mowers
+
+    def receive_mower_by_name(self, mower_name: str) -&gt; Mower:
+        logger.debug(f&#34;get_mower_from_name: {mower_name}&#34;)
+        for mower in self.receive_mowers():
+            if mower.name == mower_name:
+                logger.debug(mower)
+                return mower
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
+
+    def receive_mower_by_id(self, mower_id: str) -&gt; Mower:
+        logger.debug(f&#34;receive_mower: {mower_id}&#34;)
+        mower = Mower(json.loads(self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/&#34;, &#34;GET&#34;).text))
+        logger.debug(mower)
+        return mower
+
+    def receive_mower_current_state(self, mower_id: str) -&gt; MowerState:
+        logger.debug(f&#34;receive_mower_current_state: {mower_id}&#34;)
+        state = Mower(json.loads(
+            self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/&#34;, &#34;GET&#34;).text)).get_current_state()
+        logger.debug(state)
+        return state
+
+    def receive_mower_statistics(self, mower_id: str) -&gt; dict:
+        logger.debug(f&#34;receive_mower_statistics: {mower_id}&#34;)
+        stats = json.loads(self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/statistic/&#34;, &#34;GET&#34;).text)
+        logger.debug(stats)
+        return stats
+
+    def receive_mower_week_mow_time_in_hours(self, mower_id: str) -&gt; dict:
+        logger.debug(f&#34;receive_mower_week_mow_time_in_hours: {mower_id}&#34;)
+        mow_times = json.loads(
+            self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/statistics/week-mow-time-in-hours/&#34;,
+                               &#34;GET&#34;).text)
+        logger.debug(mow_times)
+        return mow_times
+
+    def receive_mower_start_points(self, mower_id: str) -&gt; dict:
+        logger.debug(f&#34;receive_mower_start_points: {mower_id}&#34;)
+        start_points = json.loads(
+            self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/start_points/&#34;, &#34;GET&#34;).text)
+        logger.debug(start_points)
+        return start_points</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="imow.api.IMowApi"><code class="flex name class">
+<span>class <span class="ident">IMowApi</span></span>
+<span>(</span><span>email: str = None, password: str = None, token: str = None)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class IMowApi:
+
+    def __init__(self, email: str = None, password: str = None, token: str = None) -&gt; None:
+
+        if (email is None or password is None) and token is None:
+            raise LookupError(&#34;No email, password or token provided&#34;)
+
+        self.http_session = None
+        self.csrf_token = None
+        self.requestId = None
+        self.access_token = None
+        self.token_expires = None
+        if token:
+            logger.debug(&#34;New instance: Use Token&#34;)
+            self.access_token = token
+        if not self.access_token:
+            logger.debug(&#34;New instance: Authenticate with email and password&#34;)
+            self.get_token(email, password)
+
+    def get_token(self, email: str = &#34;&#34;, password: str = &#34;&#34;, force_reauth=False) -&gt; [str, datetime]:
+        &#34;&#34;&#34;
+        look for a token, if present, return. Else authenticate and store new token
+        :param email: stihl webapp login email non-url-encoded
+        :param password: stihl webapp login password
+        :param force_reauth: Force a re-authentication with username and password
+        :return: the access token
+        &#34;&#34;&#34;
+
+        if not self.access_token or force_reauth:
+            if force_reauth:
+                self.http_session = None
+                self.csrf_token = None
+                self.requestId = None
+                self.access_token = None
+                self.token_expires = None
+
+            self.__authenticate(email, password)
+            logger.debug(&#34;Get Token: Re-Authenticate&#34;)
+
+        return self.access_token, self.token_expires
+
+    def __authenticate(self, email: str, password: str) -&gt; [str, str, requests.Response]:
+        &#34;&#34;&#34;
+        try the authentication request with fetched csrf and requestId payload
+        :param email: stihl webapp login email non-url-encoded
+        :param password: stihl webapp login password
+        :return: the newly created access token, and expire time besides the legacy response
+        &#34;&#34;&#34;
+        self.__fetch_new_csrf_token_and_request_id()
+        url = &#34;https://oauth2.imow.stihl.com/authentication/authenticate/?lang=de&#34;
+        encoded_mail = quote(email)
+        payload = f&#39;mail={encoded_mail}&amp;password={password}&amp;csrf-token={self.csrf_token}&amp;requestId={self.requestId}&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/x-www-form-urlencoded&#39;,
+        }
+        response = self.__api_request(url, &#34;POST&#34;, payload=payload, headers=headers)
+        if not response.status_code == http.HTTPStatus.OK:
+            logger.error(f&#34;Authenticate: {response.status_code} {response.reason}&#34;)
+            raise ConnectionError(f&#34;{response.status_code} {response.reason}&#34;)
+
+        response_url_query_args = furl(response.url).fragment.args
+        if &#34;access_token&#34; not in response_url_query_args:
+            raise LoginError(&#34;STIHL iMow did not return an access_token, check your credentials&#34;)
+
+        self.access_token = response_url_query_args[&#34;access_token&#34;]
+        self.token_expires = datetime.now() + timedelta(seconds=int(response_url_query_args[&#34;expires_in&#34;]))
+        return self.access_token, self.token_expires, response
+
+    def __fetch_new_csrf_token_and_request_id(self) -&gt; [str, str]:
+        &#34;&#34;&#34;
+        Fetch a new csrf_token and requestId to do the authentication as expected by the api
+        csrf_token and requestId are used as payload within authentication
+        &#34;&#34;&#34;
+
+        # URL needs whole redirect query parameter
+        url = &#34;https://oauth2.imow.stihl.com/authentication/?lang=de_DE&amp;authorizationRedirectUrl=https%3A%2F%2Foauth2&#34; \
+              &#34;.imow.stihl.com%2Fauthorization%2F%3Fresponse_type%3Dtoken%26client_id%3D9526273B-1477-47C6-801C&#34; \
+              &#34;-4356F58EF883%26redirect_uri%3Dhttps%253A%252F%252Fapp.imow.stihl.com%252F%2523%252Fauthorize%26state&#34;
+
+        response = self.__api_request(url, &#34;GET&#34;)
+
+        soup = BeautifulSoup(response.text, &#39;html.parser&#39;)
+        try:
+            upstream_csrf_token = soup.find(&#34;input&#34;, {&#39;name&#39;: &#39;csrf-token&#39;}).get(&#39;value&#39;)
+            upstream_request_id = soup.find(&#34;input&#34;, {&#39;name&#39;: &#39;requestId&#39;}).get(&#39;value&#39;)
+        except AttributeError:
+            raise ProcessLookupError(&#34;Did not found necessary csrf token and/or request id in html source&#34;)
+
+        self.csrf_token = upstream_csrf_token
+        self.requestId = upstream_request_id
+        logger.debug(&#34;CSRF: new token and request id &lt;Redacted&gt;&#34;)
+        return self.csrf_token, self.requestId
+
+    def __api_request(self, url, method, payload=None, headers=None) -&gt; requests.Response:
+        &#34;&#34;&#34;
+        Do a standardized request against the stihl imow webapi, with predefined headers
+        :param url: The target URL
+        :param method: The Method to use
+        :param payload: optional payload
+        :param headers: optional update headers
+        :return: the requests.Response
+        &#34;&#34;&#34;
+        if not self.http_session:
+            self.http_session = requests.Session()
+
+        if payload is None:
+            payload = {}
+
+        headers_obj = {
+            &#39;User-Agent&#39;: &#39;Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0&#39;,
+            &#39;Accept&#39;: &#39;application/json, text/plain, */*&#39;,
+            &#39;Accept-Language&#39;: &#39;de,en-US;q=0.7,en;q=0.3&#39;,
+            &#39;Authorization&#39;: f&#39;Bearer {self.access_token if self.access_token else &#34;&#34;}&#39;,
+            &#39;Origin&#39;: &#39;https://app.imow.stihl.com&#39;,
+            &#39;DNT&#39;: &#39;1&#39;,
+            &#39;Connection&#39;: &#39;keep-alive&#39;,
+            &#39;Referer&#39;: &#39;https://app.imow.stihl.com/&#39;,
+            &#39;Pragma&#39;: &#39;no-cache&#39;,
+            &#39;Cache-Control&#39;: &#39;no-cache&#39;,
+            &#39;TE&#39;: &#39;Trailers&#39;,
+            &#39;Content-Type&#39;: &#39;application/json&#39;
+        }
+        if headers:
+            headers_obj.update(headers)
+
+        response = self.http_session.request(method, url, headers=headers_obj, data=payload)
+        self.http_session.close()
+        if response.status_code not in (http.HTTPStatus.OK, http.HTTPStatus.CREATED, http.HTTPStatus.ACCEPTED):
+            logger.error(f&#34;API Request: failed {response.status_code} {response.reason}&#34;)
+            raise ConnectionError(f&#34;{response.status_code} {response.reason}&#34;)
+        else:
+            return response
+
+    def intent(self, imow_action: IMowActions, mower_name: str = &#34;&#34;, mower_id: str = &#34;&#34;, mower_action_id: str = &#34;&#34;,
+               startpoint: any = &#34;0&#34;,
+               duration: int = 30):
+        &#34;&#34;&#34;
+        Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
+        the action Value is &lt;MowerExternalId&gt; or &lt;MowerExternalId,DurationInMunitesDividedBy10,StartPoint&gt; if
+        startMowing is chosen
+
+        :param imow_action: Anything from imow.common.actions
+        :param mower_name: sth to identify which mower is used
+        :param mower_id: sth to identify which mower is used
+        :param mower_action_id:
+            necessary identifier for the mowers for actions.
+            This is looked up, if only mower_name or mower_id is provided
+
+        :param startpoint: point from which the mowing shall start, default to 0
+        :param duration: minutes of intended mowing defaults, to 30 minutes
+        :return:
+        &#34;&#34;&#34;
+        if not mower_action_id and not mower_id and not mower_name:
+            raise AttributeError(&#34;Need some mower to work on. Please specify mower_[name|id|action_id]&#34;)
+        if not mower_action_id and mower_name:
+            mower_action_id = self.get_mower_action_id_from_name(mower_name)
+        if not mower_action_id and mower_id:
+            mower_action_id = self.get_mower_action_id_from_id(mower_id)
+
+        if len(mower_action_id) &lt; 16:
+            raise AttributeError(
+                f&#34;Invalid mower_action_id, need exactly 16 chars, got {len(mower_action_id)} in {mower_action_id}&#34;)
+        url = &#34;https://api.imow.stihl.com/mower-actions/&#34;
+
+        action_value = f&#34;{mower_action_id},{str(int(duration / 10))},{str(startpoint)}&#34; \
+            if imow_action == IMowActions.START_MOWING else mower_action_id
+
+        action_object = {
+            &#34;actionName&#34;: imow_action.value,
+            &#34;actionValue&#34;: action_value
+            # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,DurationInMunitesDividedBy10,StartPoint&gt;
+        }
+        logger.debug(f&#34;Intend: {action_object}&#34;)
+
+        payload = json.dumps(action_object)
+
+        response = self.__api_request(url, &#34;POST&#34;, payload=payload)
+        if not response.status_code == http.HTTPStatus.CREATED:
+            raise ConnectionError(f&#34;{response.status_code} {response.reason}&#34;)
+        else:
+            logger.debug(f&#39;Sent mower {mower_action_id} to {imow_action}&#39;)
+            return response
+
+    def get_status_by_name(self, mower_name: str) -&gt; dict:
+        logger.debug(f&#34;get_status_by_name: {mower_name}&#34;)
+        for mower in self.receive_mowers():
+            if mower.name == mower_name:
+                return mower.status
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
+
+    def get_status_by_id(self, mower_id=(str, int)) -&gt; dict:
+        if not type(mower_id) == str:
+            mower_id = str(mower_id)
+        logger.debug(f&#34;get_status_by_id: {mower_id}&#34;)
+        try:
+            return self.receive_mower_by_id(mower_id).status
+        except ConnectionError:
+            raise LookupError(f&#34;Mower with id {mower_id} not found in upstream&#34;)
+
+    def get_status_by_action_id(self, mower_action_id: str) -&gt; dict:
+        logger.debug(f&#34;get_status_by_action_id: {mower_action_id}&#34;)
+        for mower in self.receive_mowers():
+            if mower.externalId == mower_action_id:
+                return mower.status
+        raise LookupError(f&#34;Mower with externalId {mower_action_id} not found in upstream&#34;)
+
+    def get_mower_action_id_from_name(self, mower_name: str) -&gt; str:
+        logger.debug(f&#34;get_mower_action_id_from_name: {mower_name}&#34;)
+        for mower in self.receive_mowers():
+            if mower.name == mower_name:
+                return mower.externalId
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
+
+    def get_mower_action_id_from_id(self, mower_id: str) -&gt; str:
+        logger.debug(f&#34;get_mower_action_id_from_id: {mower_id}&#34;)
+        try:
+            return self.receive_mower_by_id(mower_id).externalId
+        except ConnectionError:
+            raise LookupError(f&#34;Mower with id {mower_id} not found in upstream&#34;)
+
+    def get_mower_id_from_name(self, mower_name: str) -&gt; str:
+        logger.debug(f&#34;get_mower_id_from_name: {mower_name}&#34;)
+        for mower in self.receive_mowers():
+            if mower.name == mower_name:
+                return mower.id
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
+
+    def receive_mowers(self) -&gt; list[Mower]:
+        logger.debug(f&#34;receive_mowers:&#34;)
+        mowers = []
+        for mower in json.loads(self.__api_request(&#34;https://api.imow.stihl.com/mowers/&#34;, &#34;GET&#34;).text):
+            mowers.append(Mower(mower))
+        logger.debug(mowers)
+        return mowers
+
+    def receive_mower_by_name(self, mower_name: str) -&gt; Mower:
+        logger.debug(f&#34;get_mower_from_name: {mower_name}&#34;)
+        for mower in self.receive_mowers():
+            if mower.name == mower_name:
+                logger.debug(mower)
+                return mower
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
+
+    def receive_mower_by_id(self, mower_id: str) -&gt; Mower:
+        logger.debug(f&#34;receive_mower: {mower_id}&#34;)
+        mower = Mower(json.loads(self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/&#34;, &#34;GET&#34;).text))
+        logger.debug(mower)
+        return mower
+
+    def receive_mower_current_state(self, mower_id: str) -&gt; MowerState:
+        logger.debug(f&#34;receive_mower_current_state: {mower_id}&#34;)
+        state = Mower(json.loads(
+            self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/&#34;, &#34;GET&#34;).text)).get_current_state()
+        logger.debug(state)
+        return state
+
+    def receive_mower_statistics(self, mower_id: str) -&gt; dict:
+        logger.debug(f&#34;receive_mower_statistics: {mower_id}&#34;)
+        stats = json.loads(self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/statistic/&#34;, &#34;GET&#34;).text)
+        logger.debug(stats)
+        return stats
+
+    def receive_mower_week_mow_time_in_hours(self, mower_id: str) -&gt; dict:
+        logger.debug(f&#34;receive_mower_week_mow_time_in_hours: {mower_id}&#34;)
+        mow_times = json.loads(
+            self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/statistics/week-mow-time-in-hours/&#34;,
+                               &#34;GET&#34;).text)
+        logger.debug(mow_times)
+        return mow_times
+
+    def receive_mower_start_points(self, mower_id: str) -&gt; dict:
+        logger.debug(f&#34;receive_mower_start_points: {mower_id}&#34;)
+        start_points = json.loads(
+            self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/start_points/&#34;, &#34;GET&#34;).text)
+        logger.debug(start_points)
+        return start_points</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="imow.api.IMowApi.get_mower_action_id_from_id"><code class="name flex">
+<span>def <span class="ident">get_mower_action_id_from_id</span></span>(<span>self, mower_id: str) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_mower_action_id_from_id(self, mower_id: str) -&gt; str:
+    logger.debug(f&#34;get_mower_action_id_from_id: {mower_id}&#34;)
+    try:
+        return self.receive_mower_by_id(mower_id).externalId
+    except ConnectionError:
+        raise LookupError(f&#34;Mower with id {mower_id} not found in upstream&#34;)</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.get_mower_action_id_from_name"><code class="name flex">
+<span>def <span class="ident">get_mower_action_id_from_name</span></span>(<span>self, mower_name: str) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_mower_action_id_from_name(self, mower_name: str) -&gt; str:
+    logger.debug(f&#34;get_mower_action_id_from_name: {mower_name}&#34;)
+    for mower in self.receive_mowers():
+        if mower.name == mower_name:
+            return mower.externalId
+    raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.get_mower_id_from_name"><code class="name flex">
+<span>def <span class="ident">get_mower_id_from_name</span></span>(<span>self, mower_name: str) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_mower_id_from_name(self, mower_name: str) -&gt; str:
+    logger.debug(f&#34;get_mower_id_from_name: {mower_name}&#34;)
+    for mower in self.receive_mowers():
+        if mower.name == mower_name:
+            return mower.id
+    raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.get_status_by_action_id"><code class="name flex">
+<span>def <span class="ident">get_status_by_action_id</span></span>(<span>self, mower_action_id: str) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_status_by_action_id(self, mower_action_id: str) -&gt; dict:
+    logger.debug(f&#34;get_status_by_action_id: {mower_action_id}&#34;)
+    for mower in self.receive_mowers():
+        if mower.externalId == mower_action_id:
+            return mower.status
+    raise LookupError(f&#34;Mower with externalId {mower_action_id} not found in upstream&#34;)</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.get_status_by_id"><code class="name flex">
+<span>def <span class="ident">get_status_by_id</span></span>(<span>self, mower_id=(&lt;class &#x27;str&#x27;&gt;, &lt;class &#x27;int&#x27;&gt;)) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_status_by_id(self, mower_id=(str, int)) -&gt; dict:
+    if not type(mower_id) == str:
+        mower_id = str(mower_id)
+    logger.debug(f&#34;get_status_by_id: {mower_id}&#34;)
+    try:
+        return self.receive_mower_by_id(mower_id).status
+    except ConnectionError:
+        raise LookupError(f&#34;Mower with id {mower_id} not found in upstream&#34;)</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.get_status_by_name"><code class="name flex">
+<span>def <span class="ident">get_status_by_name</span></span>(<span>self, mower_name: str) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_status_by_name(self, mower_name: str) -&gt; dict:
+    logger.debug(f&#34;get_status_by_name: {mower_name}&#34;)
+    for mower in self.receive_mowers():
+        if mower.name == mower_name:
+            return mower.status
+    raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.get_token"><code class="name flex">
+<span>def <span class="ident">get_token</span></span>(<span>self, email: str = '', password: str = '', force_reauth=False) ‑> [str, datetime]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>look for a token, if present, return. Else authenticate and store new token
+:param email: stihl webapp login email non-url-encoded
+:param password: stihl webapp login password
+:param force_reauth: Force a re-authentication with username and password
+:return: the access token</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_token(self, email: str = &#34;&#34;, password: str = &#34;&#34;, force_reauth=False) -&gt; [str, datetime]:
+    &#34;&#34;&#34;
+    look for a token, if present, return. Else authenticate and store new token
+    :param email: stihl webapp login email non-url-encoded
+    :param password: stihl webapp login password
+    :param force_reauth: Force a re-authentication with username and password
+    :return: the access token
+    &#34;&#34;&#34;
+
+    if not self.access_token or force_reauth:
+        if force_reauth:
+            self.http_session = None
+            self.csrf_token = None
+            self.requestId = None
+            self.access_token = None
+            self.token_expires = None
+
+        self.__authenticate(email, password)
+        logger.debug(&#34;Get Token: Re-Authenticate&#34;)
+
+    return self.access_token, self.token_expires</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.intent"><code class="name flex">
+<span>def <span class="ident">intent</span></span>(<span>self, imow_action: IMowActions, mower_name: str = '', mower_id: str = '', mower_action_id: str = '', startpoint: any = '0', duration: int = 30)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
+the action Value is <MowerExternalId> or <MowerExternalId,DurationInMunitesDividedBy10,StartPoint> if
+startMowing is chosen</p>
+<p>:param imow_action: Anything from imow.common.actions
+:param mower_name: sth to identify which mower is used
+:param mower_id: sth to identify which mower is used
+:param mower_action_id:
+necessary identifier for the mowers for actions.
+This is looked up, if only mower_name or mower_id is provided</p>
+<p>:param startpoint: point from which the mowing shall start, default to 0
+:param duration: minutes of intended mowing defaults, to 30 minutes
+:return:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def intent(self, imow_action: IMowActions, mower_name: str = &#34;&#34;, mower_id: str = &#34;&#34;, mower_action_id: str = &#34;&#34;,
+           startpoint: any = &#34;0&#34;,
+           duration: int = 30):
+    &#34;&#34;&#34;
+    Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
+    the action Value is &lt;MowerExternalId&gt; or &lt;MowerExternalId,DurationInMunitesDividedBy10,StartPoint&gt; if
+    startMowing is chosen
+
+    :param imow_action: Anything from imow.common.actions
+    :param mower_name: sth to identify which mower is used
+    :param mower_id: sth to identify which mower is used
+    :param mower_action_id:
+        necessary identifier for the mowers for actions.
+        This is looked up, if only mower_name or mower_id is provided
+
+    :param startpoint: point from which the mowing shall start, default to 0
+    :param duration: minutes of intended mowing defaults, to 30 minutes
+    :return:
+    &#34;&#34;&#34;
+    if not mower_action_id and not mower_id and not mower_name:
+        raise AttributeError(&#34;Need some mower to work on. Please specify mower_[name|id|action_id]&#34;)
+    if not mower_action_id and mower_name:
+        mower_action_id = self.get_mower_action_id_from_name(mower_name)
+    if not mower_action_id and mower_id:
+        mower_action_id = self.get_mower_action_id_from_id(mower_id)
+
+    if len(mower_action_id) &lt; 16:
+        raise AttributeError(
+            f&#34;Invalid mower_action_id, need exactly 16 chars, got {len(mower_action_id)} in {mower_action_id}&#34;)
+    url = &#34;https://api.imow.stihl.com/mower-actions/&#34;
+
+    action_value = f&#34;{mower_action_id},{str(int(duration / 10))},{str(startpoint)}&#34; \
+        if imow_action == IMowActions.START_MOWING else mower_action_id
+
+    action_object = {
+        &#34;actionName&#34;: imow_action.value,
+        &#34;actionValue&#34;: action_value
+        # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,DurationInMunitesDividedBy10,StartPoint&gt;
+    }
+    logger.debug(f&#34;Intend: {action_object}&#34;)
+
+    payload = json.dumps(action_object)
+
+    response = self.__api_request(url, &#34;POST&#34;, payload=payload)
+    if not response.status_code == http.HTTPStatus.CREATED:
+        raise ConnectionError(f&#34;{response.status_code} {response.reason}&#34;)
+    else:
+        logger.debug(f&#39;Sent mower {mower_action_id} to {imow_action}&#39;)
+        return response</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.receive_mower_by_id"><code class="name flex">
+<span>def <span class="ident">receive_mower_by_id</span></span>(<span>self, mower_id: str) ‑> <a title="imow.common.mower.Mower" href="../common/mower.html#imow.common.mower.Mower">Mower</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def receive_mower_by_id(self, mower_id: str) -&gt; Mower:
+    logger.debug(f&#34;receive_mower: {mower_id}&#34;)
+    mower = Mower(json.loads(self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/&#34;, &#34;GET&#34;).text))
+    logger.debug(mower)
+    return mower</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.receive_mower_by_name"><code class="name flex">
+<span>def <span class="ident">receive_mower_by_name</span></span>(<span>self, mower_name: str) ‑> <a title="imow.common.mower.Mower" href="../common/mower.html#imow.common.mower.Mower">Mower</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def receive_mower_by_name(self, mower_name: str) -&gt; Mower:
+    logger.debug(f&#34;get_mower_from_name: {mower_name}&#34;)
+    for mower in self.receive_mowers():
+        if mower.name == mower_name:
+            logger.debug(mower)
+            return mower
+    raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.receive_mower_current_state"><code class="name flex">
+<span>def <span class="ident">receive_mower_current_state</span></span>(<span>self, mower_id: str) ‑> <a title="imow.common.mowerstate.MowerState" href="../common/mowerstate.html#imow.common.mowerstate.MowerState">MowerState</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def receive_mower_current_state(self, mower_id: str) -&gt; MowerState:
+    logger.debug(f&#34;receive_mower_current_state: {mower_id}&#34;)
+    state = Mower(json.loads(
+        self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/&#34;, &#34;GET&#34;).text)).get_current_state()
+    logger.debug(state)
+    return state</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.receive_mower_start_points"><code class="name flex">
+<span>def <span class="ident">receive_mower_start_points</span></span>(<span>self, mower_id: str) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def receive_mower_start_points(self, mower_id: str) -&gt; dict:
+    logger.debug(f&#34;receive_mower_start_points: {mower_id}&#34;)
+    start_points = json.loads(
+        self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/start_points/&#34;, &#34;GET&#34;).text)
+    logger.debug(start_points)
+    return start_points</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.receive_mower_statistics"><code class="name flex">
+<span>def <span class="ident">receive_mower_statistics</span></span>(<span>self, mower_id: str) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def receive_mower_statistics(self, mower_id: str) -&gt; dict:
+    logger.debug(f&#34;receive_mower_statistics: {mower_id}&#34;)
+    stats = json.loads(self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/statistic/&#34;, &#34;GET&#34;).text)
+    logger.debug(stats)
+    return stats</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.receive_mower_week_mow_time_in_hours"><code class="name flex">
+<span>def <span class="ident">receive_mower_week_mow_time_in_hours</span></span>(<span>self, mower_id: str) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def receive_mower_week_mow_time_in_hours(self, mower_id: str) -&gt; dict:
+    logger.debug(f&#34;receive_mower_week_mow_time_in_hours: {mower_id}&#34;)
+    mow_times = json.loads(
+        self.__api_request(f&#34;https://api.imow.stihl.com/mowers/{mower_id}/statistics/week-mow-time-in-hours/&#34;,
+                           &#34;GET&#34;).text)
+    logger.debug(mow_times)
+    return mow_times</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.receive_mowers"><code class="name flex">
+<span>def <span class="ident">receive_mowers</span></span>(<span>self) ‑> list[Mower]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def receive_mowers(self) -&gt; list[Mower]:
+    logger.debug(f&#34;receive_mowers:&#34;)
+    mowers = []
+    for mower in json.loads(self.__api_request(&#34;https://api.imow.stihl.com/mowers/&#34;, &#34;GET&#34;).text):
+        mowers.append(Mower(mower))
+    logger.debug(mowers)
+    return mowers</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="imow" href="../index.html">imow</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="imow.api.IMowApi" href="#imow.api.IMowApi">IMowApi</a></code></h4>
+<ul class="">
+<li><code><a title="imow.api.IMowApi.get_mower_action_id_from_id" href="#imow.api.IMowApi.get_mower_action_id_from_id">get_mower_action_id_from_id</a></code></li>
+<li><code><a title="imow.api.IMowApi.get_mower_action_id_from_name" href="#imow.api.IMowApi.get_mower_action_id_from_name">get_mower_action_id_from_name</a></code></li>
+<li><code><a title="imow.api.IMowApi.get_mower_id_from_name" href="#imow.api.IMowApi.get_mower_id_from_name">get_mower_id_from_name</a></code></li>
+<li><code><a title="imow.api.IMowApi.get_status_by_action_id" href="#imow.api.IMowApi.get_status_by_action_id">get_status_by_action_id</a></code></li>
+<li><code><a title="imow.api.IMowApi.get_status_by_id" href="#imow.api.IMowApi.get_status_by_id">get_status_by_id</a></code></li>
+<li><code><a title="imow.api.IMowApi.get_status_by_name" href="#imow.api.IMowApi.get_status_by_name">get_status_by_name</a></code></li>
+<li><code><a title="imow.api.IMowApi.get_token" href="#imow.api.IMowApi.get_token">get_token</a></code></li>
+<li><code><a title="imow.api.IMowApi.intent" href="#imow.api.IMowApi.intent">intent</a></code></li>
+<li><code><a title="imow.api.IMowApi.receive_mower_by_id" href="#imow.api.IMowApi.receive_mower_by_id">receive_mower_by_id</a></code></li>
+<li><code><a title="imow.api.IMowApi.receive_mower_by_name" href="#imow.api.IMowApi.receive_mower_by_name">receive_mower_by_name</a></code></li>
+<li><code><a title="imow.api.IMowApi.receive_mower_current_state" href="#imow.api.IMowApi.receive_mower_current_state">receive_mower_current_state</a></code></li>
+<li><code><a title="imow.api.IMowApi.receive_mower_start_points" href="#imow.api.IMowApi.receive_mower_start_points">receive_mower_start_points</a></code></li>
+<li><code><a title="imow.api.IMowApi.receive_mower_statistics" href="#imow.api.IMowApi.receive_mower_statistics">receive_mower_statistics</a></code></li>
+<li><code><a title="imow.api.IMowApi.receive_mower_week_mow_time_in_hours" href="#imow.api.IMowApi.receive_mower_week_mow_time_in_hours">receive_mower_week_mow_time_in_hours</a></code></li>
+<li><code><a title="imow.api.IMowApi.receive_mowers" href="#imow.api.IMowApi.receive_mowers">receive_mowers</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

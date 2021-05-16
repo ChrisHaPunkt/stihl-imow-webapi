@@ -5,7 +5,7 @@ import json
 
 from imow.api import IMowApi
 from imow.common.actions import IMowActions
-from imow.common.mower import Mower, MowerState
+from imow.common.currentmowerstate import CurrentMowerState, MowerTaskState
 from secrets import *
 
 import logging
@@ -37,7 +37,7 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
 
     def test_get_mower(self):
         result = self.imow.receive_mower_by_id(mower_id=self.test_mower.id)
-        self.assertIsInstance(result, Mower, msg="Expected Mower class returned")
+        self.assertIsInstance(result, CurrentMowerState, msg="Expected Mower class returned")
 
     def test_get_status_by_name(self):
         result = self.imow.get_status_by_name(MOWER_NAME)
@@ -71,4 +71,4 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
 
     def test_mower_state(self):
         result = self.imow.receive_mower_current_state(mower_id=self.test_mower.id)
-        self.assertIsInstance(result, MowerState, msg="Expected MowerState class returned")
+        self.assertIsInstance(result, MowerTaskState, msg="Expected MowerState class returned")
