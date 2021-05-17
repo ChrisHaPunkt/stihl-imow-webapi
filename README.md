@@ -43,7 +43,7 @@ Import the module and instantiate the `IMowApi()` constructor with credentials.
 
 ```python
 from imow.api import IMowApi
-
+from imow.common.actions import IMowActions
 if __name__ == '__main__':
     api = IMowApi("email@account.stihl", "supersecret")
     
@@ -53,6 +53,10 @@ if __name__ == '__main__':
 
     mower = api.receive_mowers()[0]
     print(f'{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}')
+    print(mower.get_current_task())
+    # The intent creates an upstream action. 
+    mower.intent(IMowActions.EDGE_MOWING)
+    mower.intent(IMowActions.TO_DOCKING)
 
 ```
 

@@ -12,8 +12,10 @@ from bs4 import BeautifulSoup
 from furl import furl
 
 from imow.common.actions import IMowActions
+from imow.common.consts import IMOW_OAUTH_URI, IMOW_API_URI
 from imow.common.exceptions import LoginError
-from imow.common.currentmowerstate import CurrentMowerState, MowerTaskState
+from imow.common.mowerstate import MowerState
+from imow.common.mowertask import MowerTask
 from imow.common.package_descriptions import *
 
 logger = logging.getLogger('imow')
@@ -44,13 +46,13 @@ class IMowApi:
             logger.debug("New instance: Authenticate with email and password")
             self.get_token(email, password)
 
-    def get_token(self, email: str = "", password: str = "", force_reauth=False) -> [str, datetime]:
+    def get_token(self, email: str = "", password: str = "", force_reauth=False) -> (str, datetime):
         """
         look for a token, if present, return. Else authenticate and store new token
         :param email: stihl webapp login email non-url-encoded
         :param password: stihl webapp login password
         :param force_reauth: Force a re-authentication with username and password
-        :return: the access token
+        :return: tuple, the access token and a datetime object containing the expire date
         """
 
         if not self.access_token or force_reauth:
@@ -74,7 +76,7 @@ class IMowApi:
         :return: the newly created access token, and expire time besides the legacy response
         """
         self.__fetch_new_csrf_token_and_request_id()
-        url = "https://oauth2.imow.stihl.com/authentication/authenticate/?lang=de"
+        url = f"{IMOW_OAUTH_URI}/authentication/authenticate/?lang=de"
         encoded_mail = quote(email)
         payload = f'mail={encoded_mail}&password={password}&csrf-token={self.csrf_token}&requestId={self.requestId}'
         headers = {
@@ -100,7 +102,7 @@ class IMowApi:
         """
 
         # URL needs whole redirect query parameter
-        url = "https://oauth2.imow.stihl.com/authentication/?lang=de_DE&authorizationRedirectUrl=https%3A%2F%2Foauth2" \
+        url = f"{IMOW_OAUTH_URI}/authentication/?lang=de_DE&authorizationRedirectUrl=https%3A%2F%2Foauth2" \
               ".imow.stihl.com%2Fauthorization%2F%3Fresponse_type%3Dtoken%26client_id%3D9526273B-1477-47C6-801C" \
               "-4356F58EF883%26redirect_uri%3Dhttps%253A%252F%252Fapp.imow.stihl.com%252F%2523%252Fauthorize%26state"
 
@@ -187,7 +189,8 @@ class IMowApi:
         if len(mower_action_id) < 16:
             raise AttributeError(
                 f"Invalid mower_action_id, need exactly 16 chars, got {len(mower_action_id)} in {mower_action_id}")
-        url = "https://api.imow.stihl.com/mower-actions/"
+
+        url = f"{IMOW_API_URI}/mower-actions/"
 
         action_value = f"{mower_action_id},{str(int(duration / 10))},{str(startpoint)}" \
             if imow_action == IMowActions.START_MOWING else mower_action_id
@@ -252,15 +255,15 @@ class IMowApi:
                 return mower.id
         raise LookupError(f"Mower with name {mower_name} not found in upstream")
 
-    def receive_mowers(self) -> list[CurrentMowerState]:
+    def receive_mowers(self) -> list[MowerState]:
         logger.debug(f"receive_mowers:")
         mowers = []
-        for mower in json.loads(self.api_request("https://api.imow.stihl.com/mowers/", "GET").text):
-            mowers.append(CurrentMowerState(mower, self))
+        for mower in json.loads(self.api_request(f"{IMOW_API_URI}/mowers/", "GET").text):
+            mowers.append(MowerState(mower, self))
         logger.debug(mowers)
         return mowers
 
-    def receive_mower_by_name(self, mower_name: str) -> CurrentMowerState:
+    def receive_mower_by_name(self, mower_name: str) -> MowerState:
         logger.debug(f"get_mower_from_name: {mower_name}")
         for mower in self.receive_mowers():
             if mower.name == mower_name:
@@ -268,31 +271,35 @@ class IMowApi:
                 return mower
         raise LookupError(f"Mower with name {mower_name} not found in upstream")
 
-    def receive_mower_by_id(self, mower_id: str) -> CurrentMowerState:
+    def receive_mower_by_id(self, mower_id: str) -> MowerState:
         logger.debug(f"receive_mower: {mower_id}")
-        mower = CurrentMowerState(
-            json.loads(self.api_request(f"https://api.imow.stihl.com/mowers/{mower_id}/", "GET").text), self)
+        mower = MowerState(
+            json.loads(self.api_request(f"{IMOW_API_URI}/mowers/{mower_id}/", "GET").text), self)
         logger.debug(mower)
         return mower
 
-    def receive_mower_current_taskstate(self, mower_id: str) -> MowerTaskState:
+    def receive_mower_current_task(self, mower_id: str) -> [MowerTask, int]:
         logger.debug(f"receive_mower_current_state: {mower_id}")
-        state = CurrentMowerState(json.loads(
-            self.api_request(f"https://api.imow.stihl.com/mowers/{mower_id}/", "GET").text),
-            self).get_current_taskstate()
+        state = MowerState(json.loads(
+            self.api_request(f"{IMOW_API_URI}/mowers/{mower_id}/", "GET").text),
+            self)
         logger.debug(state)
-        return state
+        try:
+            return MowerTask(state.status.get("mainState"))
+        except ValueError as ve:
+            logger.warning(f'{state.status.get("mainState")} is not yet a known MowerTask-id to this Class.')
+            return state.status.get("mainState")
 
     def receive_mower_statistics(self, mower_id: str) -> dict:
         logger.debug(f"receive_mower_statistics: {mower_id}")
-        stats = json.loads(self.api_request(f"https://api.imow.stihl.com/mowers/{mower_id}/statistic/", "GET").text)
+        stats = json.loads(self.api_request(f"{IMOW_API_URI}/mowers/{mower_id}/statistic/", "GET").text)
         logger.debug(stats)
         return stats
 
     def receive_mower_week_mow_time_in_hours(self, mower_id: str) -> dict:
         logger.debug(f"receive_mower_week_mow_time_in_hours: {mower_id}")
         mow_times = json.loads(
-            self.api_request(f"https://api.imow.stihl.com/mowers/{mower_id}/statistics/week-mow-time-in-hours/",
+            self.api_request(f"{IMOW_API_URI}/mowers/{mower_id}/statistics/week-mow-time-in-hours/",
                              "GET").text)
         logger.debug(mow_times)
         return mow_times
@@ -300,6 +307,6 @@ class IMowApi:
     def receive_mower_start_points(self, mower_id: str) -> dict:
         logger.debug(f"receive_mower_start_points: {mower_id}")
         start_points = json.loads(
-            self.api_request(f"https://api.imow.stihl.com/mowers/{mower_id}/start_points/", "GET").text)
+            self.api_request(f"{IMOW_API_URI}/mowers/{mower_id}/start-points/", "GET").text)
         logger.debug(start_points)
         return start_points

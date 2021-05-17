@@ -26,14 +26,99 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from enum import Enum
+<pre><code class="python">import json
+import logging
+
+from imow.common.actions import IMowActions
+from imow.common.consts import IMOW_API_URI
+from imow.common.mowertask import MowerTask
+
+logger = logging.getLogger(&#39;imow&#39;)
 
 
-class MowerState(Enum):
-    EDGE_MOWING = 5
-    INSIDE_DOCK_NO_CHARGING = 6
-    INSIDE_DOCK_CHARGING = 7
-    DRIVING_TO_DOCK = 11</code></pre>
+class MowerState:
+
+    def __init__(self, upstream: dict, api):
+        self.api = api
+        self.update(upstream)
+
+    def update(self, upstream: dict = None):
+        if not upstream:
+            upstream = json.loads(self.api.api_request(f&#34;{IMOW_API_URI}/mowers/{self.id}/&#34;, &#34;GET&#34;).text)
+        self.__dict__.update(map(lambda kv: (kv[0].replace(&#39; &#39;, &#39;_&#39;), kv[1]), upstream.items()))
+
+    def get_current_task(self) -&gt; (MowerTask, int):
+        return self.api.receive_mower_current_task(mower_id=self.id)
+
+    def intent(self, imow_action: IMowActions, startpoint: any = &#34;0&#34;, duration: int = 30):
+        self.api.intent(imow_action=imow_action, startpoint=startpoint, duration=duration,
+                        mower_action_id=self.externalId)
+
+    def get_status(self) -&gt; dict:
+        self.update()
+        return self.status
+
+    def get_statistics(self) -&gt; dict:
+        return self.api.receive_mower_statistics(self.id)
+
+    def get_startpoints(self) -&gt; dict:
+        return self.api.receive_mower_start_points(self.id)
+
+    def get_mower_week_mow_time_in_hours(self) -&gt; dict:
+        return self.api.receive_mower_week_mow_time_in_hours(self.id)
+
+    accountId: str = {str}
+    asmEnabled: bool = {bool}
+    automaticModeEnabled: bool = {bool}
+    boundryOffset: bool = {int}  # 60
+    childLock: bool = {bool}  # False
+    circumference: bool = {int}  # 41
+    cModuleId: str = {str}  # &#39;0234d0fffab1d345&#39;
+    codePage: bool = {int}  # 0
+    coordinateLatitude: float = {float}  # 54.123456
+    coordinateLongitude: float = {float}  # 10.654321
+    corridorMode: bool = {int}  # 0
+    demoModeEnabled: bool = {bool}  # False
+    deviceType: bool = {int}  # 24
+    deviceTypeDescription: str = {str}  # &#39;RMI 422 PC&#39;
+    edgeMowingMode: bool = {int}  # 2
+    endOfContract: str = {str}  # &#39;2000-01-01T01:59:43+00:00&#39;
+    energyMode: bool = {int}  # 3
+    externalId: str = {str}  # &#39;0000000123456789&#39;
+    firmwareVersion: str = {str}  # &#39;01v013&#39;
+    gdprAccepted: bool = {bool}  # True
+    gpsProtectionEnabled: bool = {bool}  # True
+    id: str = {str}  # &#39;31466&#39;
+    imsi: str = {str}  # &#39;16198732186461&#39;
+    lastWeatherCheck: str = {str}  # &#39;2021-05-15T01:42:25+00:00&#39;
+    ledStatus: bool = {int}  # 11
+    localTimezoneOffset: bool = {int}  # 7182
+    mappingIntelligentHomeDrive: bool = {int}  # 0
+    mowerImageThumbnailUrl = {
+        str}  # &#39;https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
+    # -thumb.png&#39;
+    mowerImageUrl = {
+        str}  # &#39;https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
+    # -photo.png&#39;
+    name: str = {str}  # &#39;Mährlin&#39;
+    protectionLevel: bool = {int}  # 1
+    rainSensorMode: bool = {int}  # 1
+    smartLogic: dict = {dict: 13}
+    # {&#39;dynamicMowingplan&#39;: False, &#39;mower&#39;: None, &#39;mowingArea&#39;: 100, &#39;mowingAreaInFeet&#39;: 1000, &#39;mowingAreaInMeter&#39;: 100,
+    # &#39;mowingGrowthAdjustment&#39;: 0, &#39;mowingTime&#39;: 60, &#39;mowingTimeManual&#39;: False, &#39;performedActivityTime&#39;: 3,
+    # &#39;smartNotifications&#39;: False, &#39;suggestedActivityTime&#39;: 135, &#39;totalActivityActiveTime&#39;: 0,
+    # &#39;weatherForecastEnabled&#39;: True}
+    softwarePacket: str = {str}  # &#39;12.03&#39;
+    status: dict = {dict: 15}
+    # {&#39;bladeService&#39;: False, &#39;chargeLevel&#39;: 66, &#39;extraStatus&#39;: 0, &#39;extraStatus1&#39;: 0, &#39;extraStatus2&#39;: 0,
+    # &#39;extraStatus3&#39;: 0, &#39;extraStatus4&#39;: 0, &#39;extraStatus5&#39;: 0, &#39;lastGeoPositionDate&#39;: &#39;2021-05-15T07:12:10+00:00&#39;,
+    # &#39;lastNoErrorMainState&#39;: 7, &#39;lastSeenDate&#39;: &#39;2021-05-13T23:58:31+00:00&#39;, &#39;mainState&#39;: 7, &#39;mower&#39;: None,
+    # &#39;online&#39;: True, &#39;rainStatus&#39;: False}
+    team = {None}  # None
+    teamable: bool = {bool}  # False
+    timeZone: str = {str}  # &#39;Europe/Berlin&#39;
+    unitFormat: bool = {int}  # 0
+    version: str = {str}  # &#39;3.2.038&#39;</code></pre>
 </details>
 </section>
 <section>
@@ -47,41 +132,357 @@ class MowerState(Enum):
 <dl>
 <dt id="imow.common.mowerstate.MowerState"><code class="flex name class">
 <span>class <span class="ident">MowerState</span></span>
-<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+<span>(</span><span>upstream: dict, api)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>An enumeration.</p></div>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class MowerState(Enum):
-    EDGE_MOWING = 5
-    INSIDE_DOCK_NO_CHARGING = 6
-    INSIDE_DOCK_CHARGING = 7
-    DRIVING_TO_DOCK = 11</code></pre>
+<pre><code class="python">class MowerState:
+
+    def __init__(self, upstream: dict, api):
+        self.api = api
+        self.update(upstream)
+
+    def update(self, upstream: dict = None):
+        if not upstream:
+            upstream = json.loads(self.api.api_request(f&#34;{IMOW_API_URI}/mowers/{self.id}/&#34;, &#34;GET&#34;).text)
+        self.__dict__.update(map(lambda kv: (kv[0].replace(&#39; &#39;, &#39;_&#39;), kv[1]), upstream.items()))
+
+    def get_current_task(self) -&gt; (MowerTask, int):
+        return self.api.receive_mower_current_task(mower_id=self.id)
+
+    def intent(self, imow_action: IMowActions, startpoint: any = &#34;0&#34;, duration: int = 30):
+        self.api.intent(imow_action=imow_action, startpoint=startpoint, duration=duration,
+                        mower_action_id=self.externalId)
+
+    def get_status(self) -&gt; dict:
+        self.update()
+        return self.status
+
+    def get_statistics(self) -&gt; dict:
+        return self.api.receive_mower_statistics(self.id)
+
+    def get_startpoints(self) -&gt; dict:
+        return self.api.receive_mower_start_points(self.id)
+
+    def get_mower_week_mow_time_in_hours(self) -&gt; dict:
+        return self.api.receive_mower_week_mow_time_in_hours(self.id)
+
+    accountId: str = {str}
+    asmEnabled: bool = {bool}
+    automaticModeEnabled: bool = {bool}
+    boundryOffset: bool = {int}  # 60
+    childLock: bool = {bool}  # False
+    circumference: bool = {int}  # 41
+    cModuleId: str = {str}  # &#39;0234d0fffab1d345&#39;
+    codePage: bool = {int}  # 0
+    coordinateLatitude: float = {float}  # 54.123456
+    coordinateLongitude: float = {float}  # 10.654321
+    corridorMode: bool = {int}  # 0
+    demoModeEnabled: bool = {bool}  # False
+    deviceType: bool = {int}  # 24
+    deviceTypeDescription: str = {str}  # &#39;RMI 422 PC&#39;
+    edgeMowingMode: bool = {int}  # 2
+    endOfContract: str = {str}  # &#39;2000-01-01T01:59:43+00:00&#39;
+    energyMode: bool = {int}  # 3
+    externalId: str = {str}  # &#39;0000000123456789&#39;
+    firmwareVersion: str = {str}  # &#39;01v013&#39;
+    gdprAccepted: bool = {bool}  # True
+    gpsProtectionEnabled: bool = {bool}  # True
+    id: str = {str}  # &#39;31466&#39;
+    imsi: str = {str}  # &#39;16198732186461&#39;
+    lastWeatherCheck: str = {str}  # &#39;2021-05-15T01:42:25+00:00&#39;
+    ledStatus: bool = {int}  # 11
+    localTimezoneOffset: bool = {int}  # 7182
+    mappingIntelligentHomeDrive: bool = {int}  # 0
+    mowerImageThumbnailUrl = {
+        str}  # &#39;https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
+    # -thumb.png&#39;
+    mowerImageUrl = {
+        str}  # &#39;https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
+    # -photo.png&#39;
+    name: str = {str}  # &#39;Mährlin&#39;
+    protectionLevel: bool = {int}  # 1
+    rainSensorMode: bool = {int}  # 1
+    smartLogic: dict = {dict: 13}
+    # {&#39;dynamicMowingplan&#39;: False, &#39;mower&#39;: None, &#39;mowingArea&#39;: 100, &#39;mowingAreaInFeet&#39;: 1000, &#39;mowingAreaInMeter&#39;: 100,
+    # &#39;mowingGrowthAdjustment&#39;: 0, &#39;mowingTime&#39;: 60, &#39;mowingTimeManual&#39;: False, &#39;performedActivityTime&#39;: 3,
+    # &#39;smartNotifications&#39;: False, &#39;suggestedActivityTime&#39;: 135, &#39;totalActivityActiveTime&#39;: 0,
+    # &#39;weatherForecastEnabled&#39;: True}
+    softwarePacket: str = {str}  # &#39;12.03&#39;
+    status: dict = {dict: 15}
+    # {&#39;bladeService&#39;: False, &#39;chargeLevel&#39;: 66, &#39;extraStatus&#39;: 0, &#39;extraStatus1&#39;: 0, &#39;extraStatus2&#39;: 0,
+    # &#39;extraStatus3&#39;: 0, &#39;extraStatus4&#39;: 0, &#39;extraStatus5&#39;: 0, &#39;lastGeoPositionDate&#39;: &#39;2021-05-15T07:12:10+00:00&#39;,
+    # &#39;lastNoErrorMainState&#39;: 7, &#39;lastSeenDate&#39;: &#39;2021-05-13T23:58:31+00:00&#39;, &#39;mainState&#39;: 7, &#39;mower&#39;: None,
+    # &#39;online&#39;: True, &#39;rainStatus&#39;: False}
+    team = {None}  # None
+    teamable: bool = {bool}  # False
+    timeZone: str = {str}  # &#39;Europe/Berlin&#39;
+    unitFormat: bool = {int}  # 0
+    version: str = {str}  # &#39;3.2.038&#39;</code></pre>
 </details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>enum.Enum</li>
-</ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="imow.common.mowerstate.MowerState.DRIVING_TO_DOCK"><code class="name">var <span class="ident">DRIVING_TO_DOCK</span></code></dt>
+<dt id="imow.common.mowerstate.MowerState.accountId"><code class="name">var <span class="ident">accountId</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="imow.common.mowerstate.MowerState.EDGE_MOWING"><code class="name">var <span class="ident">EDGE_MOWING</span></code></dt>
+<dt id="imow.common.mowerstate.MowerState.asmEnabled"><code class="name">var <span class="ident">asmEnabled</span> : bool</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="imow.common.mowerstate.MowerState.INSIDE_DOCK_CHARGING"><code class="name">var <span class="ident">INSIDE_DOCK_CHARGING</span></code></dt>
+<dt id="imow.common.mowerstate.MowerState.automaticModeEnabled"><code class="name">var <span class="ident">automaticModeEnabled</span> : bool</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="imow.common.mowerstate.MowerState.INSIDE_DOCK_NO_CHARGING"><code class="name">var <span class="ident">INSIDE_DOCK_NO_CHARGING</span></code></dt>
+<dt id="imow.common.mowerstate.MowerState.boundryOffset"><code class="name">var <span class="ident">boundryOffset</span> : bool</code></dt>
 <dd>
 <div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.cModuleId"><code class="name">var <span class="ident">cModuleId</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.childLock"><code class="name">var <span class="ident">childLock</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.circumference"><code class="name">var <span class="ident">circumference</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.codePage"><code class="name">var <span class="ident">codePage</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.coordinateLatitude"><code class="name">var <span class="ident">coordinateLatitude</span> : float</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.coordinateLongitude"><code class="name">var <span class="ident">coordinateLongitude</span> : float</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.corridorMode"><code class="name">var <span class="ident">corridorMode</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.demoModeEnabled"><code class="name">var <span class="ident">demoModeEnabled</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.deviceType"><code class="name">var <span class="ident">deviceType</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.deviceTypeDescription"><code class="name">var <span class="ident">deviceTypeDescription</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.edgeMowingMode"><code class="name">var <span class="ident">edgeMowingMode</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.endOfContract"><code class="name">var <span class="ident">endOfContract</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.energyMode"><code class="name">var <span class="ident">energyMode</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.externalId"><code class="name">var <span class="ident">externalId</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.firmwareVersion"><code class="name">var <span class="ident">firmwareVersion</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.gdprAccepted"><code class="name">var <span class="ident">gdprAccepted</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.gpsProtectionEnabled"><code class="name">var <span class="ident">gpsProtectionEnabled</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.id"><code class="name">var <span class="ident">id</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.imsi"><code class="name">var <span class="ident">imsi</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.lastWeatherCheck"><code class="name">var <span class="ident">lastWeatherCheck</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.ledStatus"><code class="name">var <span class="ident">ledStatus</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.localTimezoneOffset"><code class="name">var <span class="ident">localTimezoneOffset</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.mappingIntelligentHomeDrive"><code class="name">var <span class="ident">mappingIntelligentHomeDrive</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.mowerImageThumbnailUrl"><code class="name">var <span class="ident">mowerImageThumbnailUrl</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.mowerImageUrl"><code class="name">var <span class="ident">mowerImageUrl</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.protectionLevel"><code class="name">var <span class="ident">protectionLevel</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.rainSensorMode"><code class="name">var <span class="ident">rainSensorMode</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.smartLogic"><code class="name">var <span class="ident">smartLogic</span> : dict</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.softwarePacket"><code class="name">var <span class="ident">softwarePacket</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.status"><code class="name">var <span class="ident">status</span> : dict</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.team"><code class="name">var <span class="ident">team</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.teamable"><code class="name">var <span class="ident">teamable</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.timeZone"><code class="name">var <span class="ident">timeZone</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.unitFormat"><code class="name">var <span class="ident">unitFormat</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.version"><code class="name">var <span class="ident">version</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="imow.common.mowerstate.MowerState.get_current_task"><code class="name flex">
+<span>def <span class="ident">get_current_task</span></span>(<span>self) ‑> (<enum 'MowerTask'>, <class 'int'>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_current_task(self) -&gt; (MowerTask, int):
+    return self.api.receive_mower_current_task(mower_id=self.id)</code></pre>
+</details>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.get_mower_week_mow_time_in_hours"><code class="name flex">
+<span>def <span class="ident">get_mower_week_mow_time_in_hours</span></span>(<span>self) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_mower_week_mow_time_in_hours(self) -&gt; dict:
+    return self.api.receive_mower_week_mow_time_in_hours(self.id)</code></pre>
+</details>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.get_startpoints"><code class="name flex">
+<span>def <span class="ident">get_startpoints</span></span>(<span>self) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_startpoints(self) -&gt; dict:
+    return self.api.receive_mower_start_points(self.id)</code></pre>
+</details>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.get_statistics"><code class="name flex">
+<span>def <span class="ident">get_statistics</span></span>(<span>self) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_statistics(self) -&gt; dict:
+    return self.api.receive_mower_statistics(self.id)</code></pre>
+</details>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.get_status"><code class="name flex">
+<span>def <span class="ident">get_status</span></span>(<span>self) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_status(self) -&gt; dict:
+    self.update()
+    return self.status</code></pre>
+</details>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.intent"><code class="name flex">
+<span>def <span class="ident">intent</span></span>(<span>self, imow_action: <a title="imow.common.actions.IMowActions" href="actions.html#imow.common.actions.IMowActions">IMowActions</a>, startpoint: <built-in function any> = '0', duration: int = 30)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def intent(self, imow_action: IMowActions, startpoint: any = &#34;0&#34;, duration: int = 30):
+    self.api.intent(imow_action=imow_action, startpoint=startpoint, duration=duration,
+                    mower_action_id=self.externalId)</code></pre>
+</details>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.update"><code class="name flex">
+<span>def <span class="ident">update</span></span>(<span>self, upstream: dict = None)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update(self, upstream: dict = None):
+    if not upstream:
+        upstream = json.loads(self.api.api_request(f&#34;{IMOW_API_URI}/mowers/{self.id}/&#34;, &#34;GET&#34;).text)
+    self.__dict__.update(map(lambda kv: (kv[0].replace(&#39; &#39;, &#39;_&#39;), kv[1]), upstream.items()))</code></pre>
+</details>
 </dd>
 </dl>
 </dd>
@@ -104,10 +505,53 @@ class MowerState(Enum):
 <li>
 <h4><code><a title="imow.common.mowerstate.MowerState" href="#imow.common.mowerstate.MowerState">MowerState</a></code></h4>
 <ul class="">
-<li><code><a title="imow.common.mowerstate.MowerState.DRIVING_TO_DOCK" href="#imow.common.mowerstate.MowerState.DRIVING_TO_DOCK">DRIVING_TO_DOCK</a></code></li>
-<li><code><a title="imow.common.mowerstate.MowerState.EDGE_MOWING" href="#imow.common.mowerstate.MowerState.EDGE_MOWING">EDGE_MOWING</a></code></li>
-<li><code><a title="imow.common.mowerstate.MowerState.INSIDE_DOCK_CHARGING" href="#imow.common.mowerstate.MowerState.INSIDE_DOCK_CHARGING">INSIDE_DOCK_CHARGING</a></code></li>
-<li><code><a title="imow.common.mowerstate.MowerState.INSIDE_DOCK_NO_CHARGING" href="#imow.common.mowerstate.MowerState.INSIDE_DOCK_NO_CHARGING">INSIDE_DOCK_NO_CHARGING</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.accountId" href="#imow.common.mowerstate.MowerState.accountId">accountId</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.asmEnabled" href="#imow.common.mowerstate.MowerState.asmEnabled">asmEnabled</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.automaticModeEnabled" href="#imow.common.mowerstate.MowerState.automaticModeEnabled">automaticModeEnabled</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.boundryOffset" href="#imow.common.mowerstate.MowerState.boundryOffset">boundryOffset</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.cModuleId" href="#imow.common.mowerstate.MowerState.cModuleId">cModuleId</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.childLock" href="#imow.common.mowerstate.MowerState.childLock">childLock</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.circumference" href="#imow.common.mowerstate.MowerState.circumference">circumference</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.codePage" href="#imow.common.mowerstate.MowerState.codePage">codePage</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.coordinateLatitude" href="#imow.common.mowerstate.MowerState.coordinateLatitude">coordinateLatitude</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.coordinateLongitude" href="#imow.common.mowerstate.MowerState.coordinateLongitude">coordinateLongitude</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.corridorMode" href="#imow.common.mowerstate.MowerState.corridorMode">corridorMode</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.demoModeEnabled" href="#imow.common.mowerstate.MowerState.demoModeEnabled">demoModeEnabled</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.deviceType" href="#imow.common.mowerstate.MowerState.deviceType">deviceType</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.deviceTypeDescription" href="#imow.common.mowerstate.MowerState.deviceTypeDescription">deviceTypeDescription</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.edgeMowingMode" href="#imow.common.mowerstate.MowerState.edgeMowingMode">edgeMowingMode</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.endOfContract" href="#imow.common.mowerstate.MowerState.endOfContract">endOfContract</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.energyMode" href="#imow.common.mowerstate.MowerState.energyMode">energyMode</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.externalId" href="#imow.common.mowerstate.MowerState.externalId">externalId</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.firmwareVersion" href="#imow.common.mowerstate.MowerState.firmwareVersion">firmwareVersion</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.gdprAccepted" href="#imow.common.mowerstate.MowerState.gdprAccepted">gdprAccepted</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.get_current_task" href="#imow.common.mowerstate.MowerState.get_current_task">get_current_task</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.get_mower_week_mow_time_in_hours" href="#imow.common.mowerstate.MowerState.get_mower_week_mow_time_in_hours">get_mower_week_mow_time_in_hours</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.get_startpoints" href="#imow.common.mowerstate.MowerState.get_startpoints">get_startpoints</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.get_statistics" href="#imow.common.mowerstate.MowerState.get_statistics">get_statistics</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.get_status" href="#imow.common.mowerstate.MowerState.get_status">get_status</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.gpsProtectionEnabled" href="#imow.common.mowerstate.MowerState.gpsProtectionEnabled">gpsProtectionEnabled</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.id" href="#imow.common.mowerstate.MowerState.id">id</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.imsi" href="#imow.common.mowerstate.MowerState.imsi">imsi</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.intent" href="#imow.common.mowerstate.MowerState.intent">intent</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.lastWeatherCheck" href="#imow.common.mowerstate.MowerState.lastWeatherCheck">lastWeatherCheck</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.ledStatus" href="#imow.common.mowerstate.MowerState.ledStatus">ledStatus</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.localTimezoneOffset" href="#imow.common.mowerstate.MowerState.localTimezoneOffset">localTimezoneOffset</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.mappingIntelligentHomeDrive" href="#imow.common.mowerstate.MowerState.mappingIntelligentHomeDrive">mappingIntelligentHomeDrive</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.mowerImageThumbnailUrl" href="#imow.common.mowerstate.MowerState.mowerImageThumbnailUrl">mowerImageThumbnailUrl</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.mowerImageUrl" href="#imow.common.mowerstate.MowerState.mowerImageUrl">mowerImageUrl</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.name" href="#imow.common.mowerstate.MowerState.name">name</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.protectionLevel" href="#imow.common.mowerstate.MowerState.protectionLevel">protectionLevel</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.rainSensorMode" href="#imow.common.mowerstate.MowerState.rainSensorMode">rainSensorMode</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.smartLogic" href="#imow.common.mowerstate.MowerState.smartLogic">smartLogic</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.softwarePacket" href="#imow.common.mowerstate.MowerState.softwarePacket">softwarePacket</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.status" href="#imow.common.mowerstate.MowerState.status">status</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.team" href="#imow.common.mowerstate.MowerState.team">team</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.teamable" href="#imow.common.mowerstate.MowerState.teamable">teamable</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.timeZone" href="#imow.common.mowerstate.MowerState.timeZone">timeZone</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.unitFormat" href="#imow.common.mowerstate.MowerState.unitFormat">unitFormat</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.update" href="#imow.common.mowerstate.MowerState.update">update</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.version" href="#imow.common.mowerstate.MowerState.version">version</a></code></li>
 </ul>
 </li>
 </ul>

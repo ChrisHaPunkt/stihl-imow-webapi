@@ -1,39 +1,43 @@
-import http
 import json
 import logging
 
-from imow.api import IMowApi
 from imow.common.actions import IMowActions
-from imow.common.mowertaskstate import MowerTaskState
+from imow.common.consts import IMOW_API_URI
+from imow.common.mowertask import MowerTask
 
 logger = logging.getLogger('imow')
 
 
-class CurrentMowerState:
+class MowerState:
 
-    def __init__(self, upstream: dict, api: IMowApi):
+    def __init__(self, upstream: dict, api):  # Type: api: IMowApi
         self.api = api
         self.update(upstream)
 
     def update(self, upstream: dict = None):
         if not upstream:
-            upstream = json.loads(self.api.api_request(f"https://api.imow.stihl.com/mowers/{self.id}/", "GET").text)
+            upstream = json.loads(self.api.api_request(f"{IMOW_API_URI}/mowers/{self.id}/", "GET").text)
         self.__dict__.update(map(lambda kv: (kv[0].replace(' ', '_'), kv[1]), upstream.items()))
 
-    def get_current_taskstate(self) -> (MowerTaskState, int):
-        try:
-            return MowerTaskState(self.status.get("mainState"))
-        except ValueError as ve:
-            logger.warning(f'{self.status.get("mainState")} is not yet a known MowerState to this Class.')
-            return self.status.get("mainState")
+    def get_current_task(self) -> (MowerTask, int):
+        return self.api.receive_mower_current_task(mower_id=self.id)
 
     def intent(self, imow_action: IMowActions, startpoint: any = "0", duration: int = 30):
-
-        self.api.intent(imow_action=imow_action, startpoint=startpoint, duration=duration, mower_action_id=self.externalId)
+        self.api.intent(imow_action=imow_action, startpoint=startpoint, duration=duration,
+                        mower_action_id=self.externalId)
 
     def get_status(self) -> dict:
         self.update()
         return self.status
+
+    def get_statistics(self) -> dict:
+        return self.api.receive_mower_statistics(self.id)
+
+    def get_startpoints(self) -> dict:
+        return self.api.receive_mower_start_points(self.id)
+
+    def get_mower_week_mow_time_in_hours(self) -> dict:
+        return self.api.receive_mower_week_mow_time_in_hours(self.id)
 
     accountId: str = {str}
     asmEnabled: bool = {bool}

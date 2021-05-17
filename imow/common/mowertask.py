@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class MowerTaskState(Enum):
+class MowerTask(Enum):
     EDGE_MOWING = 5
     INSIDE_DOCK_NO_CHARGING = 6
     INSIDE_DOCK_CHARGING = 7
