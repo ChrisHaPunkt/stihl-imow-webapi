@@ -1,4 +1,4 @@
-# STIHL iMow Unofficial Python API Wrapper
+# STIHL iMow unofficial Python API wrapper
 
 [![PyPI version shields.io](https://img.shields.io/pypi/v/imow-webapi)](https://pypi.python.org/pypi/imow-webapi/)
 [![CI](https://github.com/ChrisHaPunkt/stihl-imow-webapi/actions/workflows/python-package.yml/badge.svg?branch=master)](https://github.com/ChrisHaPunkt/stihl-imow-webapi/actions/workflows/python-package.yml)
@@ -39,24 +39,31 @@ And have fun!
 ## Usage
 
 Import the module and instantiate the `IMowApi()` constructor with credentials.
-.
+
 
 ```python
 from imow.api import IMowApi
-
+from imow.common.actions import IMowActions
 if __name__ == '__main__':
     api = IMowApi("email@account.stihl", "supersecret")
+    
+    # save token for later use if you want to recreate IMowApi(token=my_token) because the created token is valid for
+    # 30 days 
+    my_token, expire_time = api.get_token()
+
     mower = api.receive_mowers()[0]
     print(f'{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}')
-
-
+    print(mower.get_current_task())
+    # The intent creates an upstream action. 
+    mower.intent(IMowActions.EDGE_MOWING)
+    mower.intent(IMowActions.TO_DOCKING)
 
 ```
 
 ## Testing
 For unit testing run `pytest -s tests/test_unit*`. For upstream integration testing, provide a `/secrets.py` with the following contents:
 ````python
-EMAIL = "my-stihl-imow-account@email.com"
+EMAIL = "email@account.stihl"
 PASSWORD = "supersecret"
 MOWER_NAME = "MyRobot"
 ````
@@ -73,9 +80,9 @@ to see all available versions.
 
 ## Authors
 
-| Name             | Mail Address                | GitHub Profile                                |
-|------------------|-----------------------------|-----------------------------------------------|
-| Christian Heinrichs | chris@homeset.de          | [ChrisHaPunkt](https://github.com/ChrisHaPunkt)     |
+| Mail Address                | GitHub Profile                                |
+-----------------------------|-----------------------------------------------|
+| chris@homeset.de          | [ChrisHaPunkt](https://github.com/ChrisHaPunkt)     |
 
 ## License
 

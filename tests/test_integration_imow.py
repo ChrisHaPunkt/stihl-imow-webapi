@@ -5,7 +5,8 @@ import json
 
 from imow.api import IMowApi
 from imow.common.actions import IMowActions
-from imow.common.mower import Mower, MowerState
+from imow.common.mowerstate import MowerState
+from imow.common.mowertask import MowerTask
 from secrets import *
 
 import logging
@@ -37,7 +38,7 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
 
     def test_get_mower(self):
         result = self.imow.receive_mower_by_id(mower_id=self.test_mower.id)
-        self.assertIsInstance(result, Mower, msg="Expected Mower class returned")
+        self.assertIsInstance(result, MowerState, msg="Expected Mower class returned")
 
     def test_get_status_by_name(self):
         result = self.imow.get_status_by_name(MOWER_NAME)
@@ -70,5 +71,13 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
         self.assertIs(result.status_code, int(http.HTTPStatus.CREATED), msg="Expected 201 HTTP Code")
 
     def test_mower_state(self):
-        result = self.imow.receive_mower_current_state(mower_id=self.test_mower.id)
-        self.assertIsInstance(result, MowerState, msg="Expected MowerState class returned")
+        result = self.imow.receive_mower_current_task(mower_id=self.test_mower.id)
+        self.assertIsInstance(result, MowerTask, msg="Expected MowerState class returned")
+
+    def test_mowerstate_methods(self):
+        mower = self.imow.receive_mower_by_id(mower_id=self.test_mower.id)
+        statistics = mower.get_statistics()
+        self.assertGreater(int(statistics['totalOperatingTime']), 0, msg="Expected Statistics with known properties "
+                                                                         "returned")
+        startpoints = mower.get_startpoints()
+        self.assertEqual(len(startpoints), 4, msg="Expected an array with length 4 for 4 possible startpoints returned")
