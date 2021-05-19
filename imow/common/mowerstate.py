@@ -23,7 +23,7 @@ class MowerState:
         return self.api.receive_mower_current_task(mower_id=self.id)
 
     def intent(self, imow_action: IMowActions, startpoint: any = "0", duration: int = 30):
-        self.api.intent(imow_action=imow_action, startpoint=startpoint, duration=duration,
+        return self.api.intent(imow_action=imow_action, startpoint=startpoint, duration=duration,
                         mower_action_id=self.externalId)
 
     def get_status(self) -> dict:
