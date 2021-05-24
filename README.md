@@ -8,7 +8,9 @@
 [![PyPI license](https://img.shields.io/pypi/l/imow-webapi)](https://pypi.python.org/pypi/imow-webapi/)
 
 This unofficial Python API was created to provide an interface to interact with the STIHL iMow mower WebAPI. This wrapper is able to receive the current status
-status from the mowers and to send actions
+status from the mowers and to send actions.  
+I wrote this lib to implement an integration for the [Home Assistant Smart Home System](https://www.home-assistant.io/) 
+
 
 ## Getting Started
 

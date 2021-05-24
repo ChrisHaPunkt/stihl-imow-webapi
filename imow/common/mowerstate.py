@@ -5,39 +5,52 @@ from imow.common.actions import IMowActions
 from imow.common.consts import IMOW_API_URI
 from imow.common.mowertask import MowerTask
 
-logger = logging.getLogger('imow')
+logger = logging.getLogger("imow")
 
 
 class MowerState:
-
     def __init__(self, upstream: dict, api):  # Type: api: IMowApi
         self.api = api
-        self.update(upstream)
+        self.replace_state(upstream)
 
-    def update(self, upstream: dict = None):
-        if not upstream:
-            upstream = json.loads(self.api.api_request(f"{IMOW_API_URI}/mowers/{self.id}/", "GET").text)
-        self.__dict__.update(map(lambda kv: (kv[0].replace(' ', '_'), kv[1]), upstream.items()))
+    def replace_state(self, upstream: dict):
+        self.__dict__.update(
+            map(lambda kv: (kv[0].replace(" ", "_"), kv[1]), upstream.items())
+        )
 
-    def get_current_task(self) -> (MowerTask, int):
-        return self.api.receive_mower_current_task(mower_id=self.id)
+    async def update(self):
+        response = await self.api.api_request(
+            f"{IMOW_API_URI}/mowers/{self.id}/", "GET"
+        )
+        upstream = json.loads(response.text)
+        self.replace_state(upstream)
+        return self
 
-    def intent(self, imow_action: IMowActions, startpoint: any = "0", duration: int = 30):
-        self.api.intent(imow_action=imow_action, startpoint=startpoint, duration=duration,
-                        mower_action_id=self.externalId)
+    async def get_current_task(self) -> (MowerTask, int):
+        return await self.api.receive_mower_current_task(mower_id=self.id)
 
-    def get_status(self) -> dict:
-        self.update()
+    async def intent(
+        self, imow_action: IMowActions, startpoint: any = "0", duration: int = 30
+    ) -> None:
+        response = await self.api.intent(
+            imow_action=imow_action,
+            startpoint=startpoint,
+            duration=duration,
+            mower_action_id=self.externalId,
+        )
+
+    async def get_status(self) -> dict:
+        await self.update()
         return self.status
 
-    def get_statistics(self) -> dict:
-        return self.api.receive_mower_statistics(self.id)
+    async def get_statistics(self) -> dict:
+        return await self.api.receive_mower_statistics(self.id)
 
-    def get_startpoints(self) -> dict:
-        return self.api.receive_mower_start_points(self.id)
+    async def get_startpoints(self) -> dict:
+        return await self.api.receive_mower_start_points(self.id)
 
-    def get_mower_week_mow_time_in_hours(self) -> dict:
-        return self.api.receive_mower_week_mow_time_in_hours(self.id)
+    async def get_mower_week_mow_time_in_hours(self) -> dict:
+        return await self.api.receive_mower_week_mow_time_in_hours(self.id)
 
     accountId: str = {str}
     asmEnabled: bool = {bool}
@@ -67,10 +80,12 @@ class MowerState:
     localTimezoneOffset: bool = {int}  # 7182
     mappingIntelligentHomeDrive: bool = {int}  # 0
     mowerImageThumbnailUrl = {
-        str}  # 'https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
+        str
+    }  # 'https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
     # -thumb.png'
     mowerImageUrl = {
-        str}  # 'https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
+        str
+    }  # 'https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
     # -photo.png'
     name: str = {str}  # 'Mährlin'
     protectionLevel: bool = {int}  # 1
