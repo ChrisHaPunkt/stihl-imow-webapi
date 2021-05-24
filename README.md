@@ -8,7 +8,9 @@
 [![PyPI license](https://img.shields.io/pypi/l/imow-webapi)](https://pypi.python.org/pypi/imow-webapi/)
 
 This unofficial Python API was created to provide an interface to interact with the STIHL iMow mower WebAPI. This wrapper is able to receive the current status
-status from the mowers and to send actions
+status from the mowers and to send actions.  
+I wrote this library to implement an integration for the [Home Assistant Smart Home System](https://www.home-assistant.io/) 
+
 
 ## Getting Started
 
@@ -46,20 +48,28 @@ Import the module and instantiate the `IMowApi()` constructor with credentials.
 ```python
 from imow.api import IMowApi
 from imow.common.actions import IMowActions
-if __name__ == '__main__':
-    api = IMowApi("email@account.stihl", "supersecret")
-    
+import asyncio
+
+async def main():
+    api = IMowApi()
+
     # save token for later use if you want to recreate IMowApi(token=my_token) because the created token is valid for
     # 30 days 
+    token, expire_time = api.get_token("email@account.stihl", "supersecret", return_expire_time=True)
     my_token, expire_time = api.get_token()
 
-    mower = api.receive_mowers()[0]
-    print(f'{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}')
-    print(mower.get_current_task())
-    # The intent creates an upstream action. 
-    mower.intent(IMowActions.EDGE_MOWING)
-    mower.intent(IMowActions.TO_DOCKING)
+    print(await api.get_token())
+    mowers = await api.receive_mowers()
+    mower = mowers[0]
 
+    print(f'{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}')
+    print(await mower.get_current_task())
+    await mower.intent(IMowActions.TO_DOCKING)
+    print(await mower.update_from_upstream())
+    print(await mower.get_startpoints())
+
+if __name__ == '__main__':
+    asyncio.run(main())
 ```
 
 ## Testing
