@@ -1,6 +1,11 @@
 
 # Changelog
 
+## Version 0.4.1 (2021-24-17)
+
+### Changes
+- Even more asynchronously with switch from `requests` to `aiohttp` 
+
 ## Version 0.4.0 (2021-24-17)
 
 ### Breaking Changes

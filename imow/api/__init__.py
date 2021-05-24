@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import http
+import asyncio
 import json
 import logging
 import sys
@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from typing import Tuple, Union, List
 from urllib.parse import quote
 
-import requests
+import aiohttp
 from bs4 import BeautifulSoup
 from furl import furl
 
@@ -27,6 +27,12 @@ except AssertionError:
     raise RuntimeError(
         f"{package_name!r} requires Python {python_major}.{python_minor}+ (You have Python {sys.version})"
     )
+if (
+    sys.version_info[0] == 3
+    and sys.version_info[1] >= 8
+    and sys.platform.startswith("win")
+):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 class IMowApi:
@@ -80,7 +86,7 @@ class IMowApi:
 
     async def __authenticate(
         self, email: str, password: str
-    ) -> [str, str, requests.Response]:
+    ) -> [str, str, aiohttp.ClientResponse]:
         """
         try the authentication request with fetched csrf and requestId payload
         :param email: stihl webapp login email non-url-encoded
@@ -95,11 +101,8 @@ class IMowApi:
             "Content-Type": "application/x-www-form-urlencoded",
         }
         response = await self.api_request(url, "POST", payload=payload, headers=headers)
-        if not response.status_code == http.HTTPStatus.OK:
-            logger.error(f"Authenticate: {response.status_code} {response.reason}")
-            raise ConnectionError(f"{response.status_code} {response.reason}")
 
-        response_url_query_args = furl(response.url).fragment.args
+        response_url_query_args = furl(response.real_url).fragment.args
         if "access_token" not in response_url_query_args:
             raise LoginError(
                 "STIHL iMow did not return an access_token, check your credentials"
@@ -126,7 +129,7 @@ class IMowApi:
 
         response = await self.api_request(url, "GET")
 
-        soup = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(await response.text(), "html.parser")
         try:
             upstream_csrf_token = soup.find("input", {"name": "csrf-token"}).get(
                 "value"
@@ -144,17 +147,17 @@ class IMowApi:
 
     async def api_request(
         self, url, method, payload=None, headers=None
-    ) -> requests.Response:
+    ) -> aiohttp.ClientResponse:
         """
         Do a standardized request against the stihl imow webapi, with predefined headers
         :param url: The target URL
         :param method: The Method to use
         :param payload: optional payload
         :param headers: optional update headers
-        :return: the requests.Response
+        :return: the aiohttp.ClientResponse
         """
-        if not self.http_session:
-            self.http_session = requests.Session()
+        if not self.http_session or self.http_session.closed:
+            self.http_session = aiohttp.ClientSession(raise_for_status=True)
 
         if payload is None:
             payload = {}
@@ -176,12 +179,12 @@ class IMowApi:
         if headers:
             headers_obj.update(headers)
 
-        response = self.http_session.request(
+        return await self.http_session.request(
             method, url, headers=headers_obj, data=payload
         )
-        self.http_session.close()
-        response.raise_for_status()
-        return response
+
+    async def close_http(self):
+        await self.http_session.close()
 
     async def intent(
         self,
@@ -191,7 +194,7 @@ class IMowApi:
         mower_action_id: str = "",
         startpoint: any = "0",
         duration: int = 30,
-    ):
+    ) -> aiohttp.ClientResponse:
         """
         Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
         the action Value is <MowerExternalId> or <MowerExternalId,DurationInMunitesDividedBy10,StartPoint> if
@@ -240,11 +243,8 @@ class IMowApi:
         payload = json.dumps(action_object)
 
         response = await self.api_request(url, "POST", payload=payload)
-        if not response.status_code == http.HTTPStatus.CREATED:
-            raise ConnectionError(f"{response.status_code} {response.reason}")
-        else:
-            logger.debug(f"Sent mower {mower_action_id} to {imow_action}")
-            return response
+        logger.debug(f"Sent mower {mower_action_id} to {imow_action}")
+        return response
 
     async def get_status_by_name(self, mower_name: str) -> dict:
         logger.debug(f"get_status_by_name: {mower_name}")
@@ -298,7 +298,7 @@ class IMowApi:
         logger.debug(f"receive_mowers:")
         mowers = []
         response = await self.api_request(f"{IMOW_API_URI}/mowers/", "GET")
-        for mower in json.loads(response.text):
+        for mower in json.loads(await response.text()):
             mowers.append(MowerState(mower, self))
         logger.debug(mowers)
         return mowers
@@ -314,14 +314,14 @@ class IMowApi:
     async def receive_mower_by_id(self, mower_id: str) -> MowerState:
         logger.debug(f"receive_mower: {mower_id}")
         response = await self.api_request(f"{IMOW_API_URI}/mowers/{mower_id}/", "GET")
-        mower = MowerState(json.loads(response.text), self)
+        mower = MowerState(json.loads(await response.text()), self)
         logger.debug(mower)
         return mower
 
     async def receive_mower_current_task(self, mower_id: str) -> Tuple[MowerTask, int]:
         logger.debug(f"receive_mower_current_state: {mower_id}")
         response = await self.api_request(f"{IMOW_API_URI}/mowers/{mower_id}/", "GET")
-        state = MowerState(json.loads(response.text), self)
+        state = MowerState(json.loads(await response.text()), self)
         logger.debug(state)
         try:
             return MowerTask(state.status.get("mainState"))
@@ -336,7 +336,7 @@ class IMowApi:
         response = await self.api_request(
             f"{IMOW_API_URI}/mowers/{mower_id}/statistic/", "GET"
         )
-        stats = json.loads(response.text)
+        stats = json.loads(await response.text())
         logger.debug(stats)
         return stats
 
@@ -346,7 +346,7 @@ class IMowApi:
             f"{IMOW_API_URI}/mowers/{mower_id}/statistics/week-mow-time-in-hours/",
             "GET",
         )
-        mow_times = json.loads(response.text)
+        mow_times = json.loads(await response.text())
         logger.debug(mow_times)
         return mow_times
 
@@ -355,6 +355,6 @@ class IMowApi:
         response = await self.api_request(
             f"{IMOW_API_URI}/mowers/{mower_id}/start-points/", "GET"
         )
-        start_points = json.loads(response.text)
+        start_points = json.loads(await response.text())
         logger.debug(start_points)
         return start_points
