@@ -42,10 +42,15 @@ class IMowApi:
         self.api_password = password
 
     async def get_token(
-        self, email: str = "", password: str = "", force_reauth=False
+        self,
+        email: str = "",
+        password: str = "",
+        force_reauth=False,
+        return_expire_time=False,
     ) -> (str, datetime):
         """
         look for a token, if present, return. Else authenticate and store new token
+        :param return_expire_time:
         :param email: stihl webapp login email non-url-encoded
         :param password: stihl webapp login password
         :param force_reauth: Force a re-authentication with username and password
@@ -67,8 +72,10 @@ class IMowApi:
                 raise LoginError("Got no credentials to authenticate, please provide")
             await self.__authenticate(self.api_email, self.api_password)
             logger.debug("Get Token: Re-Authenticate")
-
-        return self.access_token, self.token_expires
+        if return_expire_time:
+            return self.access_token, self.token_expires
+        else:
+            return self.access_token
 
     async def __authenticate(
         self, email: str, password: str

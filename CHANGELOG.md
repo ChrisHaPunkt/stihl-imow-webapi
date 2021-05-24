@@ -1,6 +1,13 @@
 
 # Changelog
 
+## Version 0.4.0 (2021-24-17)
+
+### Breaking Changes
+- Reworked everything to use asyncio where possible. See Readme.md for new usage example.
+- Renamed MowerState method `update` to `update_from_upstream`
+- Renamed MowerState method `get_status` to `get_current_status`
+
 ## Version 0.3.0 (2021-05-17)
 
 ### Breaking Changes
