@@ -39,6 +39,7 @@ class MowerState:
             mower_action_id=self.externalId,
         )
 
+
     async def get_status(self) -> dict:
         await self.update()
         return self.status
