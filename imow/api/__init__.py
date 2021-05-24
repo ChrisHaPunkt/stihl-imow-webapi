@@ -205,9 +205,9 @@ class IMowApi:
                 "Need some mower to work on. Please specify mower_[name|id|action_id]"
             )
         if not mower_action_id and mower_name:
-            mower_action_id = self.get_mower_action_id_from_name(mower_name)
+            mower_action_id = await self.get_mower_action_id_from_name(mower_name)
         if not mower_action_id and mower_id:
-            mower_action_id = self.get_mower_action_id_from_id(mower_id)
+            mower_action_id = await self.get_mower_action_id_from_id(mower_id)
 
         if len(mower_action_id) < 16:
             raise AttributeError(
