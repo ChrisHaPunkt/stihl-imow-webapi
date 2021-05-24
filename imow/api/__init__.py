@@ -172,17 +172,8 @@ class IMowApi:
             method, url, headers=headers_obj, data=payload
         )
         self.http_session.close()
-        if response.status_code not in (
-            http.HTTPStatus.OK,
-            http.HTTPStatus.CREATED,
-            http.HTTPStatus.ACCEPTED,
-        ):
-            logger.error(
-                f"API Request: failed {response.status_code} {response.reason}"
-            )
-            raise ConnectionError(f"{response.status_code} {response.reason}")
-        else:
-            return response
+        response.raise_for_status()
+        return response
 
     async def intent(
         self,
