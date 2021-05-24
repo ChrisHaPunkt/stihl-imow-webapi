@@ -1,8 +1,6 @@
-import json
 import logging
 
 from imow.common.actions import IMowActions
-from imow.common.consts import IMOW_API_URI
 from imow.common.mowertask import MowerTask
 
 logger = logging.getLogger("imow")
