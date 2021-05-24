@@ -18,12 +18,9 @@ class MowerState:
             map(lambda kv: (kv[0].replace(" ", "_"), kv[1]), upstream.items())
         )
 
-    async def update(self):
-        response = await self.api.api_request(
-            f"{IMOW_API_URI}/mowers/{self.id}/", "GET"
-        )
-        upstream = json.loads(response.text)
-        self.replace_state(upstream)
+    async def update_from_upstream(self):
+        response = await self.api.receive_mower_by_id(self.id)
+        self.replace_state(response.__dict__)
         return self
 
     async def get_current_task(self) -> (MowerTask, int):
@@ -39,9 +36,12 @@ class MowerState:
             mower_action_id=self.externalId,
         )
 
-    async def get_status(self) -> dict:
-        await self.update()
+    async def get_current_status(self) -> dict:
+        await self.update_from_upstream()
         return self.status
+
+    async def get_from_upstream(self):  # Type: MowerState
+        return await self.update_from_upstream()
 
     async def get_statistics(self) -> dict:
         return await self.api.receive_mower_statistics(self.id)
