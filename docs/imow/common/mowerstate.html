@@ -33,39 +33,52 @@ from imow.common.actions import IMowActions
 from imow.common.consts import IMOW_API_URI
 from imow.common.mowertask import MowerTask
 
-logger = logging.getLogger(&#39;imow&#39;)
+logger = logging.getLogger(&#34;imow&#34;)
 
 
 class MowerState:
-
-    def __init__(self, upstream: dict, api):
+    def __init__(self, upstream: dict, api):  # Type: api: IMowApi
         self.api = api
-        self.update(upstream)
+        self.replace_state(upstream)
 
-    def update(self, upstream: dict = None):
-        if not upstream:
-            upstream = json.loads(self.api.api_request(f&#34;{IMOW_API_URI}/mowers/{self.id}/&#34;, &#34;GET&#34;).text)
-        self.__dict__.update(map(lambda kv: (kv[0].replace(&#39; &#39;, &#39;_&#39;), kv[1]), upstream.items()))
+    def replace_state(self, upstream: dict):
+        self.__dict__.update(
+            map(lambda kv: (kv[0].replace(&#34; &#34;, &#34;_&#34;), kv[1]), upstream.items())
+        )
 
-    def get_current_task(self) -&gt; (MowerTask, int):
-        return self.api.receive_mower_current_task(mower_id=self.id)
+    async def update_from_upstream(self):
+        response = await self.api.receive_mower_by_id(self.id)
+        self.replace_state(response.__dict__)
+        return self
 
-    def intent(self, imow_action: IMowActions, startpoint: any = &#34;0&#34;, duration: int = 30):
-        self.api.intent(imow_action=imow_action, startpoint=startpoint, duration=duration,
-                        mower_action_id=self.externalId)
+    async def get_current_task(self) -&gt; (MowerTask, int):
+        return await self.api.receive_mower_current_task(mower_id=self.id)
 
-    def get_status(self) -&gt; dict:
-        self.update()
+    async def intent(
+        self, imow_action: IMowActions, startpoint: any = &#34;0&#34;, duration: int = 30
+    ) -&gt; None:
+        response = await self.api.intent(
+            imow_action=imow_action,
+            startpoint=startpoint,
+            duration=duration,
+            mower_action_id=self.externalId,
+        )
+
+    async def get_current_status(self) -&gt; dict:
+        await self.update_from_upstream()
         return self.status
 
-    def get_statistics(self) -&gt; dict:
-        return self.api.receive_mower_statistics(self.id)
+    async def get_from_upstream(self):  # Type: MowerState
+        return await self.update_from_upstream()
 
-    def get_startpoints(self) -&gt; dict:
-        return self.api.receive_mower_start_points(self.id)
+    async def get_statistics(self) -&gt; dict:
+        return await self.api.receive_mower_statistics(self.id)
 
-    def get_mower_week_mow_time_in_hours(self) -&gt; dict:
-        return self.api.receive_mower_week_mow_time_in_hours(self.id)
+    async def get_startpoints(self) -&gt; dict:
+        return await self.api.receive_mower_start_points(self.id)
+
+    async def get_mower_week_mow_time_in_hours(self) -&gt; dict:
+        return await self.api.receive_mower_week_mow_time_in_hours(self.id)
 
     accountId: str = {str}
     asmEnabled: bool = {bool}
@@ -95,10 +108,12 @@ class MowerState:
     localTimezoneOffset: bool = {int}  # 7182
     mappingIntelligentHomeDrive: bool = {int}  # 0
     mowerImageThumbnailUrl = {
-        str}  # &#39;https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
+        str
+    }  # &#39;https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
     # -thumb.png&#39;
     mowerImageUrl = {
-        str}  # &#39;https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
+        str
+    }  # &#39;https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
     # -photo.png&#39;
     name: str = {str}  # &#39;Mährlin&#39;
     protectionLevel: bool = {int}  # 1
@@ -141,35 +156,48 @@ class MowerState:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class MowerState:
-
-    def __init__(self, upstream: dict, api):
+    def __init__(self, upstream: dict, api):  # Type: api: IMowApi
         self.api = api
-        self.update(upstream)
+        self.replace_state(upstream)
 
-    def update(self, upstream: dict = None):
-        if not upstream:
-            upstream = json.loads(self.api.api_request(f&#34;{IMOW_API_URI}/mowers/{self.id}/&#34;, &#34;GET&#34;).text)
-        self.__dict__.update(map(lambda kv: (kv[0].replace(&#39; &#39;, &#39;_&#39;), kv[1]), upstream.items()))
+    def replace_state(self, upstream: dict):
+        self.__dict__.update(
+            map(lambda kv: (kv[0].replace(&#34; &#34;, &#34;_&#34;), kv[1]), upstream.items())
+        )
 
-    def get_current_task(self) -&gt; (MowerTask, int):
-        return self.api.receive_mower_current_task(mower_id=self.id)
+    async def update_from_upstream(self):
+        response = await self.api.receive_mower_by_id(self.id)
+        self.replace_state(response.__dict__)
+        return self
 
-    def intent(self, imow_action: IMowActions, startpoint: any = &#34;0&#34;, duration: int = 30):
-        self.api.intent(imow_action=imow_action, startpoint=startpoint, duration=duration,
-                        mower_action_id=self.externalId)
+    async def get_current_task(self) -&gt; (MowerTask, int):
+        return await self.api.receive_mower_current_task(mower_id=self.id)
 
-    def get_status(self) -&gt; dict:
-        self.update()
+    async def intent(
+        self, imow_action: IMowActions, startpoint: any = &#34;0&#34;, duration: int = 30
+    ) -&gt; None:
+        response = await self.api.intent(
+            imow_action=imow_action,
+            startpoint=startpoint,
+            duration=duration,
+            mower_action_id=self.externalId,
+        )
+
+    async def get_current_status(self) -&gt; dict:
+        await self.update_from_upstream()
         return self.status
 
-    def get_statistics(self) -&gt; dict:
-        return self.api.receive_mower_statistics(self.id)
+    async def get_from_upstream(self):  # Type: MowerState
+        return await self.update_from_upstream()
 
-    def get_startpoints(self) -&gt; dict:
-        return self.api.receive_mower_start_points(self.id)
+    async def get_statistics(self) -&gt; dict:
+        return await self.api.receive_mower_statistics(self.id)
 
-    def get_mower_week_mow_time_in_hours(self) -&gt; dict:
-        return self.api.receive_mower_week_mow_time_in_hours(self.id)
+    async def get_startpoints(self) -&gt; dict:
+        return await self.api.receive_mower_start_points(self.id)
+
+    async def get_mower_week_mow_time_in_hours(self) -&gt; dict:
+        return await self.api.receive_mower_week_mow_time_in_hours(self.id)
 
     accountId: str = {str}
     asmEnabled: bool = {bool}
@@ -199,10 +227,12 @@ class MowerState:
     localTimezoneOffset: bool = {int}  # 7182
     mappingIntelligentHomeDrive: bool = {int}  # 0
     mowerImageThumbnailUrl = {
-        str}  # &#39;https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
+        str
+    }  # &#39;https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
     # -thumb.png&#39;
     mowerImageUrl = {
-        str}  # &#39;https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
+        str
+    }  # &#39;https://app-cdn-appdata001-r-euwe-1b3d32.azureedge.net/device-images/mower-images/31466-2309868077
     # -photo.png&#39;
     name: str = {str}  # &#39;Mährlin&#39;
     protectionLevel: bool = {int}  # 1
@@ -389,8 +419,8 @@ class MowerState:
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="imow.common.mowerstate.MowerState.get_current_task"><code class="name flex">
-<span>def <span class="ident">get_current_task</span></span>(<span>self) ‑> (<enum 'MowerTask'>, <class 'int'>)</span>
+<dt id="imow.common.mowerstate.MowerState.get_current_status"><code class="name flex">
+<span>async def <span class="ident">get_current_status</span></span>(<span>self) ‑> dict</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -398,65 +428,13 @@ class MowerState:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_current_task(self) -&gt; (MowerTask, int):
-    return self.api.receive_mower_current_task(mower_id=self.id)</code></pre>
-</details>
-</dd>
-<dt id="imow.common.mowerstate.MowerState.get_mower_week_mow_time_in_hours"><code class="name flex">
-<span>def <span class="ident">get_mower_week_mow_time_in_hours</span></span>(<span>self) ‑> dict</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_mower_week_mow_time_in_hours(self) -&gt; dict:
-    return self.api.receive_mower_week_mow_time_in_hours(self.id)</code></pre>
-</details>
-</dd>
-<dt id="imow.common.mowerstate.MowerState.get_startpoints"><code class="name flex">
-<span>def <span class="ident">get_startpoints</span></span>(<span>self) ‑> dict</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_startpoints(self) -&gt; dict:
-    return self.api.receive_mower_start_points(self.id)</code></pre>
-</details>
-</dd>
-<dt id="imow.common.mowerstate.MowerState.get_statistics"><code class="name flex">
-<span>def <span class="ident">get_statistics</span></span>(<span>self) ‑> dict</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_statistics(self) -&gt; dict:
-    return self.api.receive_mower_statistics(self.id)</code></pre>
-</details>
-</dd>
-<dt id="imow.common.mowerstate.MowerState.get_status"><code class="name flex">
-<span>def <span class="ident">get_status</span></span>(<span>self) ‑> dict</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_status(self) -&gt; dict:
-    self.update()
+<pre><code class="python">async def get_current_status(self) -&gt; dict:
+    await self.update_from_upstream()
     return self.status</code></pre>
 </details>
 </dd>
-<dt id="imow.common.mowerstate.MowerState.intent"><code class="name flex">
-<span>def <span class="ident">intent</span></span>(<span>self, imow_action: <a title="imow.common.actions.IMowActions" href="actions.html#imow.common.actions.IMowActions">IMowActions</a>, startpoint: <built-in function any> = '0', duration: int = 30)</span>
+<dt id="imow.common.mowerstate.MowerState.get_current_task"><code class="name flex">
+<span>async def <span class="ident">get_current_task</span></span>(<span>self) ‑> (<enum 'MowerTask'>, <class 'int'>)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -464,13 +442,12 @@ class MowerState:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def intent(self, imow_action: IMowActions, startpoint: any = &#34;0&#34;, duration: int = 30):
-    self.api.intent(imow_action=imow_action, startpoint=startpoint, duration=duration,
-                    mower_action_id=self.externalId)</code></pre>
+<pre><code class="python">async def get_current_task(self) -&gt; (MowerTask, int):
+    return await self.api.receive_mower_current_task(mower_id=self.id)</code></pre>
 </details>
 </dd>
-<dt id="imow.common.mowerstate.MowerState.update"><code class="name flex">
-<span>def <span class="ident">update</span></span>(<span>self, upstream: dict = None)</span>
+<dt id="imow.common.mowerstate.MowerState.get_from_upstream"><code class="name flex">
+<span>async def <span class="ident">get_from_upstream</span></span>(<span>self)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -478,10 +455,97 @@ class MowerState:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def update(self, upstream: dict = None):
-    if not upstream:
-        upstream = json.loads(self.api.api_request(f&#34;{IMOW_API_URI}/mowers/{self.id}/&#34;, &#34;GET&#34;).text)
-    self.__dict__.update(map(lambda kv: (kv[0].replace(&#39; &#39;, &#39;_&#39;), kv[1]), upstream.items()))</code></pre>
+<pre><code class="python">async def get_from_upstream(self):  # Type: MowerState
+    return await self.update_from_upstream()</code></pre>
+</details>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.get_mower_week_mow_time_in_hours"><code class="name flex">
+<span>async def <span class="ident">get_mower_week_mow_time_in_hours</span></span>(<span>self) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def get_mower_week_mow_time_in_hours(self) -&gt; dict:
+    return await self.api.receive_mower_week_mow_time_in_hours(self.id)</code></pre>
+</details>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.get_startpoints"><code class="name flex">
+<span>async def <span class="ident">get_startpoints</span></span>(<span>self) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def get_startpoints(self) -&gt; dict:
+    return await self.api.receive_mower_start_points(self.id)</code></pre>
+</details>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.get_statistics"><code class="name flex">
+<span>async def <span class="ident">get_statistics</span></span>(<span>self) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def get_statistics(self) -&gt; dict:
+    return await self.api.receive_mower_statistics(self.id)</code></pre>
+</details>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.intent"><code class="name flex">
+<span>async def <span class="ident">intent</span></span>(<span>self, imow_action: <a title="imow.common.actions.IMowActions" href="actions.html#imow.common.actions.IMowActions">IMowActions</a>, startpoint: <built-in function any> = '0', duration: int = 30) ‑> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def intent(
+    self, imow_action: IMowActions, startpoint: any = &#34;0&#34;, duration: int = 30
+) -&gt; None:
+    response = await self.api.intent(
+        imow_action=imow_action,
+        startpoint=startpoint,
+        duration=duration,
+        mower_action_id=self.externalId,
+    )</code></pre>
+</details>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.replace_state"><code class="name flex">
+<span>def <span class="ident">replace_state</span></span>(<span>self, upstream: dict)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def replace_state(self, upstream: dict):
+    self.__dict__.update(
+        map(lambda kv: (kv[0].replace(&#34; &#34;, &#34;_&#34;), kv[1]), upstream.items())
+    )</code></pre>
+</details>
+</dd>
+<dt id="imow.common.mowerstate.MowerState.update_from_upstream"><code class="name flex">
+<span>async def <span class="ident">update_from_upstream</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def update_from_upstream(self):
+    response = await self.api.receive_mower_by_id(self.id)
+    self.replace_state(response.__dict__)
+    return self</code></pre>
 </details>
 </dd>
 </dl>
@@ -525,11 +589,12 @@ class MowerState:
 <li><code><a title="imow.common.mowerstate.MowerState.externalId" href="#imow.common.mowerstate.MowerState.externalId">externalId</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.firmwareVersion" href="#imow.common.mowerstate.MowerState.firmwareVersion">firmwareVersion</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.gdprAccepted" href="#imow.common.mowerstate.MowerState.gdprAccepted">gdprAccepted</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.get_current_status" href="#imow.common.mowerstate.MowerState.get_current_status">get_current_status</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.get_current_task" href="#imow.common.mowerstate.MowerState.get_current_task">get_current_task</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.get_from_upstream" href="#imow.common.mowerstate.MowerState.get_from_upstream">get_from_upstream</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.get_mower_week_mow_time_in_hours" href="#imow.common.mowerstate.MowerState.get_mower_week_mow_time_in_hours">get_mower_week_mow_time_in_hours</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.get_startpoints" href="#imow.common.mowerstate.MowerState.get_startpoints">get_startpoints</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.get_statistics" href="#imow.common.mowerstate.MowerState.get_statistics">get_statistics</a></code></li>
-<li><code><a title="imow.common.mowerstate.MowerState.get_status" href="#imow.common.mowerstate.MowerState.get_status">get_status</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.gpsProtectionEnabled" href="#imow.common.mowerstate.MowerState.gpsProtectionEnabled">gpsProtectionEnabled</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.id" href="#imow.common.mowerstate.MowerState.id">id</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.imsi" href="#imow.common.mowerstate.MowerState.imsi">imsi</a></code></li>
@@ -543,6 +608,7 @@ class MowerState:
 <li><code><a title="imow.common.mowerstate.MowerState.name" href="#imow.common.mowerstate.MowerState.name">name</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.protectionLevel" href="#imow.common.mowerstate.MowerState.protectionLevel">protectionLevel</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.rainSensorMode" href="#imow.common.mowerstate.MowerState.rainSensorMode">rainSensorMode</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.replace_state" href="#imow.common.mowerstate.MowerState.replace_state">replace_state</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.smartLogic" href="#imow.common.mowerstate.MowerState.smartLogic">smartLogic</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.softwarePacket" href="#imow.common.mowerstate.MowerState.softwarePacket">softwarePacket</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.status" href="#imow.common.mowerstate.MowerState.status">status</a></code></li>
@@ -550,7 +616,7 @@ class MowerState:
 <li><code><a title="imow.common.mowerstate.MowerState.teamable" href="#imow.common.mowerstate.MowerState.teamable">teamable</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.timeZone" href="#imow.common.mowerstate.MowerState.timeZone">timeZone</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.unitFormat" href="#imow.common.mowerstate.MowerState.unitFormat">unitFormat</a></code></li>
-<li><code><a title="imow.common.mowerstate.MowerState.update" href="#imow.common.mowerstate.MowerState.update">update</a></code></li>
+<li><code><a title="imow.common.mowerstate.MowerState.update_from_upstream" href="#imow.common.mowerstate.MowerState.update_from_upstream">update_from_upstream</a></code></li>
 <li><code><a title="imow.common.mowerstate.MowerState.version" href="#imow.common.mowerstate.MowerState.version">version</a></code></li>
 </ul>
 </li>

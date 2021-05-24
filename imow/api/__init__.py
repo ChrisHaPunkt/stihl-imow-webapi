@@ -5,6 +5,7 @@ import json
 import logging
 import sys
 from datetime import datetime, timedelta
+from typing import Tuple, Union, List
 from urllib.parse import quote
 
 import requests
@@ -47,7 +48,7 @@ class IMowApi:
         password: str = "",
         force_reauth=False,
         return_expire_time=False,
-    ) -> (str, datetime):
+    ) -> Union[Tuple[str, datetime], str]:
         """
         look for a token, if present, return. Else authenticate and store new token
         :param return_expire_time:
@@ -293,7 +294,7 @@ class IMowApi:
                 return mower.id
         raise LookupError(f"Mower with name {mower_name} not found in upstream")
 
-    async def receive_mowers(self) -> list[MowerState]:
+    async def receive_mowers(self) -> List[MowerState]:
         logger.debug(f"receive_mowers:")
         mowers = []
         response = await self.api_request(f"{IMOW_API_URI}/mowers/", "GET")
@@ -317,7 +318,7 @@ class IMowApi:
         logger.debug(mower)
         return mower
 
-    async def receive_mower_current_task(self, mower_id: str) -> [MowerTask, int]:
+    async def receive_mower_current_task(self, mower_id: str) -> Tuple[MowerTask, int]:
         logger.debug(f"receive_mower_current_state: {mower_id}")
         response = await self.api_request(f"{IMOW_API_URI}/mowers/{mower_id}/", "GET")
         state = MowerState(json.loads(response.text), self)
