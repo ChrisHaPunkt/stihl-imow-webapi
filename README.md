@@ -55,8 +55,8 @@ async def main():
 
     # save token for later use if you want to recreate IMowApi(token=my_token) because the created token is valid for
     # 30 days 
-    token, expire_time = api.get_token("email@account.stihl", "supersecret", return_expire_time=True)
-    my_token, expire_time = api.get_token()
+    token, expire_time = await api.get_token("email@account.stihl", "supersecret", return_expire_time=True)
+    my_token, expire_time = await api.get_token()
 
     print(await api.get_token())
     mowers = await api.receive_mowers()
