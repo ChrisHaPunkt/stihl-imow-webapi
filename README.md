@@ -83,7 +83,9 @@ and run `pytest -s tests/test_integration*` or `pytest -s`.
 
 ## Built With
 
-* [Requests](http://docs.python-requests.org/en/master/) - Http for Humans
+* aiohttp
+* BeautifulSoup
+* asyncio
 
 ## Versioning
 
