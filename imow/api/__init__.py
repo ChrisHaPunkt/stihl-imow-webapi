@@ -37,10 +37,14 @@ if (
 
 class IMowApi:
     def __init__(
-        self, email: str = None, password: str = None, token: str = None
+        self,
+        email: str = None,
+        password: str = None,
+        token: str = None,
+        aiohttp_session=aiohttp.ClientSession(raise_for_status=True),
     ) -> None:
 
-        self.http_session = None
+        self.http_session = aiohttp_session
         self.csrf_token = None
         self.requestId = None
         self.access_token = token
