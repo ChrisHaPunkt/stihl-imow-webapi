@@ -1,6 +1,11 @@
 
 # Changelog
 
+## Version 0.4.4 (2021-05-28)
+
+### Features
+- Add `validate_token()` method to `IMowAPI` Class. Test if a token is valid and can call the webapi.
+
 ## Version 0.4.3 (2021-05-27)
 
 ### Features

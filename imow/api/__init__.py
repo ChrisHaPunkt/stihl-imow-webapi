@@ -9,6 +9,7 @@ from typing import Tuple, Union, List
 from urllib.parse import quote
 
 import aiohttp
+from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from furl import furl
 
@@ -41,16 +42,16 @@ class IMowApi:
         email: str = None,
         password: str = None,
         token: str = None,
-        aiohttp_session=aiohttp.ClientSession(raise_for_status=True),
+        aiohttp_session: ClientSession = aiohttp.ClientSession(raise_for_status=True),
     ) -> None:
 
-        self.http_session = aiohttp_session
-        self.csrf_token = None
-        self.requestId = None
-        self.access_token = token
-        self.token_expires = None
-        self.api_email = email
-        self.api_password = password
+        self.http_session: ClientSession = aiohttp_session
+        self.csrf_token: str = ""
+        self.requestId: str = ""
+        self.access_token: str = token
+        self.token_expires: datetime = None
+        self.api_email: str = email
+        self.api_password: str = password
 
     async def get_token(
         self,
@@ -77,16 +78,32 @@ class IMowApi:
                 self.http_session = None
                 self.csrf_token = None
                 self.requestId = None
-                self.access_token = None
-                self.token_expires = None
+                self.access_token: str = ""
+                self.token_expires: datetime = None
             if not self.api_email and not self.api_password:
                 raise LoginError("Got no credentials to authenticate, please provide")
             await self.__authenticate(self.api_email, self.api_password)
             logger.debug("Get Token: Re-Authenticate")
+
+        await self.validate_token()
         if return_expire_time:
             return self.access_token, self.token_expires
         else:
             return self.access_token
+
+    async def validate_token(self, explicit_token: str = None) -> bool:
+        old_token = None
+        if explicit_token:
+            # save old instance token and place temp token for validation
+            old_token = self.access_token
+            self.access_token = explicit_token
+
+        await self.receive_mowers()
+
+        if explicit_token:
+            # Reset instance token
+            self.access_token = old_token
+        return True
 
     async def __authenticate(
         self, email: str, password: str

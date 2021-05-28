@@ -37,9 +37,6 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
             )
             self.initialized = True
 
-    def tearDownClass(cls) -> None:
-        cls.loop.run_until_complete(cls.imow.close_http())
-
     def test_auth_with_email_and_password(self):
         token_old = self.imow.access_token
 
@@ -52,6 +49,14 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
         self.assertNotEqual(
             token_old, token_new, msg="Expected old and new token differ"
         )
+
+    def test_validate_token(self):
+        self.assertTrue(self.loop.run_until_complete(self.imow.validate_token()))
+
+    def test_validate_token_invalid(self):
+        with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):
+            self.loop.run_until_complete(self.imow.validate_token(
+                "MTAyMTQ1NTZAMzU3MTE4MjQ2ZGUwOGNmMDFiZDc4NTBmOTVmNmRhNTA0NzNlNjI0NTBmZTIzN2RkNzA1YTI1YWIwOTUxYmRhOB"))
 
     def test_get_mowers(self):
         result = self.loop.run_until_complete(self.imow.receive_mowers())
