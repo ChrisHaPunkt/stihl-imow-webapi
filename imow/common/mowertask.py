@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class MowerTask(Enum):
+    DOCK_ERROR = 1
     EDGE_MOWING = 5
     INSIDE_DOCK_NO_CHARGING = 6
     INSIDE_DOCK_CHARGING = 7
