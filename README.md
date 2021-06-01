@@ -52,24 +52,28 @@ import asyncio
 
 async def main():
     api = IMowApi()
-
     # save token for later use if you want to recreate IMowApi(token=my_token) because the created token is valid for
-    # 30 days 
+    # 30 days
     token, expire_time = await api.get_token("email@account.stihl", "supersecret", return_expire_time=True)
-    my_token, expire_time = await api.get_token()
 
     print(await api.get_token())
+
     mowers = await api.receive_mowers()
     mower = mowers[0]
 
-    print(f'{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}')
+    print(f"{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}")
     print(await mower.get_current_task())
     await mower.intent(IMowActions.TO_DOCKING)
     print(await mower.update_from_upstream())
     print(await mower.get_startpoints())
 
-if __name__ == '__main__':
+    # Cleanup the created http session
+    await api.close()
+
+
+if __name__ == "__main__":
     asyncio.run(main())
+
 ```
 
 ## Testing
