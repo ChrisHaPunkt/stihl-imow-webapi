@@ -3,7 +3,7 @@
 ## Version 0.4.5 (2021-06-01)
 
 ### Features
-
+- Add 2 new identified Tasks within `MowerTask` (Thanks to @lausser)
 - Add `check_api_maintenance()` method to `IMowAPI` Class. Check if the api server is currently under maintenance.  
   This method is automatically called if the api server returns a 500 error response for any request.
 - One should call the new `close()` method for the `IMowAPI` Class when finishing the api interactions to correctly
