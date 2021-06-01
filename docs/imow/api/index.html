@@ -37,13 +37,13 @@ from typing import Tuple, Union, List
 from urllib.parse import quote
 
 import aiohttp
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientResponseError
 from bs4 import BeautifulSoup
 from furl import furl
 
 from imow.common.actions import IMowActions
 from imow.common.consts import IMOW_OAUTH_URI, IMOW_API_URI
-from imow.common.exceptions import LoginError
+from imow.common.exceptions import LoginError, ApiMaintenanceError
 from imow.common.mowerstate import MowerState
 from imow.common.mowertask import MowerTask
 from imow.common.package_descriptions import *
@@ -70,7 +70,7 @@ class IMowApi:
         email: str = None,
         password: str = None,
         token: str = None,
-        aiohttp_session: ClientSession = aiohttp.ClientSession(raise_for_status=True),
+        aiohttp_session: ClientSession = None,
     ) -&gt; None:
 
         self.http_session: ClientSession = aiohttp_session
@@ -80,6 +80,29 @@ class IMowApi:
         self.token_expires: datetime = None
         self.api_email: str = email
         self.api_password: str = password
+
+    async def close(self):
+        &#34;&#34;&#34;Cleanup the aiohttp Session&#34;&#34;&#34;
+        await self.http_session.close()
+
+    async def check_api_maintenance(self) -&gt; None:
+
+        url = &#34;https://app-api-maintenance-r-euwe-4bf2d8.azurewebsites.net/maintenance/&#34;
+
+        headers = {
+            &#34;Authorization&#34;: &#34;&#34;,
+        }
+        response = await self.api_request(url, &#34;GET&#34;, headers=headers)
+        status = json.loads(await response.text())
+        logger.debug(status)
+        if status[&#34;serverDisrupted&#34;] or status[&#34;serverDown&#34;]:
+            msg = (
+                f&#34;iMow API is under Maintenance -&gt; &#34;
+                f&#39;serverDisrupted: {status[&#34;serverDisrupted&#34;]}, serverDown: {status[&#34;serverDown&#34;]}, &#39;
+                f&#39;affectedTill {status[&#34;affectedTill&#34;]}&#39;
+            )
+            await self.http_session.close()
+            raise ApiMaintenanceError(msg)
 
     async def get_token(
         self,
@@ -208,7 +231,7 @@ class IMowApi:
         if not self.http_session or self.http_session.closed:
             self.http_session = aiohttp.ClientSession(raise_for_status=True)
 
-        if payload is None:
+        if not payload:
             payload = {}
 
         headers_obj = {
@@ -227,13 +250,15 @@ class IMowApi:
         }
         if headers:
             headers_obj.update(headers)
+        try:
 
-        return await self.http_session.request(
-            method, url, headers=headers_obj, data=payload
-        )
-
-    async def close_http(self):
-        await self.http_session.close()
+            return await self.http_session.request(
+                method, url, headers=headers_obj, data=payload
+            )
+        except ClientResponseError as e:
+            if e.status == 500:
+                await self.check_api_maintenance()
+            raise e
 
     async def intent(
         self,
@@ -420,7 +445,7 @@ class IMowApi:
 <dl>
 <dt id="imow.api.IMowApi"><code class="flex name class">
 <span>class <span class="ident">IMowApi</span></span>
-<span>(</span><span>email: str = None, password: str = None, token: str = None, aiohttp_session: ClientSession = &lt;aiohttp.client.ClientSession object&gt;)</span>
+<span>(</span><span>email: str = None, password: str = None, token: str = None, aiohttp_session: ClientSession = None)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -434,7 +459,7 @@ class IMowApi:
         email: str = None,
         password: str = None,
         token: str = None,
-        aiohttp_session: ClientSession = aiohttp.ClientSession(raise_for_status=True),
+        aiohttp_session: ClientSession = None,
     ) -&gt; None:
 
         self.http_session: ClientSession = aiohttp_session
@@ -444,6 +469,29 @@ class IMowApi:
         self.token_expires: datetime = None
         self.api_email: str = email
         self.api_password: str = password
+
+    async def close(self):
+        &#34;&#34;&#34;Cleanup the aiohttp Session&#34;&#34;&#34;
+        await self.http_session.close()
+
+    async def check_api_maintenance(self) -&gt; None:
+
+        url = &#34;https://app-api-maintenance-r-euwe-4bf2d8.azurewebsites.net/maintenance/&#34;
+
+        headers = {
+            &#34;Authorization&#34;: &#34;&#34;,
+        }
+        response = await self.api_request(url, &#34;GET&#34;, headers=headers)
+        status = json.loads(await response.text())
+        logger.debug(status)
+        if status[&#34;serverDisrupted&#34;] or status[&#34;serverDown&#34;]:
+            msg = (
+                f&#34;iMow API is under Maintenance -&gt; &#34;
+                f&#39;serverDisrupted: {status[&#34;serverDisrupted&#34;]}, serverDown: {status[&#34;serverDown&#34;]}, &#39;
+                f&#39;affectedTill {status[&#34;affectedTill&#34;]}&#39;
+            )
+            await self.http_session.close()
+            raise ApiMaintenanceError(msg)
 
     async def get_token(
         self,
@@ -572,7 +620,7 @@ class IMowApi:
         if not self.http_session or self.http_session.closed:
             self.http_session = aiohttp.ClientSession(raise_for_status=True)
 
-        if payload is None:
+        if not payload:
             payload = {}
 
         headers_obj = {
@@ -591,13 +639,15 @@ class IMowApi:
         }
         if headers:
             headers_obj.update(headers)
+        try:
 
-        return await self.http_session.request(
-            method, url, headers=headers_obj, data=payload
-        )
-
-    async def close_http(self):
-        await self.http_session.close()
+            return await self.http_session.request(
+                method, url, headers=headers_obj, data=payload
+            )
+        except ClientResponseError as e:
+            if e.status == 500:
+                await self.check_api_maintenance()
+            raise e
 
     async def intent(
         self,
@@ -802,7 +852,7 @@ class IMowApi:
     if not self.http_session or self.http_session.closed:
         self.http_session = aiohttp.ClientSession(raise_for_status=True)
 
-    if payload is None:
+    if not payload:
         payload = {}
 
     headers_obj = {
@@ -821,14 +871,19 @@ class IMowApi:
     }
     if headers:
         headers_obj.update(headers)
+    try:
 
-    return await self.http_session.request(
-        method, url, headers=headers_obj, data=payload
-    )</code></pre>
+        return await self.http_session.request(
+            method, url, headers=headers_obj, data=payload
+        )
+    except ClientResponseError as e:
+        if e.status == 500:
+            await self.check_api_maintenance()
+        raise e</code></pre>
 </details>
 </dd>
-<dt id="imow.api.IMowApi.close_http"><code class="name flex">
-<span>async def <span class="ident">close_http</span></span>(<span>self)</span>
+<dt id="imow.api.IMowApi.check_api_maintenance"><code class="name flex">
+<span>async def <span class="ident">check_api_maintenance</span></span>(<span>self) ‑> NoneType</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -836,7 +891,37 @@ class IMowApi:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">async def close_http(self):
+<pre><code class="python">async def check_api_maintenance(self) -&gt; None:
+
+    url = &#34;https://app-api-maintenance-r-euwe-4bf2d8.azurewebsites.net/maintenance/&#34;
+
+    headers = {
+        &#34;Authorization&#34;: &#34;&#34;,
+    }
+    response = await self.api_request(url, &#34;GET&#34;, headers=headers)
+    status = json.loads(await response.text())
+    logger.debug(status)
+    if status[&#34;serverDisrupted&#34;] or status[&#34;serverDown&#34;]:
+        msg = (
+            f&#34;iMow API is under Maintenance -&gt; &#34;
+            f&#39;serverDisrupted: {status[&#34;serverDisrupted&#34;]}, serverDown: {status[&#34;serverDown&#34;]}, &#39;
+            f&#39;affectedTill {status[&#34;affectedTill&#34;]}&#39;
+        )
+        await self.http_session.close()
+        raise ApiMaintenanceError(msg)</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.close"><code class="name flex">
+<span>async def <span class="ident">close</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Cleanup the aiohttp Session</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def close(self):
+    &#34;&#34;&#34;Cleanup the aiohttp Session&#34;&#34;&#34;
     await self.http_session.close()</code></pre>
 </details>
 </dd>
@@ -1263,7 +1348,8 @@ This is looked up, if only mower_name or mower_id is provided</p>
 <h4><code><a title="imow.api.IMowApi" href="#imow.api.IMowApi">IMowApi</a></code></h4>
 <ul class="">
 <li><code><a title="imow.api.IMowApi.api_request" href="#imow.api.IMowApi.api_request">api_request</a></code></li>
-<li><code><a title="imow.api.IMowApi.close_http" href="#imow.api.IMowApi.close_http">close_http</a></code></li>
+<li><code><a title="imow.api.IMowApi.check_api_maintenance" href="#imow.api.IMowApi.check_api_maintenance">check_api_maintenance</a></code></li>
+<li><code><a title="imow.api.IMowApi.close" href="#imow.api.IMowApi.close">close</a></code></li>
 <li><code><a title="imow.api.IMowApi.get_mower_action_id_from_id" href="#imow.api.IMowApi.get_mower_action_id_from_id">get_mower_action_id_from_id</a></code></li>
 <li><code><a title="imow.api.IMowApi.get_mower_action_id_from_name" href="#imow.api.IMowApi.get_mower_action_id_from_name">get_mower_action_id_from_name</a></code></li>
 <li><code><a title="imow.api.IMowApi.get_mower_id_from_name" href="#imow.api.IMowApi.get_mower_id_from_name">get_mower_id_from_name</a></code></li>

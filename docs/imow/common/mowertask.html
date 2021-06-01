@@ -30,10 +30,19 @@
 
 
 class MowerTask(Enum):
+    # Common
+    STANDBY = 0
+
+    # Mowing States
     EDGE_MOWING = 5
+
+    # Dock Relations
     INSIDE_DOCK_NO_CHARGING = 6
     INSIDE_DOCK_CHARGING = 7
-    DRIVING_TO_DOCK = 11</code></pre>
+    DRIVING_TO_DOCK = 11
+
+    # Errors
+    DOCK_ERROR = 1</code></pre>
 </details>
 </section>
 <section>
@@ -56,10 +65,19 @@ class MowerTask(Enum):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class MowerTask(Enum):
+    # Common
+    STANDBY = 0
+
+    # Mowing States
     EDGE_MOWING = 5
+
+    # Dock Relations
     INSIDE_DOCK_NO_CHARGING = 6
     INSIDE_DOCK_CHARGING = 7
-    DRIVING_TO_DOCK = 11</code></pre>
+    DRIVING_TO_DOCK = 11
+
+    # Errors
+    DOCK_ERROR = 1</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -67,6 +85,10 @@ class MowerTask(Enum):
 </ul>
 <h3>Class variables</h3>
 <dl>
+<dt id="imow.common.mowertask.MowerTask.DOCK_ERROR"><code class="name">var <span class="ident">DOCK_ERROR</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="imow.common.mowertask.MowerTask.DRIVING_TO_DOCK"><code class="name">var <span class="ident">DRIVING_TO_DOCK</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -80,6 +102,10 @@ class MowerTask(Enum):
 <div class="desc"></div>
 </dd>
 <dt id="imow.common.mowertask.MowerTask.INSIDE_DOCK_NO_CHARGING"><code class="name">var <span class="ident">INSIDE_DOCK_NO_CHARGING</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="imow.common.mowertask.MowerTask.STANDBY"><code class="name">var <span class="ident">STANDBY</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -104,10 +130,12 @@ class MowerTask(Enum):
 <li>
 <h4><code><a title="imow.common.mowertask.MowerTask" href="#imow.common.mowertask.MowerTask">MowerTask</a></code></h4>
 <ul class="">
+<li><code><a title="imow.common.mowertask.MowerTask.DOCK_ERROR" href="#imow.common.mowertask.MowerTask.DOCK_ERROR">DOCK_ERROR</a></code></li>
 <li><code><a title="imow.common.mowertask.MowerTask.DRIVING_TO_DOCK" href="#imow.common.mowertask.MowerTask.DRIVING_TO_DOCK">DRIVING_TO_DOCK</a></code></li>
 <li><code><a title="imow.common.mowertask.MowerTask.EDGE_MOWING" href="#imow.common.mowertask.MowerTask.EDGE_MOWING">EDGE_MOWING</a></code></li>
 <li><code><a title="imow.common.mowertask.MowerTask.INSIDE_DOCK_CHARGING" href="#imow.common.mowertask.MowerTask.INSIDE_DOCK_CHARGING">INSIDE_DOCK_CHARGING</a></code></li>
 <li><code><a title="imow.common.mowertask.MowerTask.INSIDE_DOCK_NO_CHARGING" href="#imow.common.mowertask.MowerTask.INSIDE_DOCK_NO_CHARGING">INSIDE_DOCK_NO_CHARGING</a></code></li>
+<li><code><a title="imow.common.mowertask.MowerTask.STANDBY" href="#imow.common.mowertask.MowerTask.STANDBY">STANDBY</a></code></li>
 </ul>
 </li>
 </ul>
