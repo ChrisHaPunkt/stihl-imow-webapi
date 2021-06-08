@@ -9,7 +9,6 @@ import aiohttp
 from imow.api import IMowApi
 from imow.common.actions import IMowActions
 from imow.common.mowerstate import MowerState
-from imow.common.mowertask import MowerTask
 from secrets import *
 
 logger = logging.getLogger("imow")

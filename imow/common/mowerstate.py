@@ -1,7 +1,6 @@
 import logging
 
 from imow.common.actions import IMowActions
-from imow.common.mowertask import MowerTask
 
 logger = logging.getLogger("imow")
 
@@ -31,7 +30,6 @@ class MowerState:
             self.state_message["error"] = False
             self.state_message["error_id"] = ""
 
-
         else:
             self.state_message["error"] = True
 
@@ -50,7 +48,7 @@ class MowerState:
         return self.state_message
 
     async def intent(
-            self, imow_action: IMowActions, startpoint: any = "0", duration: int = 30
+        self, imow_action: IMowActions, startpoint: any = "0", duration: int = 30
     ) -> None:
         response = await self.imow.intent(
             imow_action=imow_action,

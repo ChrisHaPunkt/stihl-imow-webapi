@@ -8,7 +8,15 @@ from imow.common.exceptions import MessageNotFoundError
 
 class Message:
     def __init__(
-        self, message_id, message, short_code, action, priority, picture_message, picture, status
+        self,
+        message_id,
+        message,
+        short_code,
+        action,
+        priority,
+        picture_message,
+        picture,
+        status,
     ):
         self.id = message_id
         self.message = message
@@ -1530,6 +1538,6 @@ class Messages:
             if message.shortCode == short_code:
                 return (
                     self.i18n[f"viking_mainstate_{message.picture}_short"],
-                    self.i18n[f"viking_mainstate_{message.picture}_short"]
+                    self.i18n[f"viking_mainstate_{message.picture}_short"],
                 )
         raise MessageNotFoundError(f"No message found for {short_code}")

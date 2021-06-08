@@ -18,7 +18,6 @@ from imow.common.consts import IMOW_OAUTH_URI, IMOW_API_URI
 from imow.common.exceptions import LoginError, ApiMaintenanceError
 from imow.common.messages import Messages
 from imow.common.mowerstate import MowerState
-from imow.common.mowertask import MowerTask
 from imow.common.package_descriptions import *
 
 logger = logging.getLogger("imow")
