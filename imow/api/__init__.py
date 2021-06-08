@@ -16,6 +16,7 @@ from furl import furl
 from imow.common.actions import IMowActions
 from imow.common.consts import IMOW_OAUTH_URI, IMOW_API_URI
 from imow.common.exceptions import LoginError, ApiMaintenanceError
+from imow.common.messages import Messages
 from imow.common.mowerstate import MowerState
 from imow.common.mowertask import MowerTask
 from imow.common.package_descriptions import *
@@ -43,6 +44,7 @@ class IMowApi:
         password: str = None,
         token: str = None,
         aiohttp_session: ClientSession = None,
+        lang: str = "en",
     ) -> None:
 
         self.http_session: ClientSession = aiohttp_session
@@ -52,6 +54,8 @@ class IMowApi:
         self.token_expires: datetime = None
         self.api_email: str = email
         self.api_password: str = password
+        self.lang = lang
+        self.messages = None
 
     async def close(self):
         """Cleanup the aiohttp Session"""
@@ -189,6 +193,13 @@ class IMowApi:
         logger.debug("CSRF: new token and request id <Redacted>")
         return self.csrf_token, self.requestId
 
+    async def fetch_messages(self):
+        url = f"https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json"
+
+        response = await self.http_session.request("GET", url)
+        i18n = json.loads(await response.text())
+        self.messages = Messages(i18n)
+
     async def api_request(
         self, url, method, payload=None, headers=None
     ) -> aiohttp.ClientResponse:
@@ -202,6 +213,8 @@ class IMowApi:
         """
         if not self.http_session or self.http_session.closed:
             self.http_session = aiohttp.ClientSession(raise_for_status=True)
+        if not self.messages:
+            await self.fetch_messages()
 
         if not payload:
             payload = {}
@@ -363,19 +376,6 @@ class IMowApi:
         mower = MowerState(json.loads(await response.text()), self)
         logger.debug(mower)
         return mower
-
-    async def receive_mower_current_task(self, mower_id: str) -> Tuple[MowerTask, int]:
-        logger.debug(f"receive_mower_current_state: {mower_id}")
-        response = await self.api_request(f"{IMOW_API_URI}/mowers/{mower_id}/", "GET")
-        state = MowerState(json.loads(await response.text()), self)
-        logger.debug(state)
-        try:
-            return MowerTask(state.status.get("mainState"))
-        except ValueError:
-            logger.warning(
-                f'{state.status.get("mainState")} is not yet a known MowerTask-id to this Class.'
-            )
-            return state.status.get("mainState")
 
     async def receive_mower_statistics(self, mower_id: str) -> dict:
         logger.debug(f"receive_mower_statistics: {mower_id}")

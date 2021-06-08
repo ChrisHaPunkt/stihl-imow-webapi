@@ -4,3 +4,7 @@ class LoginError(Exception):
 
 class ApiMaintenanceError(Exception):
     pass
+
+
+class MessageNotFoundError(Exception):
+    pass

@@ -135,14 +135,6 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
             msg="Expected 201 HTTP Code",
         )
 
-    def test_mower_state(self):
-        result = self.loop.run_until_complete(
-            self.imow.receive_mower_current_task(mower_id=self.test_mower.id)
-        )
-        self.assertIsInstance(
-            result, MowerTask, msg="Expected MowerState class returned"
-        )
-
     def test_mowerstate_methods(self):
         mower = self.loop.run_until_complete(
             self.imow.receive_mower_by_id(mower_id=self.test_mower.id)
