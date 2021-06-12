@@ -1,6 +1,6 @@
 # Changelog
 
-## Version 0.5.0
+## Version 0.5.0 (2021-06-12)
 
 ### Breaking Changes
 
