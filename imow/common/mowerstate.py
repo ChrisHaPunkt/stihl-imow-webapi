@@ -4,10 +4,10 @@ from imow.common.actions import IMowActions
 
 logger = logging.getLogger("imow")
 
-ERROR_STATE = 1
-
 
 class MowerState:
+    ERROR_MAINSTATE_CODE = 1
+
     def __init__(self, upstream: dict, imow):  # Type: api: IMowApi
         self.imow = imow
 
@@ -22,7 +22,7 @@ class MowerState:
 
     def update_state_messages(self):
 
-        if self.status["mainState"] != ERROR_STATE:
+        if self.status["mainState"] != self.ERROR_MAINSTATE_CODE:
             (
                 self.state_message["short"],
                 self.state_message["long"],
@@ -66,7 +66,7 @@ class MowerState:
         return await self.imow.receive_mower_week_mow_time_in_hours(self.id)
 
     async def intent(
-        self, imow_action: IMowActions, startpoint: any = "0", duration: int = 30
+            self, imow_action: IMowActions, startpoint: any = "0", duration: int = 30
     ) -> None:
         response = await self.imow.intent(
             imow_action=imow_action,
