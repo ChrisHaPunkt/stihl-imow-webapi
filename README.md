@@ -62,7 +62,8 @@ async def main():
     mower = mowers[0]
 
     print(f"{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}")
-    print(await mower.get_current_task())
+    print(f"Currently: {mower.state_message['short']}")
+    print(mower.state_message)
     await mower.intent(IMowActions.TO_DOCKING)
     print(await mower.update_from_upstream())
     print(await mower.get_startpoints())

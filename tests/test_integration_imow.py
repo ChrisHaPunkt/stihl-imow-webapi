@@ -9,7 +9,6 @@ import aiohttp
 from imow.api import IMowApi
 from imow.common.actions import IMowActions
 from imow.common.mowerstate import MowerState
-from imow.common.mowertask import MowerTask
 from secrets import *
 
 logger = logging.getLogger("imow")
@@ -133,14 +132,6 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
             result.status,
             int(http.HTTPStatus.CREATED),
             msg="Expected 201 HTTP Code",
-        )
-
-    def test_mower_state(self):
-        result = self.loop.run_until_complete(
-            self.imow.receive_mower_current_task(mower_id=self.test_mower.id)
-        )
-        self.assertIsInstance(
-            result, MowerTask, msg="Expected MowerState class returned"
         )
 
     def test_mowerstate_methods(self):

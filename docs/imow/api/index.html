@@ -43,9 +43,13 @@ from furl import furl
 
 from imow.common.actions import IMowActions
 from imow.common.consts import IMOW_OAUTH_URI, IMOW_API_URI
-from imow.common.exceptions import LoginError, ApiMaintenanceError
+from imow.common.exceptions import (
+    LoginError,
+    ApiMaintenanceError,
+    LanguageNotFoundError,
+)
+from imow.common.messages import Messages
 from imow.common.mowerstate import MowerState
-from imow.common.mowertask import MowerTask
 from imow.common.package_descriptions import *
 
 logger = logging.getLogger(&#34;imow&#34;)
@@ -71,6 +75,7 @@ class IMowApi:
         password: str = None,
         token: str = None,
         aiohttp_session: ClientSession = None,
+        lang: str = &#34;en&#34;,
     ) -&gt; None:
 
         self.http_session: ClientSession = aiohttp_session
@@ -80,6 +85,8 @@ class IMowApi:
         self.token_expires: datetime = None
         self.api_email: str = email
         self.api_password: str = password
+        self.lang = lang
+        self.messages = None
 
     async def close(self):
         &#34;&#34;&#34;Cleanup the aiohttp Session&#34;&#34;&#34;
@@ -217,6 +224,21 @@ class IMowApi:
         logger.debug(&#34;CSRF: new token and request id &lt;Redacted&gt;&#34;)
         return self.csrf_token, self.requestId
 
+    async def fetch_messages(self):
+        url = f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json&#34;
+        try:
+            response = await self.http_session.request(&#34;GET&#34;, url)
+            i18n = json.loads(await response.text())
+            self.messages = Messages(i18n)
+
+        except ClientResponseError as e:
+            if e.status == 404:
+                await self.close()
+                raise LanguageNotFoundError(
+                    f&#34;Language-File &#39;{self.lang}.json&#39; not found on imow upstream (&#34;
+                    f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json)&#34;
+                )
+
     async def api_request(
         self, url, method, payload=None, headers=None
     ) -&gt; aiohttp.ClientResponse:
@@ -230,6 +252,8 @@ class IMowApi:
         &#34;&#34;&#34;
         if not self.http_session or self.http_session.closed:
             self.http_session = aiohttp.ClientSession(raise_for_status=True)
+        if not self.messages:
+            await self.fetch_messages()
 
         if not payload:
             payload = {}
@@ -391,19 +415,6 @@ class IMowApi:
         mower = MowerState(json.loads(await response.text()), self)
         logger.debug(mower)
         return mower
-
-    async def receive_mower_current_task(self, mower_id: str) -&gt; Tuple[MowerTask, int]:
-        logger.debug(f&#34;receive_mower_current_state: {mower_id}&#34;)
-        response = await self.api_request(f&#34;{IMOW_API_URI}/mowers/{mower_id}/&#34;, &#34;GET&#34;)
-        state = MowerState(json.loads(await response.text()), self)
-        logger.debug(state)
-        try:
-            return MowerTask(state.status.get(&#34;mainState&#34;))
-        except ValueError:
-            logger.warning(
-                f&#39;{state.status.get(&#34;mainState&#34;)} is not yet a known MowerTask-id to this Class.&#39;
-            )
-            return state.status.get(&#34;mainState&#34;)
 
     async def receive_mower_statistics(self, mower_id: str) -&gt; dict:
         logger.debug(f&#34;receive_mower_statistics: {mower_id}&#34;)
@@ -445,7 +456,7 @@ class IMowApi:
 <dl>
 <dt id="imow.api.IMowApi"><code class="flex name class">
 <span>class <span class="ident">IMowApi</span></span>
-<span>(</span><span>email: str = None, password: str = None, token: str = None, aiohttp_session: ClientSession = None)</span>
+<span>(</span><span>email: str = None, password: str = None, token: str = None, aiohttp_session: ClientSession = None, lang: str = 'en')</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -460,6 +471,7 @@ class IMowApi:
         password: str = None,
         token: str = None,
         aiohttp_session: ClientSession = None,
+        lang: str = &#34;en&#34;,
     ) -&gt; None:
 
         self.http_session: ClientSession = aiohttp_session
@@ -469,6 +481,8 @@ class IMowApi:
         self.token_expires: datetime = None
         self.api_email: str = email
         self.api_password: str = password
+        self.lang = lang
+        self.messages = None
 
     async def close(self):
         &#34;&#34;&#34;Cleanup the aiohttp Session&#34;&#34;&#34;
@@ -606,6 +620,21 @@ class IMowApi:
         logger.debug(&#34;CSRF: new token and request id &lt;Redacted&gt;&#34;)
         return self.csrf_token, self.requestId
 
+    async def fetch_messages(self):
+        url = f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json&#34;
+        try:
+            response = await self.http_session.request(&#34;GET&#34;, url)
+            i18n = json.loads(await response.text())
+            self.messages = Messages(i18n)
+
+        except ClientResponseError as e:
+            if e.status == 404:
+                await self.close()
+                raise LanguageNotFoundError(
+                    f&#34;Language-File &#39;{self.lang}.json&#39; not found on imow upstream (&#34;
+                    f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json)&#34;
+                )
+
     async def api_request(
         self, url, method, payload=None, headers=None
     ) -&gt; aiohttp.ClientResponse:
@@ -619,6 +648,8 @@ class IMowApi:
         &#34;&#34;&#34;
         if not self.http_session or self.http_session.closed:
             self.http_session = aiohttp.ClientSession(raise_for_status=True)
+        if not self.messages:
+            await self.fetch_messages()
 
         if not payload:
             payload = {}
@@ -780,19 +811,6 @@ class IMowApi:
         mower = MowerState(json.loads(await response.text()), self)
         logger.debug(mower)
         return mower
-
-    async def receive_mower_current_task(self, mower_id: str) -&gt; Tuple[MowerTask, int]:
-        logger.debug(f&#34;receive_mower_current_state: {mower_id}&#34;)
-        response = await self.api_request(f&#34;{IMOW_API_URI}/mowers/{mower_id}/&#34;, &#34;GET&#34;)
-        state = MowerState(json.loads(await response.text()), self)
-        logger.debug(state)
-        try:
-            return MowerTask(state.status.get(&#34;mainState&#34;))
-        except ValueError:
-            logger.warning(
-                f&#39;{state.status.get(&#34;mainState&#34;)} is not yet a known MowerTask-id to this Class.&#39;
-            )
-            return state.status.get(&#34;mainState&#34;)
 
     async def receive_mower_statistics(self, mower_id: str) -&gt; dict:
         logger.debug(f&#34;receive_mower_statistics: {mower_id}&#34;)
@@ -851,6 +869,8 @@ class IMowApi:
     &#34;&#34;&#34;
     if not self.http_session or self.http_session.closed:
         self.http_session = aiohttp.ClientSession(raise_for_status=True)
+    if not self.messages:
+        await self.fetch_messages()
 
     if not payload:
         payload = {}
@@ -923,6 +943,31 @@ class IMowApi:
 <pre><code class="python">async def close(self):
     &#34;&#34;&#34;Cleanup the aiohttp Session&#34;&#34;&#34;
     await self.http_session.close()</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.fetch_messages"><code class="name flex">
+<span>async def <span class="ident">fetch_messages</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def fetch_messages(self):
+    url = f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json&#34;
+    try:
+        response = await self.http_session.request(&#34;GET&#34;, url)
+        i18n = json.loads(await response.text())
+        self.messages = Messages(i18n)
+
+    except ClientResponseError as e:
+        if e.status == 404:
+            await self.close()
+            raise LanguageNotFoundError(
+                f&#34;Language-File &#39;{self.lang}.json&#39; not found on imow upstream (&#34;
+                f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json)&#34;
+            )</code></pre>
 </details>
 </dd>
 <dt id="imow.api.IMowApi.get_mower_action_id_from_id"><code class="name flex">
@@ -1202,29 +1247,6 @@ This is looked up, if only mower_name or mower_id is provided</p>
     raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)</code></pre>
 </details>
 </dd>
-<dt id="imow.api.IMowApi.receive_mower_current_task"><code class="name flex">
-<span>async def <span class="ident">receive_mower_current_task</span></span>(<span>self, mower_id: str) ‑> Tuple[<a title="imow.common.mowertask.MowerTask" href="../common/mowertask.html#imow.common.mowertask.MowerTask">MowerTask</a>, int]</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">async def receive_mower_current_task(self, mower_id: str) -&gt; Tuple[MowerTask, int]:
-    logger.debug(f&#34;receive_mower_current_state: {mower_id}&#34;)
-    response = await self.api_request(f&#34;{IMOW_API_URI}/mowers/{mower_id}/&#34;, &#34;GET&#34;)
-    state = MowerState(json.loads(await response.text()), self)
-    logger.debug(state)
-    try:
-        return MowerTask(state.status.get(&#34;mainState&#34;))
-    except ValueError:
-        logger.warning(
-            f&#39;{state.status.get(&#34;mainState&#34;)} is not yet a known MowerTask-id to this Class.&#39;
-        )
-        return state.status.get(&#34;mainState&#34;)</code></pre>
-</details>
-</dd>
 <dt id="imow.api.IMowApi.receive_mower_start_points"><code class="name flex">
 <span>async def <span class="ident">receive_mower_start_points</span></span>(<span>self, mower_id: str) ‑> dict</span>
 </code></dt>
@@ -1350,6 +1372,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
 <li><code><a title="imow.api.IMowApi.api_request" href="#imow.api.IMowApi.api_request">api_request</a></code></li>
 <li><code><a title="imow.api.IMowApi.check_api_maintenance" href="#imow.api.IMowApi.check_api_maintenance">check_api_maintenance</a></code></li>
 <li><code><a title="imow.api.IMowApi.close" href="#imow.api.IMowApi.close">close</a></code></li>
+<li><code><a title="imow.api.IMowApi.fetch_messages" href="#imow.api.IMowApi.fetch_messages">fetch_messages</a></code></li>
 <li><code><a title="imow.api.IMowApi.get_mower_action_id_from_id" href="#imow.api.IMowApi.get_mower_action_id_from_id">get_mower_action_id_from_id</a></code></li>
 <li><code><a title="imow.api.IMowApi.get_mower_action_id_from_name" href="#imow.api.IMowApi.get_mower_action_id_from_name">get_mower_action_id_from_name</a></code></li>
 <li><code><a title="imow.api.IMowApi.get_mower_id_from_name" href="#imow.api.IMowApi.get_mower_id_from_name">get_mower_id_from_name</a></code></li>
@@ -1360,7 +1383,6 @@ This is looked up, if only mower_name or mower_id is provided</p>
 <li><code><a title="imow.api.IMowApi.intent" href="#imow.api.IMowApi.intent">intent</a></code></li>
 <li><code><a title="imow.api.IMowApi.receive_mower_by_id" href="#imow.api.IMowApi.receive_mower_by_id">receive_mower_by_id</a></code></li>
 <li><code><a title="imow.api.IMowApi.receive_mower_by_name" href="#imow.api.IMowApi.receive_mower_by_name">receive_mower_by_name</a></code></li>
-<li><code><a title="imow.api.IMowApi.receive_mower_current_task" href="#imow.api.IMowApi.receive_mower_current_task">receive_mower_current_task</a></code></li>
 <li><code><a title="imow.api.IMowApi.receive_mower_start_points" href="#imow.api.IMowApi.receive_mower_start_points">receive_mower_start_points</a></code></li>
 <li><code><a title="imow.api.IMowApi.receive_mower_statistics" href="#imow.api.IMowApi.receive_mower_statistics">receive_mower_statistics</a></code></li>
 <li><code><a title="imow.api.IMowApi.receive_mower_week_mow_time_in_hours" href="#imow.api.IMowApi.receive_mower_week_mow_time_in_hours">receive_mower_week_mow_time_in_hours</a></code></li>

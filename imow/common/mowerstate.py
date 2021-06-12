@@ -1,38 +1,53 @@
 import logging
 
 from imow.common.actions import IMowActions
-from imow.common.mowertask import MowerTask
 
 logger = logging.getLogger("imow")
 
 
 class MowerState:
-    def __init__(self, upstream: dict, api):  # Type: api: IMowApi
-        self.api = api
+    ERROR_MAINSTATE_CODE = 1
+
+    def __init__(self, upstream: dict, imow):  # Type: api: IMowApi
+        self.imow = imow
+
+        self.state_message = {"short": "", "long": "", "error_id": "", "error": False}
         self.replace_state(upstream)
 
     def replace_state(self, upstream: dict):
         self.__dict__.update(
             map(lambda kv: (kv[0].replace(" ", "_"), kv[1]), upstream.items())
         )
+        self.update_state_messages()
+
+    def update_state_messages(self):
+
+        if self.status["mainState"] != self.ERROR_MAINSTATE_CODE:
+            (
+                self.state_message["short"],
+                self.state_message["long"],
+            ) = self.imow.messages.get_status_message(
+                short_code=self.status["mainState"]
+            )
+            self.state_message["error"] = False
+            self.state_message["error_id"] = ""
+
+        else:
+            self.state_message["error"] = True
+
+            (
+                self.state_message["short"],
+                self.state_message["long"],
+                self.state_message["error_id"],
+            ) = self.imow.messages.get_error_message(self.status["extraStatus"])
 
     async def update_from_upstream(self):
-        response = await self.api.receive_mower_by_id(self.id)
+        response = await self.imow.receive_mower_by_id(self.id)
         self.replace_state(response.__dict__)
         return self
 
-    async def get_current_task(self) -> (MowerTask, int):
-        return await self.api.receive_mower_current_task(mower_id=self.id)
-
-    async def intent(
-        self, imow_action: IMowActions, startpoint: any = "0", duration: int = 30
-    ) -> None:
-        response = await self.api.intent(
-            imow_action=imow_action,
-            startpoint=startpoint,
-            duration=duration,
-            mower_action_id=self.externalId,
-        )
+    def get_current_task(self) -> str:
+        return self.state_message["short"]
 
     async def get_current_status(self) -> dict:
         await self.update_from_upstream()
@@ -42,13 +57,23 @@ class MowerState:
         return await self.update_from_upstream()
 
     async def get_statistics(self) -> dict:
-        return await self.api.receive_mower_statistics(self.id)
+        return await self.imow.receive_mower_statistics(self.id)
 
     async def get_startpoints(self) -> dict:
-        return await self.api.receive_mower_start_points(self.id)
+        return await self.imow.receive_mower_start_points(self.id)
 
     async def get_mower_week_mow_time_in_hours(self) -> dict:
-        return await self.api.receive_mower_week_mow_time_in_hours(self.id)
+        return await self.imow.receive_mower_week_mow_time_in_hours(self.id)
+
+    async def intent(
+            self, imow_action: IMowActions, startpoint: any = "0", duration: int = 30
+    ) -> None:
+        response = await self.imow.intent(
+            imow_action=imow_action,
+            startpoint=startpoint,
+            duration=duration,
+            mower_action_id=self.externalId,
+        )
 
     accountId: str = {str}
     asmEnabled: bool = {bool}

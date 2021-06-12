@@ -1,8 +1,36 @@
 # Changelog
 
+## Version 0.5.0 (2021-06-12)
+
+### Breaking Changes
+
+- The ``MowerTask`` class is removed in favor of the new ``state_message`` property on th ``MowerState`` object.
+- The ``MowerState.get_current_task()`` method now returns the `short` property of the state message instead of a ``MowerTask``
+  property and is now longer an ``async`` method.
+
+### Features
+
+- ```python
+  mower.state_message -> dict
+  {
+      'short': 'Hood blocked', 
+      'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).', 
+      'error_id': 'M1120', 
+      'error': True
+  }
+  ```
+  The MowerState Class now provides a ```state_message``` property which gives a ``short`` and``long`` text for
+  description (Besides an error indication and error_id). All error and status codes are now dynamically matched and
+  human readable available.  
+  **This makes the ``MowerTask`` obsolete and it is removed with this release.**
+- ``api = IMowApi(lang="en")``  
+  The imow api can now be instanced with a language code (fallback to ``en``).   
+  The ``state_message`` property displays the messages in the corresponding language.
+
 ## Version 0.4.5 (2021-06-01)
 
 ### Features
+
 - Add 2 new identified Tasks within `MowerTask` (Thanks to @lausser)
 - Add `check_api_maintenance()` method to `IMowAPI` Class. Check if the api server is currently under maintenance.  
   This method is automatically called if the api server returns a 500 error response for any request.
