@@ -8,3 +8,7 @@ class ApiMaintenanceError(Exception):
 
 class MessageNotFoundError(Exception):
     pass
+
+
+class LanguageNotFoundError(Exception):
+    pass

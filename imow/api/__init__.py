@@ -15,7 +15,11 @@ from furl import furl
 
 from imow.common.actions import IMowActions
 from imow.common.consts import IMOW_OAUTH_URI, IMOW_API_URI
-from imow.common.exceptions import LoginError, ApiMaintenanceError
+from imow.common.exceptions import (
+    LoginError,
+    ApiMaintenanceError,
+    LanguageNotFoundError,
+)
 from imow.common.messages import Messages
 from imow.common.mowerstate import MowerState
 from imow.common.package_descriptions import *
@@ -194,10 +198,18 @@ class IMowApi:
 
     async def fetch_messages(self):
         url = f"https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json"
+        try:
+            response = await self.http_session.request("GET", url)
+            i18n = json.loads(await response.text())
+            self.messages = Messages(i18n)
 
-        response = await self.http_session.request("GET", url)
-        i18n = json.loads(await response.text())
-        self.messages = Messages(i18n)
+        except ClientResponseError as e:
+            if e.status == 404:
+                await self.close()
+                raise LanguageNotFoundError(
+                    f"Language-File '{self.lang}.json' not found on imow upstream ("
+                    f"https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json)"
+                )
 
     async def api_request(
         self, url, method, payload=None, headers=None

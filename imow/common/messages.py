@@ -1,7 +1,4 @@
-import json
-from typing import List, Tuple
-
-import aiohttp
+from typing import Tuple
 
 from imow.common.exceptions import MessageNotFoundError
 

@@ -31,6 +31,14 @@
 
 
 class ApiMaintenanceError(Exception):
+    pass
+
+
+class MessageNotFoundError(Exception):
+    pass
+
+
+class LanguageNotFoundError(Exception):
     pass</code></pre>
 </details>
 </section>
@@ -62,6 +70,25 @@ class ApiMaintenanceError(Exception):
 <li>builtins.BaseException</li>
 </ul>
 </dd>
+<dt id="imow.common.exceptions.LanguageNotFoundError"><code class="flex name class">
+<span>class <span class="ident">LanguageNotFoundError</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Common base class for all non-exit exceptions.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LanguageNotFoundError(Exception):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
 <dt id="imow.common.exceptions.LoginError"><code class="flex name class">
 <span>class <span class="ident">LoginError</span></span>
 <span>(</span><span>*args, **kwargs)</span>
@@ -73,6 +100,25 @@ class ApiMaintenanceError(Exception):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class LoginError(Exception):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+<dt id="imow.common.exceptions.MessageNotFoundError"><code class="flex name class">
+<span>class <span class="ident">MessageNotFoundError</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Common base class for all non-exit exceptions.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MessageNotFoundError(Exception):
     pass</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -101,7 +147,13 @@ class ApiMaintenanceError(Exception):
 <h4><code><a title="imow.common.exceptions.ApiMaintenanceError" href="#imow.common.exceptions.ApiMaintenanceError">ApiMaintenanceError</a></code></h4>
 </li>
 <li>
+<h4><code><a title="imow.common.exceptions.LanguageNotFoundError" href="#imow.common.exceptions.LanguageNotFoundError">LanguageNotFoundError</a></code></h4>
+</li>
+<li>
 <h4><code><a title="imow.common.exceptions.LoginError" href="#imow.common.exceptions.LoginError">LoginError</a></code></h4>
+</li>
+<li>
+<h4><code><a title="imow.common.exceptions.MessageNotFoundError" href="#imow.common.exceptions.MessageNotFoundError">MessageNotFoundError</a></code></h4>
 </li>
 </ul>
 </li>

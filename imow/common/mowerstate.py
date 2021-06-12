@@ -4,6 +4,8 @@ from imow.common.actions import IMowActions
 
 logger = logging.getLogger("imow")
 
+ERROR_STATE = 1
+
 
 class MowerState:
     def __init__(self, upstream: dict, imow):  # Type: api: IMowApi
@@ -20,7 +22,7 @@ class MowerState:
 
     def update_state_messages(self):
 
-        if self.status["mainState"] != 1:
+        if self.status["mainState"] != ERROR_STATE:
             (
                 self.state_message["short"],
                 self.state_message["long"],
@@ -44,18 +46,8 @@ class MowerState:
         self.replace_state(response.__dict__)
         return self
 
-    async def get_current_task(self) -> dict:
-        return self.state_message
-
-    async def intent(
-        self, imow_action: IMowActions, startpoint: any = "0", duration: int = 30
-    ) -> None:
-        response = await self.imow.intent(
-            imow_action=imow_action,
-            startpoint=startpoint,
-            duration=duration,
-            mower_action_id=self.externalId,
-        )
+    def get_current_task(self) -> str:
+        return self.state_message["short"]
 
     async def get_current_status(self) -> dict:
         await self.update_from_upstream()
@@ -72,6 +64,16 @@ class MowerState:
 
     async def get_mower_week_mow_time_in_hours(self) -> dict:
         return await self.imow.receive_mower_week_mow_time_in_hours(self.id)
+
+    async def intent(
+        self, imow_action: IMowActions, startpoint: any = "0", duration: int = 30
+    ) -> None:
+        response = await self.imow.intent(
+            imow_action=imow_action,
+            startpoint=startpoint,
+            duration=duration,
+            mower_action_id=self.externalId,
+        )
 
     accountId: str = {str}
     asmEnabled: bool = {bool}
