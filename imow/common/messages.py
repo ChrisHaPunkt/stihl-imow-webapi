@@ -27,7 +27,7 @@ class Message:
 
 class Messages:
     def __init__(self, i18n: dict):
-        """ Class to match a shortCode (mower.status['extraStatus']) to an error 'id' and give back the translated
+        """Class to match a shortCode (mower.status['extraStatus']) to an error 'id' and give back the translated
         messages.
         i18n: An upstream language dict, fetched from imow api
         """
