@@ -4,12 +4,12 @@
 
 ## Features
 - ```python
-  mower.machine_error = None | i.e. 'M1120'
-  mower.machine_state = None | i.e. 'HOOD_BLOCKED'
-  mower.state_message -> dict
-  {
+  mower.machine_error = 'M1120',
+  mower.machine_state = 'HOOD_BLOCKED',
+  mower.state_message: dict = {
       'short': 'Hood blocked', 
       'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).', 
+      'legacy_message': 'Abschaltung Automatikmode durch Bumper', 
       'error_id': 'M1120', 
       'error': True
   }
