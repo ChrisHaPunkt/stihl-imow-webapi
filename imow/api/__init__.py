@@ -58,7 +58,8 @@ class IMowApi:
         self.api_email: str = email
         self.api_password: str = password
         self.lang = lang
-        self.messages = None
+        self.messages_user = None
+        self.messages_en = None
 
     async def close(self):
         """Cleanup the aiohttp Session"""
@@ -197,11 +198,18 @@ class IMowApi:
         return self.csrf_token, self.requestId
 
     async def fetch_messages(self):
-        url = f"https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json"
         try:
-            response = await self.http_session.request("GET", url)
-            i18n = json.loads(await response.text())
-            self.messages = Messages(i18n)
+            url_en = f"https://app.imow.stihl.com/assets/i18n/animations/en.json"
+            response_en = await self.http_session.request("GET", url_en)
+            i18n_en = json.loads(await response_en.text())
+            self.messages_en = Messages(i18n_en)
+            if self.lang != "en":
+                url_user = f"https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json"
+                response_user = await self.http_session.request("GET", url_user)
+                i18n_user = json.loads(await response_user.text())
+                self.messages_user = Messages(i18n_user)
+            else:
+                self.messages_user = self.messages_en
 
         except ClientResponseError as e:
             if e.status == 404:
@@ -224,7 +232,7 @@ class IMowApi:
         """
         if not self.http_session or self.http_session.closed:
             self.http_session = aiohttp.ClientSession(raise_for_status=True)
-        if not self.messages:
+        if not self.messages_en:
             await self.fetch_messages()
 
         if not payload:

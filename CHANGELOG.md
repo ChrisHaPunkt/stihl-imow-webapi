@@ -1,5 +1,21 @@
 # Changelog
 
+## Version 0.5.1 (2021-06-13)
+
+## Features
+- ```python
+  mower.machine_error = None | i.e. 'M1120'
+  mower.machine_state = None | i.e. 'HOOD_BLOCKED'
+  mower.state_message -> dict
+  {
+      'short': 'Hood blocked', 
+      'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).', 
+      'error_id': 'M1120', 
+      'error': True
+  }
+  ```
+  Provide a machine usable string from the short message in english
+
 ## Version 0.5.0 (2021-06-12)
 
 ### Breaking Changes

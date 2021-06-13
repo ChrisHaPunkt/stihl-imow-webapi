@@ -64,6 +64,7 @@ async def main():
     print(f"{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}")
     print(f"Currently: {mower.state_message['short']}")
     print(mower.state_message)
+    print(mower.machine_state)
     await mower.intent(IMowActions.TO_DOCKING)
     print(await mower.update_from_upstream())
     print(await mower.get_startpoints())
@@ -76,7 +77,14 @@ if __name__ == "__main__":
     asyncio.run(main())
 
 ```
-
+```text
+Selection of outputs from above statements:
+> Mährlin @ 54.123456,10.12345
+> Currently: Hood blocked
+> {'short': 'Hood blocked', 'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).', 'legacy_message': 'Abschaltung Automatikmode durch Bumper', 'error_id': '', 'error': False}
+> HOOD_BLOCKED
+> <imow.common.mowerstate.MowerState object at 0x000001B034C245F8>
+```
 ## Testing
 For unit testing run `pytest -s tests/test_unit*`. For upstream integration testing, provide a `/secrets.py` with the following contents:
 ````python

@@ -27,6 +27,10 @@ class Message:
 
 class Messages:
     def __init__(self, i18n: dict):
+        """ Class to match a shortCode (mower.status['extraStatus']) to an error 'id' and give back the translated
+        messages.
+        i18n: An upstream language dict, fetched from imow api
+        """
         self.i18n = i18n
         self.success_messages = [
             Message("1337", "Ruhezustand", 0, "--", 2, "Ruhezustand", "idle", "green"),
@@ -1520,13 +1524,14 @@ class Messages:
             ),
         ]
 
-    def get_error_message(self, short_code) -> Tuple[str, str, str]:
+    def get_error_message(self, short_code) -> Tuple[str, str, str, str]:
         for message in self.error_messages:
             if message.shortCode == short_code:
                 return (
                     self.i18n[f"message_M{message.id}_short"],
                     self.i18n[f"message_M{message.id}_long"],
                     f"M{message.id}",
+                    f"{message.message}",
                 )
         raise MessageNotFoundError(f"No error message found for {short_code}")
 
