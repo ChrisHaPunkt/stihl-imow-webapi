@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.5.2 (2021-06-15)
+
+## Bugfixes
+- Also quote password string in auth request to support more special chars 
+
 ## Version 0.5.1 (2021-06-13)
 
 ## Features

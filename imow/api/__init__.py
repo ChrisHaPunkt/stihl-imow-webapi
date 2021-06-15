@@ -146,9 +146,13 @@ class IMowApi:
         :return: the newly created access token, and expire time besides the legacy response
         """
         await self.__fetch_new_csrf_token_and_request_id()
-        url = f"{IMOW_OAUTH_URI}/authentication/authenticate/?lang=de"
+        url = f"{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}"
         encoded_mail = quote(email)
-        payload = f"mail={encoded_mail}&password={password}&csrf-token={self.csrf_token}&requestId={self.requestId}"
+        encoded_password = quote(password)
+        payload = (
+            f"mail={encoded_mail}&password={encoded_password}"
+            f"&csrf-token={self.csrf_token}&requestId={self.requestId} "
+        )
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
         }
