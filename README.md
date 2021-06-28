@@ -12,9 +12,6 @@ This unofficial Python API was created to provide an interface to interact with 
 status from the mowers and to send actions.  
 I wrote this library to implement an integration for the [Home Assistant Smart Home System](https://www.home-assistant.io/), which you can find [here](https://github.com/ChrisHaPunkt/ha-stihl-imow).
 
-If you want to  
-[!["Buy Me A Coffee"](
-https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=chrishapunkt&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/chrishapunkt)
 
 
 ## Getting Started
@@ -23,6 +20,12 @@ These instructions will get you a copy of the project up and running on your loc
 purposes. See deployment for notes on how to deploy the project on a live system.
 
 API Documentation is available on: [https://chrishapunkt.github.io/stihl-imow-webapi/imow](https://chrishapunkt.github.io/stihl-imow-webapi/imow)
+
+If you want to  
+[!["Buy Me A Coffee"](
+https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=chrishapunkt&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/chrishapunkt)
+
+
 ### Prerequisites
 
 Python 3.7+ is required to run this application, other than that there are no prerequisites for the project, as the
