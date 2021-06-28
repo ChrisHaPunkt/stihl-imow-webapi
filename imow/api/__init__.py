@@ -260,9 +260,9 @@ class IMowApi:
             headers_obj.update(headers)
         try:
 
-            return await self.http_session.request(
-                method, url, headers=headers_obj, data=payload
-            )
+            payload_ = await self.http_session.request(method, url, headers=headers_obj, data=payload)
+            payload_.raise_for_status()
+            return payload_
         except ClientResponseError as e:
             if e.status == 500:
                 await self.check_api_maintenance()

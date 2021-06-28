@@ -11,15 +11,15 @@ class MowerState:
     def __init__(self, upstream: dict, imow):  # Type: api: IMowApi
         self.imow = imow
 
-        self.state_message = {
+        self.stateMessage = {
             "short": "",
             "long": "",
-            "legacy_message": "",
-            "error_id": "",
+            "legacyMessage": "",
+            "errorId": "",
             "error": False,
         }
-        self.machine_error = None
-        self.machine_state = None
+        self.machineError = None
+        self.machineState = None
         self.replace_state(upstream)
 
     def replace_state(self, upstream: dict):
@@ -32,30 +32,30 @@ class MowerState:
 
         if self.status["mainState"] != self.ERROR_MAINSTATE_CODE:
             (
-                self.state_message["short"],
-                self.state_message["long"],
+                self.stateMessage["short"],
+                self.stateMessage["long"],
             ) = self.imow.messages_user.get_status_message(
                 short_code=self.status["mainState"]
             )
 
             # Reset error indication
-            self.state_message["error"] = False
-            self.machine_error = None
-            self.state_message["error_id"] = ""
+            self.stateMessage["error"] = False
+            self.machineError = None
+            self.stateMessage["errorId"] = ""
 
         else:
 
             (
-                self.state_message["short"],
-                self.state_message["long"],
-                self.state_message["error_id"],
-                self.state_message["legacy_message"],
+                self.stateMessage["short"],
+                self.stateMessage["long"],
+                self.stateMessage["errorId"],
+                self.stateMessage["legacyMessage"],
             ) = self.imow.messages_user.get_error_message(
                 short_code=self.status["extraStatus"]
             )
             # Set error indication to true
-            self.state_message["error"] = True
-            self.machine_error = self.state_message["error_id"]
+            self.stateMessage["error"] = True
+            self.machineError = self.stateMessage["errorId"]
         self.generate_machine_state()
 
     def generate_machine_state(self):
@@ -67,13 +67,13 @@ class MowerState:
             (
                 state_msg_short,
                 state_msg_long,
-                error_id,
-                legacy_message,
+                errorId,
+                legacyMessage,
             ) = self.imow.messages_en.get_error_message(
                 short_code=self.status["extraStatus"]
             )
         cleaned_msg = state_msg_short.upper().replace(" ", "_").replace(".", "")
-        self.machine_state = cleaned_msg
+        self.machineState = cleaned_msg
 
     async def update_from_upstream(self):
         response = await self.imow.receive_mower_by_id(self.id)
@@ -81,7 +81,7 @@ class MowerState:
         return self
 
     def get_current_task(self) -> str:
-        return self.state_message["short"]
+        return self.stateMessage["short"]
 
     async def get_current_status(self) -> dict:
         await self.update_from_upstream()

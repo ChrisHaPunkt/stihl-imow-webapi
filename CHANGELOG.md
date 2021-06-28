@@ -1,5 +1,25 @@
 # Changelog
 
+## Version 0.6.0 (2021-06-28)
+- ```python
+  mower.machineError = 'M1120',
+  mower.machineState = 'HOOD_BLOCKED',
+  mower.stateMessage: dict = {
+      'short': 'Hood blocked', 
+      'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).', 
+      'legacyMessage': 'Abschaltung Automatikmode durch Bumper', 
+      'errorId': 'M1120', 
+      'error': True
+  }
+  ```
+  
+### Breaking Changes
+- Migrated all own MowerState attributes to camelCase to match the upstream attributes style.
+  ```
+  - MowerState.stateMessage = None
+  - MowerState.machineError = None
+  - MowerState.machineState = None
+  ```
 ## Version 0.5.2 (2021-06-15)
 
 ## Bugfixes
@@ -14,8 +34,8 @@
   mower.state_message: dict = {
       'short': 'Hood blocked', 
       'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).', 
-      'legacy_message': 'Abschaltung Automatikmode durch Bumper', 
-      'error_id': 'M1120', 
+      'legacyMessage': 'Abschaltung Automatikmode durch Bumper', 
+      'errorId': 'M1120', 
       'error': True
   }
   ```
@@ -36,12 +56,12 @@
   {
       'short': 'Hood blocked', 
       'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).', 
-      'error_id': 'M1120', 
+      'errorId': 'M1120', 
       'error': True
   }
   ```
   The MowerState Class now provides a ```state_message``` property which gives a ``short`` and``long`` text for
-  description (Besides an error indication and error_id). All error and status codes are now dynamically matched and
+  description (Besides an error indication and errorId). All error and status codes are now dynamically matched and
   human readable available.  
   **This makes the ``MowerTask`` obsolete and it is removed with this release.**
 - ``api = IMowApi(lang="en")``  

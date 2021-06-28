@@ -52,11 +52,11 @@ And have fun!
 
 Import the module and instantiate the `IMowApi()` constructor with credentials.
 
-
 ```python
 from imow.api import IMowApi
 from imow.common.actions import IMowActions
 import asyncio
+
 
 async def main():
     api = IMowApi()
@@ -70,9 +70,9 @@ async def main():
     mower = mowers[0]
 
     print(f"{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}")
-    print(f"Currently: {mower.state_message['short']}")
-    print(mower.state_message)
-    print(mower.machine_state)
+    print(f"Currently: {mower.stateMessage['short']}")
+    print(mower.stateMessage)
+    print(mower.machineState)
     await mower.intent(IMowActions.TO_DOCKING)
     print(await mower.update_from_upstream())
     print(await mower.get_startpoints())
@@ -89,7 +89,7 @@ if __name__ == "__main__":
 Selection of outputs from above statements:
 > Mährlin @ 54.123456,10.12345
 > Currently: Hood blocked
-> {'short': 'Hood blocked', 'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).', 'legacy_message': 'Abschaltung Automatikmode durch Bumper', 'error_id': '', 'error': False}
+> {'short': 'Hood blocked', 'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).', 'legacyMessage': 'Abschaltung Automatikmode durch Bumper', 'errorId': '', 'error': False}
 > HOOD_BLOCKED
 > <imow.common.mowerstate.MowerState object at 0x000001B034C245F8>
 ```
