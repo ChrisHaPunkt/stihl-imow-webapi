@@ -59,7 +59,7 @@ import asyncio
 
 
 async def main():
-    api = IMowApi()
+    api = IMowApi(lang="de")
     # save token for later use if you want to recreate IMowApi(token=my_token) because the created token is valid for
     # 30 days
     token, expire_time = await api.get_token("email@account.stihl", "supersecret", return_expire_time=True)
