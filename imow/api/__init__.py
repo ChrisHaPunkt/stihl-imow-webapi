@@ -260,7 +260,9 @@ class IMowApi:
             headers_obj.update(headers)
         try:
 
-            payload_ = await self.http_session.request(method, url, headers=headers_obj, data=payload)
+            payload_ = await self.http_session.request(
+                method, url, headers=headers_obj, data=payload
+            )
             payload_.raise_for_status()
             return payload_
         except ClientResponseError as e:

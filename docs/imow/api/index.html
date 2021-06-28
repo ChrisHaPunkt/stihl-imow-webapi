@@ -174,9 +174,13 @@ class IMowApi:
         :return: the newly created access token, and expire time besides the legacy response
         &#34;&#34;&#34;
         await self.__fetch_new_csrf_token_and_request_id()
-        url = f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang=de&#34;
+        url = f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
         encoded_mail = quote(email)
-        payload = f&#34;mail={encoded_mail}&amp;password={password}&amp;csrf-token={self.csrf_token}&amp;requestId={self.requestId}&#34;
+        encoded_password = quote(password)
+        payload = (
+            f&#34;mail={encoded_mail}&amp;password={encoded_password}&#34;
+            f&#34;&amp;csrf-token={self.csrf_token}&amp;requestId={self.requestId} &#34;
+        )
         headers = {
             &#34;Content-Type&#34;: &#34;application/x-www-form-urlencoded&#34;,
         }
@@ -284,9 +288,11 @@ class IMowApi:
             headers_obj.update(headers)
         try:
 
-            return await self.http_session.request(
+            payload_ = await self.http_session.request(
                 method, url, headers=headers_obj, data=payload
             )
+            payload_.raise_for_status()
+            return payload_
         except ClientResponseError as e:
             if e.status == 500:
                 await self.check_api_maintenance()
@@ -578,9 +584,13 @@ class IMowApi:
         :return: the newly created access token, and expire time besides the legacy response
         &#34;&#34;&#34;
         await self.__fetch_new_csrf_token_and_request_id()
-        url = f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang=de&#34;
+        url = f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
         encoded_mail = quote(email)
-        payload = f&#34;mail={encoded_mail}&amp;password={password}&amp;csrf-token={self.csrf_token}&amp;requestId={self.requestId}&#34;
+        encoded_password = quote(password)
+        payload = (
+            f&#34;mail={encoded_mail}&amp;password={encoded_password}&#34;
+            f&#34;&amp;csrf-token={self.csrf_token}&amp;requestId={self.requestId} &#34;
+        )
         headers = {
             &#34;Content-Type&#34;: &#34;application/x-www-form-urlencoded&#34;,
         }
@@ -688,9 +698,11 @@ class IMowApi:
             headers_obj.update(headers)
         try:
 
-            return await self.http_session.request(
+            payload_ = await self.http_session.request(
                 method, url, headers=headers_obj, data=payload
             )
+            payload_.raise_for_status()
+            return payload_
         except ClientResponseError as e:
             if e.status == 500:
                 await self.check_api_maintenance()
@@ -909,9 +921,11 @@ class IMowApi:
         headers_obj.update(headers)
     try:
 
-        return await self.http_session.request(
+        payload_ = await self.http_session.request(
             method, url, headers=headers_obj, data=payload
         )
+        payload_.raise_for_status()
+        return payload_
     except ClientResponseError as e:
         if e.status == 500:
             await self.check_api_maintenance()
