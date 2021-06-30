@@ -106,7 +106,7 @@ class MowerState:
             imow_action=imow_action,
             startpoint=startpoint,
             duration=duration,
-            mower_action_id=self.externalId,
+            mower_external_id=self.externalId,
         )
 
     accountId: str = {str}

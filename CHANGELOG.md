@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.7.0 (2021-06-30)
+### Breaking Changes
+- `IMowApi.intent` Parameter `mower_action_id` is renamed to `mower_external_id` to match the upstream api expectation.
+### Features
+- If an `api_request` is intended, and the used `access_token` expires in less than one day, it's automatically renewed. 
+  
 ## Version 0.6.0 (2021-06-28)
 - ```python
   mower.machineError = 'M1120',

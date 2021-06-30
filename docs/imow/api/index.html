@@ -266,6 +266,11 @@ class IMowApi:
             self.http_session = aiohttp.ClientSession(raise_for_status=True)
         if not self.messages_en:
             await self.fetch_messages()
+        if self.token_expires and (self.token_expires - datetime.now()).days &lt;= 1:
+            logger.info(
+                &#34;Fetching new access_token because old one expires in less than 1 day&#34;
+            )
+            await self.get_token(force_reauth=True)
 
         if not payload:
             payload = {}
@@ -303,7 +308,7 @@ class IMowApi:
         imow_action: IMowActions,
         mower_name: str = &#34;&#34;,
         mower_id: str = &#34;&#34;,
-        mower_action_id: str = &#34;&#34;,
+        mower_external_id: str = &#34;&#34;,
         startpoint: any = &#34;0&#34;,
         duration: int = 30,
     ) -&gt; aiohttp.ClientResponse:
@@ -315,7 +320,7 @@ class IMowApi:
         :param imow_action: Anything from imow.common.actions
         :param mower_name: sth to identify which mower is used
         :param mower_id: sth to identify which mower is used
-        :param mower_action_id:
+        :param mower_external_id:
             necessary identifier for the mowers for actions.
             This is looked up, if only mower_name or mower_id is provided
 
@@ -323,26 +328,26 @@ class IMowApi:
         :param duration: minutes of intended mowing defaults, to 30 minutes
         :return:
         &#34;&#34;&#34;
-        if not mower_action_id and not mower_id and not mower_name:
+        if not mower_external_id and not mower_id and not mower_name:
             raise AttributeError(
                 &#34;Need some mower to work on. Please specify mower_[name|id|action_id]&#34;
             )
-        if not mower_action_id and mower_name:
-            mower_action_id = await self.get_mower_action_id_from_name(mower_name)
-        if not mower_action_id and mower_id:
-            mower_action_id = await self.get_mower_action_id_from_id(mower_id)
+        if not mower_external_id and mower_name:
+            mower_external_id = await self.get_mower_action_id_from_name(mower_name)
+        if not mower_external_id and mower_id:
+            mower_external_id = await self.get_mower_action_id_from_id(mower_id)
 
-        if len(mower_action_id) &lt; 16:
+        if len(mower_external_id) &lt; 16:
             raise AttributeError(
-                f&#34;Invalid mower_action_id, need exactly 16 chars, got {len(mower_action_id)} in {mower_action_id}&#34;
+                f&#34;Invalid mower_action_id, need exactly 16 chars, got {len(mower_external_id)} in {mower_external_id}&#34;
             )
 
         url = f&#34;{IMOW_API_URI}/mower-actions/&#34;
 
         action_value = (
-            f&#34;{mower_action_id},{str(int(duration / 10))},{str(startpoint)}&#34;
+            f&#34;{mower_external_id},{str(int(duration / 10))},{str(startpoint)}&#34;
             if imow_action == IMowActions.START_MOWING
-            else mower_action_id
+            else mower_external_id
         )
 
         action_object = {
@@ -355,7 +360,7 @@ class IMowApi:
         payload = json.dumps(action_object)
 
         response = await self.api_request(url, &#34;POST&#34;, payload=payload)
-        logger.debug(f&#34;Sent mower {mower_action_id} to {imow_action}&#34;)
+        logger.debug(f&#34;Sent mower {mower_external_id} to {imow_action}&#34;)
         return response
 
     async def get_status_by_name(self, mower_name: str) -&gt; dict:
@@ -676,6 +681,11 @@ class IMowApi:
             self.http_session = aiohttp.ClientSession(raise_for_status=True)
         if not self.messages_en:
             await self.fetch_messages()
+        if self.token_expires and (self.token_expires - datetime.now()).days &lt;= 1:
+            logger.info(
+                &#34;Fetching new access_token because old one expires in less than 1 day&#34;
+            )
+            await self.get_token(force_reauth=True)
 
         if not payload:
             payload = {}
@@ -713,7 +723,7 @@ class IMowApi:
         imow_action: IMowActions,
         mower_name: str = &#34;&#34;,
         mower_id: str = &#34;&#34;,
-        mower_action_id: str = &#34;&#34;,
+        mower_external_id: str = &#34;&#34;,
         startpoint: any = &#34;0&#34;,
         duration: int = 30,
     ) -&gt; aiohttp.ClientResponse:
@@ -725,7 +735,7 @@ class IMowApi:
         :param imow_action: Anything from imow.common.actions
         :param mower_name: sth to identify which mower is used
         :param mower_id: sth to identify which mower is used
-        :param mower_action_id:
+        :param mower_external_id:
             necessary identifier for the mowers for actions.
             This is looked up, if only mower_name or mower_id is provided
 
@@ -733,26 +743,26 @@ class IMowApi:
         :param duration: minutes of intended mowing defaults, to 30 minutes
         :return:
         &#34;&#34;&#34;
-        if not mower_action_id and not mower_id and not mower_name:
+        if not mower_external_id and not mower_id and not mower_name:
             raise AttributeError(
                 &#34;Need some mower to work on. Please specify mower_[name|id|action_id]&#34;
             )
-        if not mower_action_id and mower_name:
-            mower_action_id = await self.get_mower_action_id_from_name(mower_name)
-        if not mower_action_id and mower_id:
-            mower_action_id = await self.get_mower_action_id_from_id(mower_id)
+        if not mower_external_id and mower_name:
+            mower_external_id = await self.get_mower_action_id_from_name(mower_name)
+        if not mower_external_id and mower_id:
+            mower_external_id = await self.get_mower_action_id_from_id(mower_id)
 
-        if len(mower_action_id) &lt; 16:
+        if len(mower_external_id) &lt; 16:
             raise AttributeError(
-                f&#34;Invalid mower_action_id, need exactly 16 chars, got {len(mower_action_id)} in {mower_action_id}&#34;
+                f&#34;Invalid mower_action_id, need exactly 16 chars, got {len(mower_external_id)} in {mower_external_id}&#34;
             )
 
         url = f&#34;{IMOW_API_URI}/mower-actions/&#34;
 
         action_value = (
-            f&#34;{mower_action_id},{str(int(duration / 10))},{str(startpoint)}&#34;
+            f&#34;{mower_external_id},{str(int(duration / 10))},{str(startpoint)}&#34;
             if imow_action == IMowActions.START_MOWING
-            else mower_action_id
+            else mower_external_id
         )
 
         action_object = {
@@ -765,7 +775,7 @@ class IMowApi:
         payload = json.dumps(action_object)
 
         response = await self.api_request(url, &#34;POST&#34;, payload=payload)
-        logger.debug(f&#34;Sent mower {mower_action_id} to {imow_action}&#34;)
+        logger.debug(f&#34;Sent mower {mower_external_id} to {imow_action}&#34;)
         return response
 
     async def get_status_by_name(self, mower_name: str) -&gt; dict:
@@ -899,6 +909,11 @@ class IMowApi:
         self.http_session = aiohttp.ClientSession(raise_for_status=True)
     if not self.messages_en:
         await self.fetch_messages()
+    if self.token_expires and (self.token_expires - datetime.now()).days &lt;= 1:
+        logger.info(
+            &#34;Fetching new access_token because old one expires in less than 1 day&#34;
+        )
+        await self.get_token(force_reauth=True)
 
     if not payload:
         payload = {}
@@ -1169,7 +1184,7 @@ class IMowApi:
 </details>
 </dd>
 <dt id="imow.api.IMowApi.intent"><code class="name flex">
-<span>async def <span class="ident">intent</span></span>(<span>self, imow_action: IMowActions, mower_name: str = '', mower_id: str = '', mower_action_id: str = '', startpoint: any = '0', duration: int = 30) ‑> aiohttp.client_reqrep.ClientResponse</span>
+<span>async def <span class="ident">intent</span></span>(<span>self, imow_action: IMowActions, mower_name: str = '', mower_id: str = '', mower_external_id: str = '', startpoint: any = '0', duration: int = 30) ‑> aiohttp.client_reqrep.ClientResponse</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
@@ -1178,7 +1193,7 @@ startMowing is chosen</p>
 <p>:param imow_action: Anything from imow.common.actions
 :param mower_name: sth to identify which mower is used
 :param mower_id: sth to identify which mower is used
-:param mower_action_id:
+:param mower_external_id:
 necessary identifier for the mowers for actions.
 This is looked up, if only mower_name or mower_id is provided</p>
 <p>:param startpoint: point from which the mowing shall start, default to 0
@@ -1193,7 +1208,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
     imow_action: IMowActions,
     mower_name: str = &#34;&#34;,
     mower_id: str = &#34;&#34;,
-    mower_action_id: str = &#34;&#34;,
+    mower_external_id: str = &#34;&#34;,
     startpoint: any = &#34;0&#34;,
     duration: int = 30,
 ) -&gt; aiohttp.ClientResponse:
@@ -1205,7 +1220,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
     :param imow_action: Anything from imow.common.actions
     :param mower_name: sth to identify which mower is used
     :param mower_id: sth to identify which mower is used
-    :param mower_action_id:
+    :param mower_external_id:
         necessary identifier for the mowers for actions.
         This is looked up, if only mower_name or mower_id is provided
 
@@ -1213,26 +1228,26 @@ This is looked up, if only mower_name or mower_id is provided</p>
     :param duration: minutes of intended mowing defaults, to 30 minutes
     :return:
     &#34;&#34;&#34;
-    if not mower_action_id and not mower_id and not mower_name:
+    if not mower_external_id and not mower_id and not mower_name:
         raise AttributeError(
             &#34;Need some mower to work on. Please specify mower_[name|id|action_id]&#34;
         )
-    if not mower_action_id and mower_name:
-        mower_action_id = await self.get_mower_action_id_from_name(mower_name)
-    if not mower_action_id and mower_id:
-        mower_action_id = await self.get_mower_action_id_from_id(mower_id)
+    if not mower_external_id and mower_name:
+        mower_external_id = await self.get_mower_action_id_from_name(mower_name)
+    if not mower_external_id and mower_id:
+        mower_external_id = await self.get_mower_action_id_from_id(mower_id)
 
-    if len(mower_action_id) &lt; 16:
+    if len(mower_external_id) &lt; 16:
         raise AttributeError(
-            f&#34;Invalid mower_action_id, need exactly 16 chars, got {len(mower_action_id)} in {mower_action_id}&#34;
+            f&#34;Invalid mower_action_id, need exactly 16 chars, got {len(mower_external_id)} in {mower_external_id}&#34;
         )
 
     url = f&#34;{IMOW_API_URI}/mower-actions/&#34;
 
     action_value = (
-        f&#34;{mower_action_id},{str(int(duration / 10))},{str(startpoint)}&#34;
+        f&#34;{mower_external_id},{str(int(duration / 10))},{str(startpoint)}&#34;
         if imow_action == IMowActions.START_MOWING
-        else mower_action_id
+        else mower_external_id
     )
 
     action_object = {
@@ -1245,7 +1260,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
     payload = json.dumps(action_object)
 
     response = await self.api_request(url, &#34;POST&#34;, payload=payload)
-    logger.debug(f&#34;Sent mower {mower_action_id} to {imow_action}&#34;)
+    logger.debug(f&#34;Sent mower {mower_external_id} to {imow_action}&#34;)
     return response</code></pre>
 </details>
 </dd>

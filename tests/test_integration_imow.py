@@ -125,7 +125,7 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
     def test_intent_to_dock_by_mower_action_id(self):
         result = self.loop.run_until_complete(
             self.imow.intent(
-                IMowActions.TO_DOCKING, mower_action_id=self.test_mower.externalId
+                IMowActions.TO_DOCKING, mower_external_id=self.test_mower.externalId
             )
         )
         self.assertIs(
