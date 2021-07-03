@@ -71,6 +71,8 @@ async def main():
 
     print(f"{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}")
     print(f"Currently: {mower.stateMessage['short']}")
+    await mower.update_setting("gpsProtectionEnabled", True)
+
     print(mower.stateMessage)
     print(mower.machineState)
     await mower.intent(IMowActions.TO_DOCKING)
