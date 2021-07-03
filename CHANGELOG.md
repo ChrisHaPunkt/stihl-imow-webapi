@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.7.3 (2021-07-03)
+
+### Bugfxes
+- Always return a MowerState on settings update
+
 ## Version 0.7.2 (2021-07-03)
 ```python
 await mower.update_setting("gpsProtectionEnabled", True)

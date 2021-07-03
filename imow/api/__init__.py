@@ -352,7 +352,7 @@ class IMowApi:
         logger.debug(f"Sent mower {mower_external_id} to {imow_action}")
         return response
 
-    async def update_setting(self, mower_id, setting, new_value):
+    async def update_setting(self, mower_id, setting, new_value) -> MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
 
         payload_fields = {
@@ -393,7 +393,8 @@ class IMowApi:
                 payload=json.dumps(payload_fields, indent=2).encode("utf-8"),
                 headers=headers,
             )
-            return mower_state.replace_state(json.loads(await response.text()))
+            mower_state.replace_state(json.loads(await response.text()))
+            return mower_state
 
         else:
             logger.info(f"{setting} is already {new_value}.")

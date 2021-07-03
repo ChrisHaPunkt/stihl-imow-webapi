@@ -380,7 +380,7 @@ class IMowApi:
         logger.debug(f&#34;Sent mower {mower_external_id} to {imow_action}&#34;)
         return response
 
-    async def update_setting(self, mower_id, setting, new_value):
+    async def update_setting(self, mower_id, setting, new_value) -&gt; MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
 
         payload_fields = {
@@ -421,7 +421,8 @@ class IMowApi:
                 payload=json.dumps(payload_fields, indent=2).encode(&#34;utf-8&#34;),
                 headers=headers,
             )
-            return mower_state.replace_state(json.loads(await response.text()))
+            mower_state.replace_state(json.loads(await response.text()))
+            return mower_state
 
         else:
             logger.info(f&#34;{setting} is already {new_value}.&#34;)
@@ -875,7 +876,7 @@ class IMowApi:
         logger.debug(f&#34;Sent mower {mower_external_id} to {imow_action}&#34;)
         return response
 
-    async def update_setting(self, mower_id, setting, new_value):
+    async def update_setting(self, mower_id, setting, new_value) -&gt; MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
 
         payload_fields = {
@@ -916,7 +917,8 @@ class IMowApi:
                 payload=json.dumps(payload_fields, indent=2).encode(&#34;utf-8&#34;),
                 headers=headers,
             )
-            return mower_state.replace_state(json.loads(await response.text()))
+            mower_state.replace_state(json.loads(await response.text()))
+            return mower_state
 
         else:
             logger.info(f&#34;{setting} is already {new_value}.&#34;)
@@ -1566,7 +1568,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
 </details>
 </dd>
 <dt id="imow.api.IMowApi.update_setting"><code class="name flex">
-<span>async def <span class="ident">update_setting</span></span>(<span>self, mower_id, setting, new_value)</span>
+<span>async def <span class="ident">update_setting</span></span>(<span>self, mower_id, setting, new_value) ‑> <a title="imow.common.mowerstate.MowerState" href="../common/mowerstate.html#imow.common.mowerstate.MowerState">MowerState</a></span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -1574,7 +1576,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">async def update_setting(self, mower_id, setting, new_value):
+<pre><code class="python">async def update_setting(self, mower_id, setting, new_value) -&gt; MowerState:
     mower_state = await self.receive_mower_by_id(mower_id)
 
     payload_fields = {
@@ -1615,7 +1617,8 @@ This is looked up, if only mower_name or mower_id is provided</p>
             payload=json.dumps(payload_fields, indent=2).encode(&#34;utf-8&#34;),
             headers=headers,
         )
-        return mower_state.replace_state(json.loads(await response.text()))
+        mower_state.replace_state(json.loads(await response.text()))
+        return mower_state
 
     else:
         logger.info(f&#34;{setting} is already {new_value}.&#34;)
