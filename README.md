@@ -50,7 +50,8 @@ And have fun!
 
 ## Usage
 
-Import the module and instantiate the `IMowApi()` constructor with credentials.
+Import the module and instantiate the `IMowApi()` constructor with credentials. Afterwards, initiate the `get_token()` method.
+Or place credentials in the `get_token()` method.
 
 ```python
 from imow.api import IMowApi
