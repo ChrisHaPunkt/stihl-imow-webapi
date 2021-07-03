@@ -28,6 +28,11 @@ class MowerState:
         )
         self.update_state_messages()
 
+    async def update_setting(self, setting, new_value):
+        await self.imow.update_setting(
+            mower_id=self.id, setting=setting, new_value=new_value
+        )
+
     def update_state_messages(self):
 
         if self.status["mainState"] != self.ERROR_MAINSTATE_CODE:
@@ -60,7 +65,10 @@ class MowerState:
 
     def generate_machine_state(self):
         if self.status["mainState"] != self.ERROR_MAINSTATE_CODE:
-            state_msg_short, state_msg_long = self.imow.messages_en.get_status_message(
+            (
+                state_msg_short,
+                state_msg_long,
+            ) = self.imow.messages_en.get_status_message(
                 short_code=self.status["mainState"]
             )
         else:
@@ -72,7 +80,9 @@ class MowerState:
             ) = self.imow.messages_en.get_error_message(
                 short_code=self.status["extraStatus"]
             )
-        cleaned_msg = state_msg_short.upper().replace(" ", "_").replace(".", "")
+        cleaned_msg = (
+            state_msg_short.upper().replace(" ", "_").replace(".", "")
+        )
         self.machineState = cleaned_msg
 
     async def update_from_upstream(self):
@@ -100,7 +110,10 @@ class MowerState:
         return await self.imow.receive_mower_week_mow_time_in_hours(self.id)
 
     async def intent(
-        self, imow_action: IMowActions, startpoint: any = "0", duration: int = 30
+        self,
+        imow_action: IMowActions,
+        startpoint: any = "0",
+        duration: int = 30,
     ) -> None:
         response = await self.imow.intent(
             imow_action=imow_action,

@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.7.2 (2021-07-03)
+```python
+await mower.update_setting("gpsProtectionEnabled", True)
+```
+### Features
+- Possibility to update a specific settings for a mower like gpsProtection on/off
 ## Version 0.7.0 (2021-06-30)
 ### Breaking Changes
 - `IMowApi.intent` Parameter `mower_action_id` is renamed to `mower_external_id` to match the upstream api expectation.
