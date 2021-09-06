@@ -295,7 +295,7 @@ class IMowApi:
         mower_id: str = "",
         mower_external_id: str = "",
         startpoint: any = "0",
-        duration: int = 30,
+        duration: any = "30",
     ) -> aiohttp.ClientResponse:
         """
         Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
@@ -333,8 +333,17 @@ class IMowApi:
 
         url = f"{IMOW_API_URI}/mower-actions/"
 
+        # Check if the user provides a timestamp as duration. We need to pass this plain if so (starttime)
+        first_action_value_appendix = (
+            f", {duration if '-' in duration else str(int(duration) / 10)}"
+        )
+        if "-" in duration and startpoint == "0":
+            second_action_value_appendix = ""
+        else:
+            second_action_value_appendix = f", {str(startpoint)}"
+
         action_value = (
-            f"{mower_external_id},{str(int(duration / 10))},{str(startpoint)}"
+            f"{mower_external_id}{first_action_value_appendix}{second_action_value_appendix}"
             if imow_action == IMowActions.START_MOWING
             else mower_external_id
         )
@@ -343,6 +352,7 @@ class IMowApi:
             "actionName": imow_action.value,
             "actionValue": action_value
             # "0000000123456789,15,0" <MowerExternalId,DurationInMunitesDividedBy10,StartPoint>
+            # "0000000123456789,15,0" <MowerExternalId,StartTime,EndTime>
         }
         logger.debug(f"Intend: {action_object}")
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.7.4 (2021-09-06)
+
+### Bugfxes
+- Allow handling of timestamps on mower intents (StartTime/Endtime)
+
 ## Version 0.7.3 (2021-07-03)
 
 ### Bugfxes
