@@ -113,7 +113,7 @@ class MowerState:
         self,
         imow_action: IMowActions,
         startpoint: any = "0",
-        duration: int = 30,
+        duration: any = "30",
     ) -> None:
         response = await self.imow.intent(
             imow_action=imow_action,
