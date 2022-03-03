@@ -49,7 +49,7 @@ pip install imow-webapi
 And have fun!
 
 ## Usage
-
+### Python Import and Usage
 Import the module and instantiate the `IMowApi()` constructor with credentials. Afterwards, initiate the `get_token()` method.
 Or place credentials in the `get_token()` method.
 
@@ -95,6 +95,44 @@ Selection of outputs from above statements:
 > {'short': 'Hood blocked', 'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).', 'legacyMessage': 'Abschaltung Automatikmode durch Bumper', 'errorId': '', 'error': False}
 > HOOD_BLOCKED
 > <imow.common.mowerstate.MowerState object at 0x000001B034C245F8>
+```
+
+### Example: Receive startpoints and intent mowing 
+Save the following as `myscript.sh` and execute `chmod +x myscript.sh`. Make sure you install the api via `pip3 install imow-webapi`  
+Afterwards you can execute via `./myscript.sh`
+```bash
+#!/usr/bin/env python3
+from imow.api import IMowApi
+from imow.common.actions import IMowActions
+import asyncio
+
+
+async def main():
+    api = IMowApi(lang="de")
+    # save token for later use if you want to recreate IMowApi(token=my_token) because the created token is valid for
+    # 30 days
+    token, expire_time = await api.get_token("email@account.stihl", "supersecret", return_expire_time=True)
+
+    print(await api.get_token())
+
+    mowers = await api.receive_mowers()
+    mower = mowers[0]
+
+    print(f"{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}")
+    print(f"Currently: {mower.stateMessage['short']}")
+
+    startpoints = await mower.get_startpoints()
+    for i in range(len(startpoints)):
+        print("Startpoint {}: {}".format(i, startpoints[i]))
+        
+    await mower.intent(IMowActions.START_MOWING, startpoint=1)
+
+    # Cleanup the created http session
+    await api.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
 ```
 ## Testing
 For unit testing run `pytest -s tests/test_unit*`. For upstream integration testing, provide a `/secrets.py` with the following contents:
