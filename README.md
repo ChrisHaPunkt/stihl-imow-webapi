@@ -28,7 +28,7 @@ https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=
 
 ### Prerequisites
 
-Python 3.7+ is required to run this application, other than that there are no prerequisites for the project, as the
+Python 3.8+ is required to run this application, other than that there are no prerequisites for the project, as the
 dependencies are included in the repository.
 
 ### Installing

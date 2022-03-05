@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.7.6 (2022-03-05)
+
+### Dependency updates
+- Update dependencies to latest
+
 ## Version 0.7.4 (2021-09-06)
 
 ### Bugfxes

@@ -69,7 +69,7 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
 
     def test_get_status_by_name(self):
         result = self.loop.run_until_complete(self.imow.get_status_by_name(MOWER_NAME))
-        self.assertTrue(result["online"], msg="Expected 200 HTTP Error Code")
+        self.assertIn(result["online"],[True, False], msg="Expected 200 HTTP Error Code")
 
     def test_get_status_by_wrong_id(self):
         with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):

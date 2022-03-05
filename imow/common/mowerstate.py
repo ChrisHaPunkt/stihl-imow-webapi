@@ -115,7 +115,7 @@ class MowerState:
         startpoint: any = "0",
         duration: any = "30",
     ) -> None:
-        response = await self.imow.intent(
+        await self.imow.intent(
             imow_action=imow_action,
             startpoint=startpoint,
             duration=duration,

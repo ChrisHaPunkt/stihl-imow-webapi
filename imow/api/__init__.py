@@ -22,7 +22,7 @@ from imow.common.exceptions import (
 )
 from imow.common.messages import Messages
 from imow.common.mowerstate import MowerState
-from imow.common.package_descriptions import *
+from imow.common.package_descriptions import python_major, python_minor, package_name
 
 logger = logging.getLogger("imow")
 
@@ -148,7 +148,9 @@ class IMowApi:
         :return: the newly created access token, and expire time besides the legacy response
         """
         await self.__fetch_new_csrf_token_and_request_id()
-        url = f"{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}"
+        url = (
+            f"{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}"
+        )
         encoded_mail = quote(email)
         encoded_password = quote(password)
         payload = (
@@ -210,7 +212,7 @@ class IMowApi:
     async def fetch_messages(self):
         try:
             url_en = (
-                f"https://app.imow.stihl.com/assets/i18n/animations/en.json"
+                "https://app.imow.stihl.com/assets/i18n/animations/en.json"
             )
             response_en = await self.http_session.request("GET", url_en)
             i18n_en = json.loads(await response_en.text())
@@ -334,10 +336,8 @@ class IMowApi:
         url = f"{IMOW_API_URI}/mower-actions/"
 
         # Check if the user provides a timestamp as duration. We need to pass this plain if so (starttime)
-        first_action_value_appendix = (
-            f", {duration if '-' in duration else str(int(duration) / 10)}"
-        )
-        if "-" in duration and startpoint == "0":
+        first_action_value_appendix = f", {duration if '-' in str(duration) else str(int(duration) / 10)}"
+        if "-" in str(duration) and startpoint == "0":
             second_action_value_appendix = ""
         else:
             second_action_value_appendix = f", {str(startpoint)}"
@@ -362,7 +362,9 @@ class IMowApi:
         logger.debug(f"Sent mower {mower_external_id} to {imow_action}")
         return response
 
-    async def update_setting(self, mower_id, setting, new_value) -> MowerState:
+    async def update_setting(
+        self, mower_id, setting, new_value
+    ) -> MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
 
         payload_fields = {
@@ -469,7 +471,7 @@ class IMowApi:
         )
 
     async def receive_mowers(self) -> List[MowerState]:
-        logger.debug(f"receive_mowers:")
+        logger.debug("receive_mowers:")
         mowers = []
         response = await self.api_request(f"{IMOW_API_URI}/mowers/", "GET")
         for mower in json.loads(await response.text()):

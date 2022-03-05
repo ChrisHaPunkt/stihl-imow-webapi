@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.10.0" />
 <title>imow.api API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
@@ -323,7 +323,7 @@ class IMowApi:
         mower_id: str = &#34;&#34;,
         mower_external_id: str = &#34;&#34;,
         startpoint: any = &#34;0&#34;,
-        duration: int = 30,
+        duration: any = &#34;30&#34;,
     ) -&gt; aiohttp.ClientResponse:
         &#34;&#34;&#34;
         Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
@@ -361,8 +361,15 @@ class IMowApi:
 
         url = f&#34;{IMOW_API_URI}/mower-actions/&#34;
 
+        # Check if the user provides a timestamp as duration. We need to pass this plain if so (starttime)
+        first_action_value_appendix = f&#34;, {duration if &#39;-&#39; in str(duration) else str(int(duration) / 10)}&#34;
+        if &#34;-&#34; in str(duration) and startpoint == &#34;0&#34;:
+            second_action_value_appendix = &#34;&#34;
+        else:
+            second_action_value_appendix = f&#34;, {str(startpoint)}&#34;
+
         action_value = (
-            f&#34;{mower_external_id},{str(int(duration / 10))},{str(startpoint)}&#34;
+            f&#34;{mower_external_id}{first_action_value_appendix}{second_action_value_appendix}&#34;
             if imow_action == IMowActions.START_MOWING
             else mower_external_id
         )
@@ -371,6 +378,7 @@ class IMowApi:
             &#34;actionName&#34;: imow_action.value,
             &#34;actionValue&#34;: action_value
             # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,DurationInMunitesDividedBy10,StartPoint&gt;
+            # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,StartTime,EndTime&gt;
         }
         logger.debug(f&#34;Intend: {action_object}&#34;)
 
@@ -819,7 +827,7 @@ class IMowApi:
         mower_id: str = &#34;&#34;,
         mower_external_id: str = &#34;&#34;,
         startpoint: any = &#34;0&#34;,
-        duration: int = 30,
+        duration: any = &#34;30&#34;,
     ) -&gt; aiohttp.ClientResponse:
         &#34;&#34;&#34;
         Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
@@ -857,8 +865,15 @@ class IMowApi:
 
         url = f&#34;{IMOW_API_URI}/mower-actions/&#34;
 
+        # Check if the user provides a timestamp as duration. We need to pass this plain if so (starttime)
+        first_action_value_appendix = f&#34;, {duration if &#39;-&#39; in str(duration) else str(int(duration) / 10)}&#34;
+        if &#34;-&#34; in str(duration) and startpoint == &#34;0&#34;:
+            second_action_value_appendix = &#34;&#34;
+        else:
+            second_action_value_appendix = f&#34;, {str(startpoint)}&#34;
+
         action_value = (
-            f&#34;{mower_external_id},{str(int(duration / 10))},{str(startpoint)}&#34;
+            f&#34;{mower_external_id}{first_action_value_appendix}{second_action_value_appendix}&#34;
             if imow_action == IMowActions.START_MOWING
             else mower_external_id
         )
@@ -867,6 +882,7 @@ class IMowApi:
             &#34;actionName&#34;: imow_action.value,
             &#34;actionValue&#34;: action_value
             # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,DurationInMunitesDividedBy10,StartPoint&gt;
+            # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,StartTime,EndTime&gt;
         }
         logger.debug(f&#34;Intend: {action_object}&#34;)
 
@@ -1113,7 +1129,7 @@ class IMowApi:
 </details>
 </dd>
 <dt id="imow.api.IMowApi.check_api_maintenance"><code class="name flex">
-<span>async def <span class="ident">check_api_maintenance</span></span>(<span>self) ‑> NoneType</span>
+<span>async def <span class="ident">check_api_maintenance</span></span>(<span>self) ‑> None</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -1365,7 +1381,7 @@ class IMowApi:
 </details>
 </dd>
 <dt id="imow.api.IMowApi.intent"><code class="name flex">
-<span>async def <span class="ident">intent</span></span>(<span>self, imow_action: IMowActions, mower_name: str = '', mower_id: str = '', mower_external_id: str = '', startpoint: any = '0', duration: int = 30) ‑> aiohttp.client_reqrep.ClientResponse</span>
+<span>async def <span class="ident">intent</span></span>(<span>self, imow_action: IMowActions, mower_name: str = '', mower_id: str = '', mower_external_id: str = '', startpoint: any = '0', duration: any = '30') ‑> aiohttp.client_reqrep.ClientResponse</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
@@ -1391,7 +1407,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
     mower_id: str = &#34;&#34;,
     mower_external_id: str = &#34;&#34;,
     startpoint: any = &#34;0&#34;,
-    duration: int = 30,
+    duration: any = &#34;30&#34;,
 ) -&gt; aiohttp.ClientResponse:
     &#34;&#34;&#34;
     Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
@@ -1429,8 +1445,15 @@ This is looked up, if only mower_name or mower_id is provided</p>
 
     url = f&#34;{IMOW_API_URI}/mower-actions/&#34;
 
+    # Check if the user provides a timestamp as duration. We need to pass this plain if so (starttime)
+    first_action_value_appendix = f&#34;, {duration if &#39;-&#39; in str(duration) else str(int(duration) / 10)}&#34;
+    if &#34;-&#34; in str(duration) and startpoint == &#34;0&#34;:
+        second_action_value_appendix = &#34;&#34;
+    else:
+        second_action_value_appendix = f&#34;, {str(startpoint)}&#34;
+
     action_value = (
-        f&#34;{mower_external_id},{str(int(duration / 10))},{str(startpoint)}&#34;
+        f&#34;{mower_external_id}{first_action_value_appendix}{second_action_value_appendix}&#34;
         if imow_action == IMowActions.START_MOWING
         else mower_external_id
     )
@@ -1439,6 +1462,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
         &#34;actionName&#34;: imow_action.value,
         &#34;actionValue&#34;: action_value
         # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,DurationInMunitesDividedBy10,StartPoint&gt;
+        # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,StartTime,EndTime&gt;
     }
     logger.debug(f&#34;Intend: {action_object}&#34;)
 
@@ -1698,7 +1722,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>
