@@ -57,32 +57,31 @@ Or place credentials in the `get_token()` method.
 from imow.api import IMowApi
 from imow.common.actions import IMowActions
 import asyncio
+import aiohttp
 
 
 async def main():
-    api = IMowApi(lang="de")
-    # save token for later use if you want to recreate IMowApi(token=my_token) because the created token is valid for
-    # 30 days
-    token, expire_time = await api.get_token("email@account.stihl", "supersecret", return_expire_time=True)
-
-    print(await api.get_token())
-
-    mowers = await api.receive_mowers()
-    mower = mowers[0]
-
-    print(f"{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}")
-    print(f"Currently: {mower.stateMessage['short']}")
-    await mower.update_setting("gpsProtectionEnabled", True)
-
-    print(mower.stateMessage)
-    print(mower.machineState)
-    await mower.intent(IMowActions.TO_DOCKING)
-    print(await mower.update_from_upstream())
-    print(await mower.get_startpoints())
-
-    # Cleanup the created http session
-    await api.close()
-
+    async with aiohttp.ClientSession() as session:
+        api = IMowApi(aiohttp_session=session, lang="de")
+        # save token for later use if you want to recreate IMowApi(token=my_token) because the created token is valid for
+        # 30 days
+        token, expire_time = await api.get_token("email@account.stihl", "supersecret", return_expire_time=True)
+        
+        print(await api.get_token())
+        
+        mowers = await api.receive_mowers()
+        mower = mowers[0]
+        
+        print(f"{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}")
+        print(f"Currently: {mower.stateMessage['short']}")
+        await mower.update_setting("gpsProtectionEnabled", True)
+        
+        print(mower.stateMessage)
+        print(mower.machineState)
+        await mower.intent(IMowActions.TO_DOCKING)
+        print(await mower.update_from_upstream())
+        print(await mower.get_startpoints())
+        
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -105,30 +104,30 @@ Afterwards you can execute via `./myscript.sh`
 from imow.api import IMowApi
 from imow.common.actions import IMowActions
 import asyncio
+import aiohttp
 
 
 async def main():
-    api = IMowApi(lang="de")
-    # save token for later use if you want to recreate IMowApi(token=my_token) because the created token is valid for
-    # 30 days
-    token, expire_time = await api.get_token("email@account.stihl", "supersecret", return_expire_time=True)
+    async with aiohttp.ClientSession() as session:
+        api = IMowApi(aiohttp_session=session, lang="de")
+        # save token for later use if you want to recreate IMowApi(token=my_token) because the created token is valid for
+        # 30 days
+        token, expire_time = await api.get_token("email@account.stihl", "supersecret", return_expire_time=True)
+    
+        print(await api.get_token())
+    
+        mowers = await api.receive_mowers()
+        mower = mowers[0]
+    
+        print(f"{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}")
+        print(f"Currently: {mower.stateMessage['short']}")
+    
+        startpoints = await mower.get_startpoints()
+        for i in range(len(startpoints)):
+            print("Startpoint {}: {}".format(i, startpoints[i]))
+            
+        await mower.intent(IMowActions.START_MOWING, startpoint=1)
 
-    print(await api.get_token())
-
-    mowers = await api.receive_mowers()
-    mower = mowers[0]
-
-    print(f"{mower.name} @ {mower.coordinateLatitude},{mower.coordinateLongitude}")
-    print(f"Currently: {mower.stateMessage['short']}")
-
-    startpoints = await mower.get_startpoints()
-    for i in range(len(startpoints)):
-        print("Startpoint {}: {}".format(i, startpoints[i]))
-        
-    await mower.intent(IMowActions.START_MOWING, startpoint=1)
-
-    # Cleanup the created http session
-    await api.close()
 
 if __name__ == "__main__":
     asyncio.run(main())

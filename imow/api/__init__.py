@@ -63,6 +63,7 @@ class IMowApi:
 
     async def close(self):
         """Cleanup the aiohttp Session"""
+        await asyncio.sleep(0.250)
         await self.http_session.close()
 
     async def check_api_maintenance(self) -> None:
@@ -106,7 +107,7 @@ class IMowApi:
                 self.api_password = password
                 self.api_email = email
             if force_reauth:
-                self.http_session = None
+                await self.close()
                 self.csrf_token = None
                 self.requestId = None
                 self.access_token: str = ""
@@ -201,12 +202,12 @@ class IMowApi:
             ).get("value")
         except AttributeError:
             raise ProcessLookupError(
-                "Did not found necessary csrf token and/or request id in html source"
+                "Did not find necessary csrf token and/or request id in html source"
             )
 
         self.csrf_token = upstream_csrf_token
         self.requestId = upstream_request_id
-        logger.debug("CSRF: new token and request id <Redacted>")
+        logger.debug("CSRF: new token and request id <redacted>")
         return self.csrf_token, self.requestId
 
     async def fetch_messages(self):
@@ -214,16 +215,16 @@ class IMowApi:
             url_en = (
                 "https://app.imow.stihl.com/assets/i18n/animations/en.json"
             )
-            response_en = await self.http_session.request("GET", url_en)
-            i18n_en = json.loads(await response_en.text())
+            async with self.http_session.request("GET", url_en) as response_en:
+                i18n_en = json.loads(await response_en.text())
             self.messages_en = Messages(i18n_en)
             if self.lang != "en":
                 url_user = f"https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json"
-                response_user = await self.http_session.request(
+                async with self.http_session.request(
                     "GET", url_user
-                )
-                i18n_user = json.loads(await response_user.text())
-                self.messages_user = Messages(i18n_user)
+                ) as response_user:
+                    i18n_user = json.loads(await response_user.text())
+                    self.messages_user = Messages(i18n_user)
             else:
                 self.messages_user = self.messages_en
 
@@ -279,12 +280,10 @@ class IMowApi:
         if headers:
             headers_obj.update(headers)
         try:
-
-            payload_ = await self.http_session.request(
-                method, url, headers=headers_obj, data=payload
-            )
-            payload_.raise_for_status()
-            return payload_
+            async with self.http_session.request(method, url, headers=headers_obj, data=payload) as response:
+                await response.read()
+                response.raise_for_status()
+                return response
         except ClientResponseError as e:
             if e.status == 500:
                 await self.check_api_maintenance()

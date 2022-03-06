@@ -26,14 +26,18 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
         )
         cls.initialized = True
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.loop.run_until_complete(cls.imow.close())
+
     def setUp(self) -> None:
         if not self.initialized:
-            self.loop = asyncio.get_event_loop()
-            self.imow = IMowApi()
-            self.loop.run_until_complete(self.imow.get_token(EMAIL, PASSWORD))
-            self.test_mower = self.loop.run_until_complete(
-                self.imow.receive_mower_by_name(MOWER_NAME)
-            )
+            # self.loop = asyncio.get_event_loop()
+            # self.imow = IMowApi()
+            # self.loop.run_until_complete(self.imow.get_token(EMAIL, PASSWORD))
+            # self.test_mower = self.loop.run_until_complete(
+            #     self.imow.receive_mower_by_name(MOWER_NAME)
+            # )
             self.initialized = True
 
     def test_auth_with_email_and_password(self):
@@ -43,6 +47,9 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
             self.imow.get_token(
                 EMAIL, PASSWORD, force_reauth=True, return_expire_time=True
             )
+        )
+        self.loop.run_until_complete(
+            self.imow.close()
         )
         self.assertIs(len(token_new), 98, msg="Expected new token has 98 chars")
         self.assertNotEqual(
@@ -69,7 +76,7 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
 
     def test_get_status_by_name(self):
         result = self.loop.run_until_complete(self.imow.get_status_by_name(MOWER_NAME))
-        self.assertIn(result["online"],[True, False], msg="Expected 200 HTTP Error Code")
+        self.assertIn(result["online"], [True, False], msg="Expected 200 HTTP Error Code")
 
     def test_get_status_by_wrong_id(self):
         with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):
