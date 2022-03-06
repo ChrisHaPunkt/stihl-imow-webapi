@@ -1,5 +1,7 @@
 # Changelog
 
+## Version 0.7.8 (2022-03-06)
+- Implement a logout function `ImowAPI.api_logout()`. Use within re-authentication
 ## Version 0.7.7 (2022-03-06)
 - Use more `async with`s
 ## Version 0.7.6 (2022-03-05)

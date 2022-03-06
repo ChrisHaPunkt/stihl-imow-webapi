@@ -19,7 +19,8 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.loop = asyncio.get_event_loop()
-        cls.imow = IMowApi()
+        cls.http_session = aiohttp.ClientSession()
+        cls.imow = IMowApi(aiohttp_session=cls.http_session)
         cls.loop.run_until_complete(cls.imow.get_token(EMAIL, PASSWORD))
         cls.test_mower = cls.loop.run_until_complete(
             cls.imow.receive_mower_by_name(MOWER_NAME)
@@ -40,7 +41,18 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
             # )
             self.initialized = True
 
-    def test_auth_with_email_and_password(self):
+    def test_logout_without_csrf(self):
+        old_csrf = self.imow.csrf_token
+        self.imow.csrf_token = ""
+        self.loop.run_until_complete(self.imow.api_logout())
+        self.imow.csrf_token = old_csrf
+        self.assertIs(
+            len(self.imow.access_token),
+            98,
+            msg="Expected new token has 98 chars",
+        )
+
+    def test_reauth_with_email_and_password(self):
         token_old = self.imow.access_token
 
         token_new, expire_time = self.loop.run_until_complete(
@@ -48,45 +60,63 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
                 EMAIL, PASSWORD, force_reauth=True, return_expire_time=True
             )
         )
-        self.loop.run_until_complete(
-            self.imow.close()
+        self.assertIs(
+            len(token_new), 98, msg="Expected new token has 98 chars"
         )
-        self.assertIs(len(token_new), 98, msg="Expected new token has 98 chars")
         self.assertNotEqual(
             token_old, token_new, msg="Expected old and new token differ"
         )
 
     def test_validate_token(self):
-        self.assertTrue(self.loop.run_until_complete(self.imow.validate_token()))
+        self.assertTrue(
+            self.loop.run_until_complete(self.imow.validate_token())
+        )
 
     def test_validate_token_invalid(self):
         with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):
-            self.loop.run_until_complete(self.imow.validate_token(
-                "MTAyMTQ1NTZAMzU3MTE4MjQ2ZGUwOGNmMDFiZDc4NTBmOTVmNmRhNTA0NzNlNjI0NTBmZTIzN2RkNzA1YTI1YWIwOTUxYmRhOB"))
+            self.loop.run_until_complete(
+                self.imow.validate_token(
+                    "MTAyMTQ1NTZAMzU3MTE4MjQ2ZGUwOGNmMDFiZDc4NTBmOTVmNmRhNTA0NzNlNjI0NTBmZTIzN2RkNzA1YTI1YWIwOTUxYmRhOB"
+                )
+            )
 
     def test_get_mowers(self):
         result = self.loop.run_until_complete(self.imow.receive_mowers())
-        self.assertIsInstance(result, list, msg="Expected array with mowers returned")
+        self.assertIsInstance(
+            result, list, msg="Expected array with mowers returned"
+        )
 
     def test_get_mower(self):
         result = self.loop.run_until_complete(
             self.imow.receive_mower_by_id(mower_id=self.test_mower.id)
         )
-        self.assertIsInstance(result, MowerState, msg="Expected Mower class returned")
+        self.assertIsInstance(
+            result, MowerState, msg="Expected Mower class returned"
+        )
 
     def test_get_status_by_name(self):
-        result = self.loop.run_until_complete(self.imow.get_status_by_name(MOWER_NAME))
-        self.assertIn(result["online"], [True, False], msg="Expected 200 HTTP Error Code")
+        result = self.loop.run_until_complete(
+            self.imow.get_status_by_name(MOWER_NAME)
+        )
+        self.assertIn(
+            result["online"],
+            [True, False],
+            msg="Expected 200 HTTP Error Code",
+        )
 
     def test_get_status_by_wrong_id(self):
         with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):
             result = self.loop.run_until_complete(
-                self.imow.get_status_by_id(mower_id=int(self.test_mower.id) + 1)
+                self.imow.get_status_by_id(
+                    mower_id=int(self.test_mower.id) + 1
+                )
             )
 
     def test_intent_to_dock_by_id(self):
         result = self.loop.run_until_complete(
-            self.imow.intent(IMowActions.TO_DOCKING, mower_id=self.test_mower.id)
+            self.imow.intent(
+                IMowActions.TO_DOCKING, mower_id=self.test_mower.id
+            )
         )
         self.assertIs(
             result.status,
@@ -111,7 +141,9 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
 
     def test_intent_start_mowing_with_defaults(self):
         result = self.loop.run_until_complete(
-            self.imow.intent(IMowActions.START_MOWING, mower_id=self.test_mower.id)
+            self.imow.intent(
+                IMowActions.START_MOWING, mower_id=self.test_mower.id
+            )
         )
         self.assertIs(
             result.status,
@@ -132,7 +164,8 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
     def test_intent_to_dock_by_mower_action_id(self):
         result = self.loop.run_until_complete(
             self.imow.intent(
-                IMowActions.TO_DOCKING, mower_external_id=self.test_mower.externalId
+                IMowActions.TO_DOCKING,
+                mower_external_id=self.test_mower.externalId,
             )
         )
         self.assertIs(

@@ -50,7 +50,11 @@ from imow.common.exceptions import (
 )
 from imow.common.messages import Messages
 from imow.common.mowerstate import MowerState
-from imow.common.package_descriptions import python_major, python_minor, package_name
+from imow.common.package_descriptions import (
+    python_major,
+    python_minor,
+    package_name,
+)
 
 logger = logging.getLogger(&#34;imow&#34;)
 
@@ -135,9 +139,9 @@ class IMowApi:
                 self.api_password = password
                 self.api_email = email
             if force_reauth:
-                await self.close()
-                self.csrf_token = None
-                self.requestId = None
+                await self.api_logout()
+                self.csrf_token = &#34;&#34;
+                self.requestId = &#34;&#34;
                 self.access_token: str = &#34;&#34;
                 self.token_expires: datetime = None
             if not self.api_email and not self.api_password:
@@ -152,6 +156,24 @@ class IMowApi:
             return self.access_token, self.token_expires
         else:
             return self.access_token
+
+    async def api_logout(self):
+        async with self.http_session.post(
+            &#34;https://oauth2.imow.stihl.com/authentication/logout/&#34;,
+            data={
+                &#34;csrf-token&#34;: self.csrf_token,
+                &#34;logoutUrl&#34;: &#34;https://app.imow.stihl.com&#34;,
+                &#34;clientId&#34;: &#34;9526273B-1477-47C6-801C-4356F58EF883&#34;,
+                &#34;cancelUrl&#34;: &#34;https://app.imow.stihl.com&#34;,
+            },
+        ) as resp:
+            await resp.read()
+        self.http_session.cookie_jar.clear_domain(
+            &#34;https://app.imow.stihl.com&#34;
+        )
+        self.http_session.cookie_jar.clear_domain(
+            &#34;https://oauth2.imow.stihl.com/&#34;
+        )
 
     async def validate_token(self, explicit_token: str = None) -&gt; bool:
         old_token = None
@@ -176,6 +198,7 @@ class IMowApi:
         :param password: stihl webapp login password
         :return: the newly created access token, and expire time besides the legacy response
         &#34;&#34;&#34;
+
         await self.__fetch_new_csrf_token_and_request_id()
         url = (
             f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
@@ -217,7 +240,6 @@ class IMowApi:
             &#34;.imow.stihl.com%2Fauthorization%2F%3Fresponse_type%3Dtoken%26client_id%3D9526273B-1477-47C6-801C&#34;
             &#34;-4356F58EF883%26redirect_uri%3Dhttps%253A%252F%252Fapp.imow.stihl.com%252F%2523%252Fauthorize%26state&#34;
         )
-
         response = await self.api_request(url, &#34;GET&#34;)
 
         soup = BeautifulSoup(await response.text(), &#34;html.parser&#34;)
@@ -243,7 +265,9 @@ class IMowApi:
             url_en = (
                 &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
             )
-            async with self.http_session.request(&#34;GET&#34;, url_en) as response_en:
+            async with self.http_session.request(
+                &#34;GET&#34;, url_en
+            ) as response_en:
                 i18n_en = json.loads(await response_en.text())
             self.messages_en = Messages(i18n_en)
             if self.lang != &#34;en&#34;:
@@ -308,7 +332,9 @@ class IMowApi:
         if headers:
             headers_obj.update(headers)
         try:
-            async with self.http_session.request(method, url, headers=headers_obj, data=payload) as response:
+            async with self.http_session.request(
+                method, url, headers=headers_obj, data=payload
+            ) as response:
                 await response.read()
                 response.raise_for_status()
                 return response
@@ -642,9 +668,9 @@ class IMowApi:
                 self.api_password = password
                 self.api_email = email
             if force_reauth:
-                await self.close()
-                self.csrf_token = None
-                self.requestId = None
+                await self.api_logout()
+                self.csrf_token = &#34;&#34;
+                self.requestId = &#34;&#34;
                 self.access_token: str = &#34;&#34;
                 self.token_expires: datetime = None
             if not self.api_email and not self.api_password:
@@ -659,6 +685,24 @@ class IMowApi:
             return self.access_token, self.token_expires
         else:
             return self.access_token
+
+    async def api_logout(self):
+        async with self.http_session.post(
+            &#34;https://oauth2.imow.stihl.com/authentication/logout/&#34;,
+            data={
+                &#34;csrf-token&#34;: self.csrf_token,
+                &#34;logoutUrl&#34;: &#34;https://app.imow.stihl.com&#34;,
+                &#34;clientId&#34;: &#34;9526273B-1477-47C6-801C-4356F58EF883&#34;,
+                &#34;cancelUrl&#34;: &#34;https://app.imow.stihl.com&#34;,
+            },
+        ) as resp:
+            await resp.read()
+        self.http_session.cookie_jar.clear_domain(
+            &#34;https://app.imow.stihl.com&#34;
+        )
+        self.http_session.cookie_jar.clear_domain(
+            &#34;https://oauth2.imow.stihl.com/&#34;
+        )
 
     async def validate_token(self, explicit_token: str = None) -&gt; bool:
         old_token = None
@@ -683,6 +727,7 @@ class IMowApi:
         :param password: stihl webapp login password
         :return: the newly created access token, and expire time besides the legacy response
         &#34;&#34;&#34;
+
         await self.__fetch_new_csrf_token_and_request_id()
         url = (
             f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
@@ -724,7 +769,6 @@ class IMowApi:
             &#34;.imow.stihl.com%2Fauthorization%2F%3Fresponse_type%3Dtoken%26client_id%3D9526273B-1477-47C6-801C&#34;
             &#34;-4356F58EF883%26redirect_uri%3Dhttps%253A%252F%252Fapp.imow.stihl.com%252F%2523%252Fauthorize%26state&#34;
         )
-
         response = await self.api_request(url, &#34;GET&#34;)
 
         soup = BeautifulSoup(await response.text(), &#34;html.parser&#34;)
@@ -750,7 +794,9 @@ class IMowApi:
             url_en = (
                 &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
             )
-            async with self.http_session.request(&#34;GET&#34;, url_en) as response_en:
+            async with self.http_session.request(
+                &#34;GET&#34;, url_en
+            ) as response_en:
                 i18n_en = json.loads(await response_en.text())
             self.messages_en = Messages(i18n_en)
             if self.lang != &#34;en&#34;:
@@ -815,7 +861,9 @@ class IMowApi:
         if headers:
             headers_obj.update(headers)
         try:
-            async with self.http_session.request(method, url, headers=headers_obj, data=payload) as response:
+            async with self.http_session.request(
+                method, url, headers=headers_obj, data=payload
+            ) as response:
                 await response.read()
                 response.raise_for_status()
                 return response
@@ -1064,6 +1112,34 @@ class IMowApi:
 </details>
 <h3>Methods</h3>
 <dl>
+<dt id="imow.api.IMowApi.api_logout"><code class="name flex">
+<span>async def <span class="ident">api_logout</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def api_logout(self):
+    async with self.http_session.post(
+        &#34;https://oauth2.imow.stihl.com/authentication/logout/&#34;,
+        data={
+            &#34;csrf-token&#34;: self.csrf_token,
+            &#34;logoutUrl&#34;: &#34;https://app.imow.stihl.com&#34;,
+            &#34;clientId&#34;: &#34;9526273B-1477-47C6-801C-4356F58EF883&#34;,
+            &#34;cancelUrl&#34;: &#34;https://app.imow.stihl.com&#34;,
+        },
+    ) as resp:
+        await resp.read()
+    self.http_session.cookie_jar.clear_domain(
+        &#34;https://app.imow.stihl.com&#34;
+    )
+    self.http_session.cookie_jar.clear_domain(
+        &#34;https://oauth2.imow.stihl.com/&#34;
+    )</code></pre>
+</details>
+</dd>
 <dt id="imow.api.IMowApi.api_request"><code class="name flex">
 <span>async def <span class="ident">api_request</span></span>(<span>self, url, method, payload=None, headers=None) ‑> aiohttp.client_reqrep.ClientResponse</span>
 </code></dt>
@@ -1122,7 +1198,9 @@ class IMowApi:
     if headers:
         headers_obj.update(headers)
     try:
-        async with self.http_session.request(method, url, headers=headers_obj, data=payload) as response:
+        async with self.http_session.request(
+            method, url, headers=headers_obj, data=payload
+        ) as response:
             await response.read()
             response.raise_for_status()
             return response
@@ -1190,7 +1268,9 @@ class IMowApi:
         url_en = (
             &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
         )
-        async with self.http_session.request(&#34;GET&#34;, url_en) as response_en:
+        async with self.http_session.request(
+            &#34;GET&#34;, url_en
+        ) as response_en:
             i18n_en = json.loads(await response_en.text())
         self.messages_en = Messages(i18n_en)
         if self.lang != &#34;en&#34;:
@@ -1366,9 +1446,9 @@ class IMowApi:
             self.api_password = password
             self.api_email = email
         if force_reauth:
-            await self.close()
-            self.csrf_token = None
-            self.requestId = None
+            await self.api_logout()
+            self.csrf_token = &#34;&#34;
+            self.requestId = &#34;&#34;
             self.access_token: str = &#34;&#34;
             self.token_expires: datetime = None
         if not self.api_email and not self.api_password:
@@ -1701,6 +1781,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
 <li>
 <h4><code><a title="imow.api.IMowApi" href="#imow.api.IMowApi">IMowApi</a></code></h4>
 <ul class="">
+<li><code><a title="imow.api.IMowApi.api_logout" href="#imow.api.IMowApi.api_logout">api_logout</a></code></li>
 <li><code><a title="imow.api.IMowApi.api_request" href="#imow.api.IMowApi.api_request">api_request</a></code></li>
 <li><code><a title="imow.api.IMowApi.check_api_maintenance" href="#imow.api.IMowApi.check_api_maintenance">check_api_maintenance</a></code></li>
 <li><code><a title="imow.api.IMowApi.close" href="#imow.api.IMowApi.close">close</a></code></li>

@@ -111,9 +111,9 @@ class IMowApi:
                 self.api_password = password
                 self.api_email = email
             if force_reauth:
-                await self.close()
-                self.csrf_token = None
-                self.requestId = None
+                await self.api_logout()
+                self.csrf_token = ""
+                self.requestId = ""
                 self.access_token: str = ""
                 self.token_expires: datetime = None
             if not self.api_email and not self.api_password:
@@ -128,6 +128,24 @@ class IMowApi:
             return self.access_token, self.token_expires
         else:
             return self.access_token
+
+    async def api_logout(self):
+        async with self.http_session.post(
+            "https://oauth2.imow.stihl.com/authentication/logout/",
+            data={
+                "csrf-token": self.csrf_token,
+                "logoutUrl": "https://app.imow.stihl.com",
+                "clientId": "9526273B-1477-47C6-801C-4356F58EF883",
+                "cancelUrl": "https://app.imow.stihl.com",
+            },
+        ) as resp:
+            await resp.read()
+        self.http_session.cookie_jar.clear_domain(
+            "https://app.imow.stihl.com"
+        )
+        self.http_session.cookie_jar.clear_domain(
+            "https://oauth2.imow.stihl.com/"
+        )
 
     async def validate_token(self, explicit_token: str = None) -> bool:
         old_token = None
@@ -152,6 +170,7 @@ class IMowApi:
         :param password: stihl webapp login password
         :return: the newly created access token, and expire time besides the legacy response
         """
+
         await self.__fetch_new_csrf_token_and_request_id()
         url = (
             f"{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}"
@@ -193,7 +212,6 @@ class IMowApi:
             ".imow.stihl.com%2Fauthorization%2F%3Fresponse_type%3Dtoken%26client_id%3D9526273B-1477-47C6-801C"
             "-4356F58EF883%26redirect_uri%3Dhttps%253A%252F%252Fapp.imow.stihl.com%252F%2523%252Fauthorize%26state"
         )
-
         response = await self.api_request(url, "GET")
 
         soup = BeautifulSoup(await response.text(), "html.parser")
