@@ -143,7 +143,7 @@ class MowerState:
         startpoint: any = &#34;0&#34;,
         duration: any = &#34;30&#34;,
     ) -&gt; None:
-        response = await self.imow.intent(
+        await self.imow.intent(
             imow_action=imow_action,
             startpoint=startpoint,
             duration=duration,
@@ -335,7 +335,7 @@ class MowerState:
         startpoint: any = &#34;0&#34;,
         duration: any = &#34;30&#34;,
     ) -&gt; None:
-        response = await self.imow.intent(
+        await self.imow.intent(
             imow_action=imow_action,
             startpoint=startpoint,
             duration=duration,
@@ -692,7 +692,7 @@ class MowerState:
     startpoint: any = &#34;0&#34;,
     duration: any = &#34;30&#34;,
 ) -&gt; None:
-    response = await self.imow.intent(
+    await self.imow.intent(
         imow_action=imow_action,
         startpoint=startpoint,
         duration=duration,

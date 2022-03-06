@@ -22,7 +22,11 @@ from imow.common.exceptions import (
 )
 from imow.common.messages import Messages
 from imow.common.mowerstate import MowerState
-from imow.common.package_descriptions import python_major, python_minor, package_name
+from imow.common.package_descriptions import (
+    python_major,
+    python_minor,
+    package_name,
+)
 
 logger = logging.getLogger("imow")
 
@@ -215,7 +219,9 @@ class IMowApi:
             url_en = (
                 "https://app.imow.stihl.com/assets/i18n/animations/en.json"
             )
-            async with self.http_session.request("GET", url_en) as response_en:
+            async with self.http_session.request(
+                "GET", url_en
+            ) as response_en:
                 i18n_en = json.loads(await response_en.text())
             self.messages_en = Messages(i18n_en)
             if self.lang != "en":
@@ -280,7 +286,9 @@ class IMowApi:
         if headers:
             headers_obj.update(headers)
         try:
-            async with self.http_session.request(method, url, headers=headers_obj, data=payload) as response:
+            async with self.http_session.request(
+                method, url, headers=headers_obj, data=payload
+            ) as response:
                 await response.read()
                 response.raise_for_status()
                 return response

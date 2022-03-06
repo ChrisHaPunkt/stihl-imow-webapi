@@ -50,7 +50,7 @@ from imow.common.exceptions import (
 )
 from imow.common.messages import Messages
 from imow.common.mowerstate import MowerState
-from imow.common.package_descriptions import *
+from imow.common.package_descriptions import python_major, python_minor, package_name
 
 logger = logging.getLogger(&#34;imow&#34;)
 
@@ -91,6 +91,7 @@ class IMowApi:
 
     async def close(self):
         &#34;&#34;&#34;Cleanup the aiohttp Session&#34;&#34;&#34;
+        await asyncio.sleep(0.250)
         await self.http_session.close()
 
     async def check_api_maintenance(self) -&gt; None:
@@ -134,7 +135,7 @@ class IMowApi:
                 self.api_password = password
                 self.api_email = email
             if force_reauth:
-                self.http_session = None
+                await self.close()
                 self.csrf_token = None
                 self.requestId = None
                 self.access_token: str = &#34;&#34;
@@ -176,7 +177,9 @@ class IMowApi:
         :return: the newly created access token, and expire time besides the legacy response
         &#34;&#34;&#34;
         await self.__fetch_new_csrf_token_and_request_id()
-        url = f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
+        url = (
+            f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
+        )
         encoded_mail = quote(email)
         encoded_password = quote(password)
         payload = (
@@ -227,29 +230,29 @@ class IMowApi:
             ).get(&#34;value&#34;)
         except AttributeError:
             raise ProcessLookupError(
-                &#34;Did not found necessary csrf token and/or request id in html source&#34;
+                &#34;Did not find necessary csrf token and/or request id in html source&#34;
             )
 
         self.csrf_token = upstream_csrf_token
         self.requestId = upstream_request_id
-        logger.debug(&#34;CSRF: new token and request id &lt;Redacted&gt;&#34;)
+        logger.debug(&#34;CSRF: new token and request id &lt;redacted&gt;&#34;)
         return self.csrf_token, self.requestId
 
     async def fetch_messages(self):
         try:
             url_en = (
-                f&#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
+                &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
             )
-            response_en = await self.http_session.request(&#34;GET&#34;, url_en)
-            i18n_en = json.loads(await response_en.text())
+            async with self.http_session.request(&#34;GET&#34;, url_en) as response_en:
+                i18n_en = json.loads(await response_en.text())
             self.messages_en = Messages(i18n_en)
             if self.lang != &#34;en&#34;:
                 url_user = f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json&#34;
-                response_user = await self.http_session.request(
+                async with self.http_session.request(
                     &#34;GET&#34;, url_user
-                )
-                i18n_user = json.loads(await response_user.text())
-                self.messages_user = Messages(i18n_user)
+                ) as response_user:
+                    i18n_user = json.loads(await response_user.text())
+                    self.messages_user = Messages(i18n_user)
             else:
                 self.messages_user = self.messages_en
 
@@ -305,12 +308,10 @@ class IMowApi:
         if headers:
             headers_obj.update(headers)
         try:
-
-            payload_ = await self.http_session.request(
-                method, url, headers=headers_obj, data=payload
-            )
-            payload_.raise_for_status()
-            return payload_
+            async with self.http_session.request(method, url, headers=headers_obj, data=payload) as response:
+                await response.read()
+                response.raise_for_status()
+                return response
         except ClientResponseError as e:
             if e.status == 500:
                 await self.check_api_maintenance()
@@ -388,7 +389,9 @@ class IMowApi:
         logger.debug(f&#34;Sent mower {mower_external_id} to {imow_action}&#34;)
         return response
 
-    async def update_setting(self, mower_id, setting, new_value) -&gt; MowerState:
+    async def update_setting(
+        self, mower_id, setting, new_value
+    ) -&gt; MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
 
         payload_fields = {
@@ -495,7 +498,7 @@ class IMowApi:
         )
 
     async def receive_mowers(self) -&gt; List[MowerState]:
-        logger.debug(f&#34;receive_mowers:&#34;)
+        logger.debug(&#34;receive_mowers:&#34;)
         mowers = []
         response = await self.api_request(f&#34;{IMOW_API_URI}/mowers/&#34;, &#34;GET&#34;)
         for mower in json.loads(await response.text()):
@@ -595,6 +598,7 @@ class IMowApi:
 
     async def close(self):
         &#34;&#34;&#34;Cleanup the aiohttp Session&#34;&#34;&#34;
+        await asyncio.sleep(0.250)
         await self.http_session.close()
 
     async def check_api_maintenance(self) -&gt; None:
@@ -638,7 +642,7 @@ class IMowApi:
                 self.api_password = password
                 self.api_email = email
             if force_reauth:
-                self.http_session = None
+                await self.close()
                 self.csrf_token = None
                 self.requestId = None
                 self.access_token: str = &#34;&#34;
@@ -680,7 +684,9 @@ class IMowApi:
         :return: the newly created access token, and expire time besides the legacy response
         &#34;&#34;&#34;
         await self.__fetch_new_csrf_token_and_request_id()
-        url = f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
+        url = (
+            f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
+        )
         encoded_mail = quote(email)
         encoded_password = quote(password)
         payload = (
@@ -731,29 +737,29 @@ class IMowApi:
             ).get(&#34;value&#34;)
         except AttributeError:
             raise ProcessLookupError(
-                &#34;Did not found necessary csrf token and/or request id in html source&#34;
+                &#34;Did not find necessary csrf token and/or request id in html source&#34;
             )
 
         self.csrf_token = upstream_csrf_token
         self.requestId = upstream_request_id
-        logger.debug(&#34;CSRF: new token and request id &lt;Redacted&gt;&#34;)
+        logger.debug(&#34;CSRF: new token and request id &lt;redacted&gt;&#34;)
         return self.csrf_token, self.requestId
 
     async def fetch_messages(self):
         try:
             url_en = (
-                f&#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
+                &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
             )
-            response_en = await self.http_session.request(&#34;GET&#34;, url_en)
-            i18n_en = json.loads(await response_en.text())
+            async with self.http_session.request(&#34;GET&#34;, url_en) as response_en:
+                i18n_en = json.loads(await response_en.text())
             self.messages_en = Messages(i18n_en)
             if self.lang != &#34;en&#34;:
                 url_user = f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json&#34;
-                response_user = await self.http_session.request(
+                async with self.http_session.request(
                     &#34;GET&#34;, url_user
-                )
-                i18n_user = json.loads(await response_user.text())
-                self.messages_user = Messages(i18n_user)
+                ) as response_user:
+                    i18n_user = json.loads(await response_user.text())
+                    self.messages_user = Messages(i18n_user)
             else:
                 self.messages_user = self.messages_en
 
@@ -809,12 +815,10 @@ class IMowApi:
         if headers:
             headers_obj.update(headers)
         try:
-
-            payload_ = await self.http_session.request(
-                method, url, headers=headers_obj, data=payload
-            )
-            payload_.raise_for_status()
-            return payload_
+            async with self.http_session.request(method, url, headers=headers_obj, data=payload) as response:
+                await response.read()
+                response.raise_for_status()
+                return response
         except ClientResponseError as e:
             if e.status == 500:
                 await self.check_api_maintenance()
@@ -892,7 +896,9 @@ class IMowApi:
         logger.debug(f&#34;Sent mower {mower_external_id} to {imow_action}&#34;)
         return response
 
-    async def update_setting(self, mower_id, setting, new_value) -&gt; MowerState:
+    async def update_setting(
+        self, mower_id, setting, new_value
+    ) -&gt; MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
 
         payload_fields = {
@@ -999,7 +1005,7 @@ class IMowApi:
         )
 
     async def receive_mowers(self) -&gt; List[MowerState]:
-        logger.debug(f&#34;receive_mowers:&#34;)
+        logger.debug(&#34;receive_mowers:&#34;)
         mowers = []
         response = await self.api_request(f&#34;{IMOW_API_URI}/mowers/&#34;, &#34;GET&#34;)
         for mower in json.loads(await response.text()):
@@ -1116,12 +1122,10 @@ class IMowApi:
     if headers:
         headers_obj.update(headers)
     try:
-
-        payload_ = await self.http_session.request(
-            method, url, headers=headers_obj, data=payload
-        )
-        payload_.raise_for_status()
-        return payload_
+        async with self.http_session.request(method, url, headers=headers_obj, data=payload) as response:
+            await response.read()
+            response.raise_for_status()
+            return response
     except ClientResponseError as e:
         if e.status == 500:
             await self.check_api_maintenance()
@@ -1168,6 +1172,7 @@ class IMowApi:
 </summary>
 <pre><code class="python">async def close(self):
     &#34;&#34;&#34;Cleanup the aiohttp Session&#34;&#34;&#34;
+    await asyncio.sleep(0.250)
     await self.http_session.close()</code></pre>
 </details>
 </dd>
@@ -1183,18 +1188,18 @@ class IMowApi:
 <pre><code class="python">async def fetch_messages(self):
     try:
         url_en = (
-            f&#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
+            &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
         )
-        response_en = await self.http_session.request(&#34;GET&#34;, url_en)
-        i18n_en = json.loads(await response_en.text())
+        async with self.http_session.request(&#34;GET&#34;, url_en) as response_en:
+            i18n_en = json.loads(await response_en.text())
         self.messages_en = Messages(i18n_en)
         if self.lang != &#34;en&#34;:
             url_user = f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json&#34;
-            response_user = await self.http_session.request(
+            async with self.http_session.request(
                 &#34;GET&#34;, url_user
-            )
-            i18n_user = json.loads(await response_user.text())
-            self.messages_user = Messages(i18n_user)
+            ) as response_user:
+                i18n_user = json.loads(await response_user.text())
+                self.messages_user = Messages(i18n_user)
         else:
             self.messages_user = self.messages_en
 
@@ -1361,7 +1366,7 @@ class IMowApi:
             self.api_password = password
             self.api_email = email
         if force_reauth:
-            self.http_session = None
+            await self.close()
             self.csrf_token = None
             self.requestId = None
             self.access_token: str = &#34;&#34;
@@ -1582,7 +1587,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">async def receive_mowers(self) -&gt; List[MowerState]:
-    logger.debug(f&#34;receive_mowers:&#34;)
+    logger.debug(&#34;receive_mowers:&#34;)
     mowers = []
     response = await self.api_request(f&#34;{IMOW_API_URI}/mowers/&#34;, &#34;GET&#34;)
     for mower in json.loads(await response.text()):
@@ -1600,7 +1605,9 @@ This is looked up, if only mower_name or mower_id is provided</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">async def update_setting(self, mower_id, setting, new_value) -&gt; MowerState:
+<pre><code class="python">async def update_setting(
+    self, mower_id, setting, new_value
+) -&gt; MowerState:
     mower_state = await self.receive_mower_by_id(mower_id)
 
     payload_fields = {
