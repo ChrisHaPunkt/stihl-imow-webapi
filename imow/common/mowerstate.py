@@ -34,7 +34,6 @@ class MowerState:
         )
 
     def update_state_messages(self):
-
         if self.status["mainState"] != self.ERROR_MAINSTATE_CODE:
             (
                 self.stateMessage["short"],
@@ -49,7 +48,6 @@ class MowerState:
             self.stateMessage["errorId"] = ""
 
         else:
-
             (
                 self.stateMessage["short"],
                 self.stateMessage["long"],

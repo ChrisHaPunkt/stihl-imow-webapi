@@ -53,7 +53,6 @@ class IMowApi:
         aiohttp_session: ClientSession = None,
         lang: str = "en",
     ) -> None:
-
         self.http_session: ClientSession = aiohttp_session
         self.csrf_token: str = ""
         self.requestId: str = ""
@@ -71,7 +70,6 @@ class IMowApi:
         await self.http_session.close()
 
     async def check_api_maintenance(self) -> None:
-
         url = "https://app-api-maintenance-r-euwe-4bf2d8.azurewebsites.net/maintenance/"
 
         headers = {
@@ -86,7 +84,6 @@ class IMowApi:
                 f'serverDisrupted: {status["serverDisrupted"]}, serverDown: {status["serverDown"]}, '
                 f'affectedTill {status["affectedTill"]}'
             )
-            await self.http_session.close()
             raise ApiMaintenanceError(msg)
 
     async def get_token(
@@ -106,7 +103,6 @@ class IMowApi:
         """
 
         if not self.access_token or force_reauth:
-
             if email and password:
                 self.api_password = password
                 self.api_email = email
@@ -254,7 +250,6 @@ class IMowApi:
 
         except ClientResponseError as e:
             if e.status == 404:
-                await self.close()
                 raise LanguageNotFoundError(
                     f"Language-File '{self.lang}.json' not found on imow upstream ("
                     f"https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json)"

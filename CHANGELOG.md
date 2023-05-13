@@ -1,5 +1,7 @@
 # Changelog
 
+## Version 0.7.9 (2023-05-13)
+- remove unnecessary http_session closes
 ## Version 0.7.8 (2022-03-06)
 - Implement a logout function `ImowAPI.api_logout()`. Use within re-authentication
 ## Version 0.7.7 (2022-03-06)
@@ -29,21 +31,21 @@ await mower.update_setting("gpsProtectionEnabled", True)
 ### Breaking Changes
 - `IMowApi.intent` Parameter `mower_action_id` is renamed to `mower_external_id` to match the upstream api expectation.
 ### Features
-- If an `api_request` is intended, and the used `access_token` expires in less than one day, it's automatically renewed. 
-  
+- If an `api_request` is intended, and the used `access_token` expires in less than one day, it's automatically renewed.
+
 ## Version 0.6.0 (2021-06-28)
 - ```python
   mower.machineError = 'M1120',
   mower.machineState = 'HOOD_BLOCKED',
   mower.stateMessage: dict = {
-      'short': 'Hood blocked', 
-      'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).', 
-      'legacyMessage': 'Abschaltung Automatikmode durch Bumper', 
-      'errorId': 'M1120', 
+      'short': 'Hood blocked',
+      'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).',
+      'legacyMessage': 'Abschaltung Automatikmode durch Bumper',
+      'errorId': 'M1120',
       'error': True
   }
   ```
-  
+
 ### Breaking Changes
 - Migrated all own MowerState attributes to camelCase to match the upstream attributes style.
   ```
@@ -54,7 +56,7 @@ await mower.update_setting("gpsProtectionEnabled", True)
 ## Version 0.5.2 (2021-06-15)
 
 ## Bugfixes
-- Also quote password string in auth request to support more special chars 
+- Also quote password string in auth request to support more special chars
 
 ## Version 0.5.1 (2021-06-13)
 
@@ -63,10 +65,10 @@ await mower.update_setting("gpsProtectionEnabled", True)
   mower.machine_error = 'M1120',
   mower.machine_state = 'HOOD_BLOCKED',
   mower.state_message: dict = {
-      'short': 'Hood blocked', 
-      'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).', 
-      'legacyMessage': 'Abschaltung Automatikmode durch Bumper', 
-      'errorId': 'M1120', 
+      'short': 'Hood blocked',
+      'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).',
+      'legacyMessage': 'Abschaltung Automatikmode durch Bumper',
+      'errorId': 'M1120',
       'error': True
   }
   ```
@@ -85,18 +87,18 @@ await mower.update_setting("gpsProtectionEnabled", True)
 - ```python
   mower.state_message -> dict
   {
-      'short': 'Hood blocked', 
-      'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).', 
-      'errorId': 'M1120', 
+      'short': 'Hood blocked',
+      'long': 'The hood is blocked. Please check the hood and press the OK button on your machine (M1120).',
+      'errorId': 'M1120',
       'error': True
   }
   ```
   The MowerState Class now provides a ```state_message``` property which gives a ``short`` and``long`` text for
   description (Besides an error indication and errorId). All error and status codes are now dynamically matched and
-  human readable available.  
+  human readable available.
   **This makes the ``MowerTask`` obsolete and it is removed with this release.**
-- ``api = IMowApi(lang="en")``  
-  The imow api can now be instanced with a language code (fallback to ``en``).   
+- ``api = IMowApi(lang="en")``
+  The imow api can now be instanced with a language code (fallback to ``en``).
   The ``state_message`` property displays the messages in the corresponding language.
 
 ## Version 0.4.5 (2021-06-01)
@@ -104,7 +106,7 @@ await mower.update_setting("gpsProtectionEnabled", True)
 ### Features
 
 - Add 2 new identified Tasks within `MowerTask` (Thanks to @lausser)
-- Add `check_api_maintenance()` method to `IMowAPI` Class. Check if the api server is currently under maintenance.  
+- Add `check_api_maintenance()` method to `IMowAPI` Class. Check if the api server is currently under maintenance.
   This method is automatically called if the api server returns a 500 error response for any request.
 - One should call the new `close()` method for the `IMowAPI` Class when finishing the api interactions to correctly
   close the http session.
