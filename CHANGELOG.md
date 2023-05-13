@@ -1,5 +1,7 @@
 # Changelog
 
+## Version 0.7.10 (2023-05-13)
+- Bugfix http_session not present on logout
 ## Version 0.7.9 (2023-05-13)
 - remove unnecessary http_session closes
 ## Version 0.7.8 (2022-03-06)

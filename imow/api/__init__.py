@@ -126,6 +126,9 @@ class IMowApi:
             return self.access_token
 
     async def api_logout(self):
+
+        if not self.http_session or self.http_session.closed:
+            self.http_session = aiohttp.ClientSession(raise_for_status=True)
         async with self.http_session.post(
             "https://oauth2.imow.stihl.com/authentication/logout/",
             data={
@@ -159,7 +162,7 @@ class IMowApi:
 
     async def __authenticate(
         self, email: str, password: str
-    ) -> [str, str, aiohttp.ClientResponse]:
+    ) -> List[str, str, aiohttp.ClientResponse]:
         """
         try the authentication request with fetched csrf and requestId payload
         :param email: stihl webapp login email non-url-encoded
@@ -196,7 +199,7 @@ class IMowApi:
         )
         return self.access_token, self.token_expires, response
 
-    async def __fetch_new_csrf_token_and_request_id(self) -> [str, str]:
+    async def __fetch_new_csrf_token_and_request_id(self) -> List[str, str]:
         """
         Fetch a new csrf_token and requestId to do the authentication as expected by the api
         csrf_token and requestId are used as payload within authentication
