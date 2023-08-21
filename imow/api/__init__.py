@@ -328,8 +328,13 @@ class IMowApi:
             necessary identifier for the mowers for actions.
             This is looked up, if only mower_name or mower_id is provided
 
-        :param startpoint: point from which the mowing shall start, default to 0
-        :param duration: minutes of intended mowing defaults, to 30 minutes
+        :param first_action_value_param: first argument passed into the action call request to the api. Can be one of the following contents:
+            A duration: minutes of intented mowing. Used by START_MOWING_FROM_POINT. Defaults to '30' minutes.
+            A starttime: a datetime without seconds when to start mowing. I.e. '2023-08-12 20:50' used by START_MOWING
+            
+        :param second_action_value_param: second argument passed into the action call request to the api. Can be one of the following contents:
+            A startpoint: from which the mowing shall start. Used by START_MOWING_FROM_POINT. Defaults to '0'.
+            An endtime: a datetime without seconds when to stop mowing. I.e. '2023-08-12 20:50' used by START_MOWING
         :return:
         """
         if not mower_external_id and not mower_id and not mower_name:
@@ -352,18 +357,24 @@ class IMowApi:
 
         url = f"{IMOW_API_URI}/mower-actions/"
 
-        for key, value in kwargs.items():
-            logger.debug("{0} = {1}".format(key, value))
-            if key == "duration":
-                first_action_value_param = value
-            if key == "startpoint":
-                second_action_value_param = value
+        given_kwargs = kwargs.items()
+        if len(given_kwargs) > 0:
+            logger.debug("Translating given intent **kwargs to action_value_param")
+            for key, value in given_kwargs:
+                logger.debug("  {0} = {1}".format(key, value))
+                if key == "duration":
+                    first_action_value_param = value
+                if key == "startpoint":
+                    second_action_value_param = value
 
-            if key == "starttime":
-                first_action_value_param = value
-            if key == "endtime":
-                second_action_value_param = value
+                if key == "starttime":
+                    first_action_value_param = value
+                if key == "endtime":
+                    second_action_value_param = value
+            logger.debug(f'  -> first_action_value_param: {first_action_value_param} ')
+            logger.debug(f'  -> second_action_value_param: {second_action_value_param} ')
 
+        logger.debug(f'Build action object for: {imow_action} -> "{imow_action.value}"')
         # Build other action values depending on given ACTION
         if (
             imow_action == IMowActions.START_MOWING_FROM_POINT
@@ -381,7 +392,7 @@ class IMowApi:
 
             action_value = f"{mower_external_id},{duration},{startpoint}"
 
-        elif imow_action == IMowActions.START_MOWING:  # by start- and endtime
+        elif imow_action == IMowActions.START_MOWING:  # by start- and/or endtime
             starttime = (
                 str(first_action_value_param)
                 if first_action_value_param
@@ -406,13 +417,19 @@ class IMowApi:
             # "0000000123456789,15,0" <MowerExternalId,DurationInMunitesDividedBy10,StartPoint>
             # "0000000123456789,15,0" <MowerExternalId,StartTime,EndTime>
         }
-        logger.debug(f"Intend: {action_object}")
-        print(f"Intend: {action_object}")
+        logger.debug(f"Intent sent as request body to imow api for mower with identifier: '{mower_name}/{mower_id}/{mower_external_id}'")
+        logger.debug(f"  {action_object}")
 
         payload = json.dumps(action_object)
 
         response = await self.api_request(url, "POST", payload=payload)
-        logger.debug(f"Sent mower {mower_external_id} to {imow_action}")
+        if response.ok:
+            logger.debug(f"Success: Created mower (extId:{mower_external_id}) ActionObject with contents:")
+            logger.debug(f" {action_object}")
+            logger.debug(f" -> (HTTP Status {response.status})")
+
+        else:
+            logger.error(f'No success with mower-action: {payload}')
         return response
 
     async def update_setting(self, mower_id, setting, new_value) -> MowerState:
@@ -506,6 +523,7 @@ class IMowApi:
         logger.debug(f"get_mower_action_id_from_id: {mower_id}")
         try:
             response = await self.receive_mower_by_id(mower_id)
+            logger.debug(f" - {response.externalId}")
             return response.externalId
         except ConnectionError:
             raise LookupError(
@@ -522,12 +540,13 @@ class IMowApi:
         )
 
     async def receive_mowers(self) -> List[MowerState]:
-        logger.debug("receive_mowers:")
+        logger.debug("receive_mowers: ")
         mowers = []
         response = await self.api_request(f"{IMOW_API_URI}/mowers/", "GET")
         for mower in json.loads(await response.text()):
             mowers.append(MowerState(mower, self))
-        logger.debug(mowers)
+        for mower in mowers:
+            logger.debug(f"  - {mower.name}")
         return mowers
 
     async def receive_mower_by_name(self, mower_name: str) -> MowerState:
@@ -576,5 +595,6 @@ class IMowApi:
             f"{IMOW_API_URI}/mowers/{mower_id}/start-points/", "GET"
         )
         start_points = json.loads(await response.text())
-        logger.debug(start_points)
+        for startpoint in start_points:
+            logger.debug(f"  - {startpoint}")
         return start_points

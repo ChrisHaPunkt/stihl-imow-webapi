@@ -105,7 +105,11 @@ from imow.api import IMowApi
 from imow.common.actions import IMowActions
 import asyncio
 import aiohttp
+import logging
 
+logger = logging.getLogger("imow")
+# Enable DEBUG output
+logging.basicConfig(level=logging.DEBUG)
 
 async def main():
     async with aiohttp.ClientSession() as session:
@@ -125,8 +129,16 @@ async def main():
         startpoints = await mower.get_startpoints()
         for i in range(len(startpoints)):
             print("Startpoint {}: {}".format(i, startpoints[i]))
-            
-        await mower.intent(IMowActions._START_MOWING_FROM_POINT, startpoint=1)
+        
+        # if your mower supports the "startMowing" call, use this action (i.e iMow 600 series)
+        await mower.intent(IMowActions.START_MOWING, starttime="2023-08-12 20:50")
+        # await mower.intent(IMowActions.START_MOWING, endtime="2023-08-12 22:50")
+        # await mower.intent(IMowActions.START_MOWING, starttime="2023-08-12 20:50", endtime="2023-08-12 22:50")
+
+        # if your mower supports the "startMowingFromPoint" call, use this action (i.e iMow 400 series)
+        await mower.intent(IMowActions.START_MOWING_FROM_POINT, duration=50)
+        # await mower.intent(IMowActions.START_MOWING_FROM_POINT, startpoint=2)
+        # await mower.intent(IMowActions.START_MOWING_FROM_POINT, duration=50, startpoint=2)
 
 
 if __name__ == "__main__":
