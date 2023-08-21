@@ -166,9 +166,7 @@ class IMowApi:
             },
         ) as resp:
             await resp.read()
-        self.http_session.cookie_jar.clear_domain(
-            &#34;https://app.imow.stihl.com&#34;
-        )
+        self.http_session.cookie_jar.clear_domain(&#34;https://app.imow.stihl.com&#34;)
         self.http_session.cookie_jar.clear_domain(
             &#34;https://oauth2.imow.stihl.com/&#34;
         )
@@ -198,9 +196,7 @@ class IMowApi:
         &#34;&#34;&#34;
 
         await self.__fetch_new_csrf_token_and_request_id()
-        url = (
-            f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
-        )
+        url = f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
         encoded_mail = quote(email)
         encoded_password = quote(password)
         payload = (
@@ -263,9 +259,7 @@ class IMowApi:
             url_en = (
                 &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
             )
-            async with self.http_session.request(
-                &#34;GET&#34;, url_en
-            ) as response_en:
+            async with self.http_session.request(&#34;GET&#34;, url_en) as response_en:
                 i18n_en = json.loads(await response_en.text())
             self.messages_en = Messages(i18n_en)
             if self.lang != &#34;en&#34;:
@@ -340,6 +334,27 @@ class IMowApi:
                 await self.check_api_maintenance()
             raise e
 
+    def validate_and_fix_datetime(self, value) -&gt; str:
+        &#34;&#34;&#34;
+        Try to convert and validate the given string from &#34;%Y-%m-%d %H:%M&#34; or &#34;%Y-%m-%d %H:%M:%S into a datetime object and give the needed &#34;%Y-%m-%d %H:%M&#34; string back.
+        :param value: the string tobe checked
+        :return: the correctly formated string
+        &#34;&#34;&#34;
+        try:
+            datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M&#34;)
+            return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
+        except ValueError as ve:
+            logger.warn(
+                f&#34;  Try fixing given time format because {ve} in {value}&#34;
+            )
+            try:
+                datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M:%S&#34;)
+                return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
+            except ValueError as ve2:
+                raise ValueError(
+                    f&#39;Unsupported &#34;time&#34; argument: {value} -&gt; {ve2}&#39;
+                )
+
     async def intent(
         self,
         imow_action: IMowActions,
@@ -364,11 +379,11 @@ class IMowApi:
 
         :param first_action_value_param: first argument passed into the action call request to the api. Can be one of the following contents:
             A duration: minutes of intented mowing. Used by START_MOWING_FROM_POINT. Defaults to &#39;30&#39; minutes.
-            A starttime: a datetime without seconds when to start mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
+            A starttime: a datetime when to start mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
 
         :param second_action_value_param: second argument passed into the action call request to the api. Can be one of the following contents:
             A startpoint: from which the mowing shall start. Used by START_MOWING_FROM_POINT. Defaults to &#39;0&#39;.
-            An endtime: a datetime without seconds when to stop mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
+            An endtime: a datetime when to stop mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
         :return:
         &#34;&#34;&#34;
         if not mower_external_id and not mower_id and not mower_name:
@@ -404,9 +419,14 @@ class IMowApi:
                     second_action_value_param = value
 
                 if key == &#34;starttime&#34;:
-                    first_action_value_param = value
+                    first_action_value_param = self.validate_and_fix_datetime(
+                        value
+                    )
                 if key == &#34;endtime&#34;:
-                    second_action_value_param = value
+                    second_action_value_param = self.validate_and_fix_datetime(
+                        value
+                    )
+
             logger.debug(
                 f&#34;  -&gt; first_action_value_param: {first_action_value_param} &#34;
             )
@@ -479,9 +499,7 @@ class IMowApi:
             logger.error(f&#34;No success with mower-action: {payload}&#34;)
         return response
 
-    async def update_setting(
-        self, mower_id, setting, new_value
-    ) -&gt; MowerState:
+    async def update_setting(self, mower_id, setting, new_value) -&gt; MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
 
         payload_fields = {
@@ -762,9 +780,7 @@ class IMowApi:
             },
         ) as resp:
             await resp.read()
-        self.http_session.cookie_jar.clear_domain(
-            &#34;https://app.imow.stihl.com&#34;
-        )
+        self.http_session.cookie_jar.clear_domain(&#34;https://app.imow.stihl.com&#34;)
         self.http_session.cookie_jar.clear_domain(
             &#34;https://oauth2.imow.stihl.com/&#34;
         )
@@ -794,9 +810,7 @@ class IMowApi:
         &#34;&#34;&#34;
 
         await self.__fetch_new_csrf_token_and_request_id()
-        url = (
-            f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
-        )
+        url = f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
         encoded_mail = quote(email)
         encoded_password = quote(password)
         payload = (
@@ -859,9 +873,7 @@ class IMowApi:
             url_en = (
                 &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
             )
-            async with self.http_session.request(
-                &#34;GET&#34;, url_en
-            ) as response_en:
+            async with self.http_session.request(&#34;GET&#34;, url_en) as response_en:
                 i18n_en = json.loads(await response_en.text())
             self.messages_en = Messages(i18n_en)
             if self.lang != &#34;en&#34;:
@@ -936,6 +948,27 @@ class IMowApi:
                 await self.check_api_maintenance()
             raise e
 
+    def validate_and_fix_datetime(self, value) -&gt; str:
+        &#34;&#34;&#34;
+        Try to convert and validate the given string from &#34;%Y-%m-%d %H:%M&#34; or &#34;%Y-%m-%d %H:%M:%S into a datetime object and give the needed &#34;%Y-%m-%d %H:%M&#34; string back.
+        :param value: the string tobe checked
+        :return: the correctly formated string
+        &#34;&#34;&#34;
+        try:
+            datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M&#34;)
+            return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
+        except ValueError as ve:
+            logger.warn(
+                f&#34;  Try fixing given time format because {ve} in {value}&#34;
+            )
+            try:
+                datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M:%S&#34;)
+                return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
+            except ValueError as ve2:
+                raise ValueError(
+                    f&#39;Unsupported &#34;time&#34; argument: {value} -&gt; {ve2}&#39;
+                )
+
     async def intent(
         self,
         imow_action: IMowActions,
@@ -960,11 +993,11 @@ class IMowApi:
 
         :param first_action_value_param: first argument passed into the action call request to the api. Can be one of the following contents:
             A duration: minutes of intented mowing. Used by START_MOWING_FROM_POINT. Defaults to &#39;30&#39; minutes.
-            A starttime: a datetime without seconds when to start mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
+            A starttime: a datetime when to start mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
 
         :param second_action_value_param: second argument passed into the action call request to the api. Can be one of the following contents:
             A startpoint: from which the mowing shall start. Used by START_MOWING_FROM_POINT. Defaults to &#39;0&#39;.
-            An endtime: a datetime without seconds when to stop mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
+            An endtime: a datetime when to stop mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
         :return:
         &#34;&#34;&#34;
         if not mower_external_id and not mower_id and not mower_name:
@@ -1000,9 +1033,14 @@ class IMowApi:
                     second_action_value_param = value
 
                 if key == &#34;starttime&#34;:
-                    first_action_value_param = value
+                    first_action_value_param = self.validate_and_fix_datetime(
+                        value
+                    )
                 if key == &#34;endtime&#34;:
-                    second_action_value_param = value
+                    second_action_value_param = self.validate_and_fix_datetime(
+                        value
+                    )
+
             logger.debug(
                 f&#34;  -&gt; first_action_value_param: {first_action_value_param} &#34;
             )
@@ -1075,9 +1113,7 @@ class IMowApi:
             logger.error(f&#34;No success with mower-action: {payload}&#34;)
         return response
 
-    async def update_setting(
-        self, mower_id, setting, new_value
-    ) -&gt; MowerState:
+    async def update_setting(self, mower_id, setting, new_value) -&gt; MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
 
         payload_fields = {
@@ -1268,9 +1304,7 @@ class IMowApi:
         },
     ) as resp:
         await resp.read()
-    self.http_session.cookie_jar.clear_domain(
-        &#34;https://app.imow.stihl.com&#34;
-    )
+    self.http_session.cookie_jar.clear_domain(&#34;https://app.imow.stihl.com&#34;)
     self.http_session.cookie_jar.clear_domain(
         &#34;https://oauth2.imow.stihl.com/&#34;
     )</code></pre>
@@ -1402,9 +1436,7 @@ class IMowApi:
         url_en = (
             &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
         )
-        async with self.http_session.request(
-            &#34;GET&#34;, url_en
-        ) as response_en:
+        async with self.http_session.request(&#34;GET&#34;, url_en) as response_en:
             i18n_en = json.loads(await response_en.text())
         self.messages_en = Messages(i18n_en)
         if self.lang != &#34;en&#34;:
@@ -1613,10 +1645,10 @@ necessary identifier for the mowers for actions.
 This is looked up, if only mower_name or mower_id is provided</p>
 <p>:param first_action_value_param: first argument passed into the action call request to the api. Can be one of the following contents:
 A duration: minutes of intented mowing. Used by START_MOWING_FROM_POINT. Defaults to '30' minutes.
-A starttime: a datetime without seconds when to start mowing. I.e. '2023-08-12 20:50' used by START_MOWING</p>
+A starttime: a datetime when to start mowing. I.e. '2023-08-12 20:50' used by START_MOWING</p>
 <p>:param second_action_value_param: second argument passed into the action call request to the api. Can be one of the following contents:
 A startpoint: from which the mowing shall start. Used by START_MOWING_FROM_POINT. Defaults to '0'.
-An endtime: a datetime without seconds when to stop mowing. I.e. '2023-08-12 20:50' used by START_MOWING
+An endtime: a datetime when to stop mowing. I.e. '2023-08-12 20:50' used by START_MOWING
 :return:</p></div>
 <details class="source">
 <summary>
@@ -1646,11 +1678,11 @@ An endtime: a datetime without seconds when to stop mowing. I.e. '2023-08-12 20:
 
     :param first_action_value_param: first argument passed into the action call request to the api. Can be one of the following contents:
         A duration: minutes of intented mowing. Used by START_MOWING_FROM_POINT. Defaults to &#39;30&#39; minutes.
-        A starttime: a datetime without seconds when to start mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
+        A starttime: a datetime when to start mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
 
     :param second_action_value_param: second argument passed into the action call request to the api. Can be one of the following contents:
         A startpoint: from which the mowing shall start. Used by START_MOWING_FROM_POINT. Defaults to &#39;0&#39;.
-        An endtime: a datetime without seconds when to stop mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
+        An endtime: a datetime when to stop mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
     :return:
     &#34;&#34;&#34;
     if not mower_external_id and not mower_id and not mower_name:
@@ -1686,9 +1718,14 @@ An endtime: a datetime without seconds when to stop mowing. I.e. '2023-08-12 20:
                 second_action_value_param = value
 
             if key == &#34;starttime&#34;:
-                first_action_value_param = value
+                first_action_value_param = self.validate_and_fix_datetime(
+                    value
+                )
             if key == &#34;endtime&#34;:
-                second_action_value_param = value
+                second_action_value_param = self.validate_and_fix_datetime(
+                    value
+                )
+
         logger.debug(
             f&#34;  -&gt; first_action_value_param: {first_action_value_param} &#34;
         )
@@ -1891,9 +1928,7 @@ An endtime: a datetime without seconds when to stop mowing. I.e. '2023-08-12 20:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">async def update_setting(
-    self, mower_id, setting, new_value
-) -&gt; MowerState:
+<pre><code class="python">async def update_setting(self, mower_id, setting, new_value) -&gt; MowerState:
     mower_state = await self.receive_mower_by_id(mower_id)
 
     payload_fields = {
@@ -1940,6 +1975,39 @@ An endtime: a datetime without seconds when to stop mowing. I.e. '2023-08-12 20:
     else:
         logger.info(f&#34;{setting} is already {new_value}.&#34;)
         return await self.receive_mower_by_id(mower_id)</code></pre>
+</details>
+</dd>
+<dt id="imow.api.IMowApi.validate_and_fix_datetime"><code class="name flex">
+<span>def <span class="ident">validate_and_fix_datetime</span></span>(<span>self, value) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Try to convert and validate the given string from "%Y-%m-%d %H:%M" or "%Y-%m-%d %H:%M:%S into a datetime object and give the needed "%Y-%m-%d %H:%M" string back.
+:param value: the string tobe checked
+:return: the correctly formated string</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def validate_and_fix_datetime(self, value) -&gt; str:
+    &#34;&#34;&#34;
+    Try to convert and validate the given string from &#34;%Y-%m-%d %H:%M&#34; or &#34;%Y-%m-%d %H:%M:%S into a datetime object and give the needed &#34;%Y-%m-%d %H:%M&#34; string back.
+    :param value: the string tobe checked
+    :return: the correctly formated string
+    &#34;&#34;&#34;
+    try:
+        datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M&#34;)
+        return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
+    except ValueError as ve:
+        logger.warn(
+            f&#34;  Try fixing given time format because {ve} in {value}&#34;
+        )
+        try:
+            datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M:%S&#34;)
+            return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
+        except ValueError as ve2:
+            raise ValueError(
+                f&#39;Unsupported &#34;time&#34; argument: {value} -&gt; {ve2}&#39;
+            )</code></pre>
 </details>
 </dd>
 <dt id="imow.api.IMowApi.validate_token"><code class="name flex">
@@ -2007,6 +2075,7 @@ An endtime: a datetime without seconds when to stop mowing. I.e. '2023-08-12 20:
 <li><code><a title="imow.api.IMowApi.receive_mower_week_mow_time_in_hours" href="#imow.api.IMowApi.receive_mower_week_mow_time_in_hours">receive_mower_week_mow_time_in_hours</a></code></li>
 <li><code><a title="imow.api.IMowApi.receive_mowers" href="#imow.api.IMowApi.receive_mowers">receive_mowers</a></code></li>
 <li><code><a title="imow.api.IMowApi.update_setting" href="#imow.api.IMowApi.update_setting">update_setting</a></code></li>
+<li><code><a title="imow.api.IMowApi.validate_and_fix_datetime" href="#imow.api.IMowApi.validate_and_fix_datetime">validate_and_fix_datetime</a></code></li>
 <li><code><a title="imow.api.IMowApi.validate_token" href="#imow.api.IMowApi.validate_token">validate_token</a></code></li>
 </ul>
 </li>

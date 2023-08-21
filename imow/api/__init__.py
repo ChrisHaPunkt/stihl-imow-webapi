@@ -138,9 +138,7 @@ class IMowApi:
             },
         ) as resp:
             await resp.read()
-        self.http_session.cookie_jar.clear_domain(
-            "https://app.imow.stihl.com"
-        )
+        self.http_session.cookie_jar.clear_domain("https://app.imow.stihl.com")
         self.http_session.cookie_jar.clear_domain(
             "https://oauth2.imow.stihl.com/"
         )
@@ -170,9 +168,7 @@ class IMowApi:
         """
 
         await self.__fetch_new_csrf_token_and_request_id()
-        url = (
-            f"{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}"
-        )
+        url = f"{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}"
         encoded_mail = quote(email)
         encoded_password = quote(password)
         payload = (
@@ -235,9 +231,7 @@ class IMowApi:
             url_en = (
                 "https://app.imow.stihl.com/assets/i18n/animations/en.json"
             )
-            async with self.http_session.request(
-                "GET", url_en
-            ) as response_en:
+            async with self.http_session.request("GET", url_en) as response_en:
                 i18n_en = json.loads(await response_en.text())
             self.messages_en = Messages(i18n_en)
             if self.lang != "en":
@@ -311,6 +305,7 @@ class IMowApi:
             if e.status == 500:
                 await self.check_api_maintenance()
             raise e
+
     def validate_and_fix_datetime(self, value) -> str:
         """
         Try to convert and validate the given string from "%Y-%m-%d %H:%M" or "%Y-%m-%d %H:%M:%S into a datetime object and give the needed "%Y-%m-%d %H:%M" string back.
@@ -318,16 +313,20 @@ class IMowApi:
         :return: the correctly formated string
         """
         try:
-            datetime_object = datetime.strptime(value, '%Y-%m-%d %H:%M')
+            datetime_object = datetime.strptime(value, "%Y-%m-%d %H:%M")
             return datetime_object.strftime("%Y-%m-%d %H:%M")
         except ValueError as ve:
-            logger.warn(f'  Try fixing given time format because {ve} in {value}')
+            logger.warn(
+                f"  Try fixing given time format because {ve} in {value}"
+            )
             try:
-                datetime_object = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+                datetime_object = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
                 return datetime_object.strftime("%Y-%m-%d %H:%M")
             except ValueError as ve2:
-                raise ValueError(f'Unsupported "time" argument: {value} -> {ve2}')
-            
+                raise ValueError(
+                    f'Unsupported "time" argument: {value} -> {ve2}'
+                )
+
     async def intent(
         self,
         imow_action: IMowActions,
@@ -392,10 +391,14 @@ class IMowApi:
                     second_action_value_param = value
 
                 if key == "starttime":
-                    first_action_value_param = self.validate_and_fix_datetime(value)                       
+                    first_action_value_param = self.validate_and_fix_datetime(
+                        value
+                    )
                 if key == "endtime":
-                    second_action_value_param = self.validate_and_fix_datetime(value)    
-                        
+                    second_action_value_param = self.validate_and_fix_datetime(
+                        value
+                    )
+
             logger.debug(
                 f"  -> first_action_value_param: {first_action_value_param} "
             )
@@ -457,20 +460,18 @@ class IMowApi:
 
         payload = json.dumps(action_object)
 
-        #response = await self.api_request(url, "POST", payload=payload)
-        #if response.ok:
-        #    logger.debug(
-        #        f"Success: Created mower (extId:{mower_external_id}) ActionObject with contents:"
-        #    )
-        #    logger.debug(f" {action_object}")
-        #    logger.debug(f" -> (HTTP Status {response.status})")
-        #else:
-        #    logger.error(f"No success with mower-action: {payload}")
-        return True #response
+        response = await self.api_request(url, "POST", payload=payload)
+        if response.ok:
+            logger.debug(
+                f"Success: Created mower (extId:{mower_external_id}) ActionObject with contents:"
+            )
+            logger.debug(f" {action_object}")
+            logger.debug(f" -> (HTTP Status {response.status})")
+        else:
+            logger.error(f"No success with mower-action: {payload}")
+        return response
 
-    async def update_setting(
-        self, mower_id, setting, new_value
-    ) -> MowerState:
+    async def update_setting(self, mower_id, setting, new_value) -> MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
 
         payload_fields = {
