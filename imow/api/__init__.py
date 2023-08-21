@@ -311,7 +311,23 @@ class IMowApi:
             if e.status == 500:
                 await self.check_api_maintenance()
             raise e
-
+    def validate_and_fix_datetime(self, value) -> str:
+        """
+        Try to convert and validate the given string from "%Y-%m-%d %H:%M" or "%Y-%m-%d %H:%M:%S into a datetime object and give the needed "%Y-%m-%d %H:%M" string back.
+        :param value: the string tobe checked
+        :return: the correctly formated string
+        """
+        try:
+            datetime_object = datetime.strptime(value, '%Y-%m-%d %H:%M')
+            return datetime_object.strftime("%Y-%m-%d %H:%M")
+        except ValueError as ve:
+            logger.warn(f'  Try fixing given time format because {ve} in {value}')
+            try:
+                datetime_object = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+                return datetime_object.strftime("%Y-%m-%d %H:%M")
+            except ValueError as ve2:
+                raise ValueError(f'Unsupported "time" argument: {value} -> {ve2}')
+            
     async def intent(
         self,
         imow_action: IMowActions,
@@ -336,11 +352,11 @@ class IMowApi:
 
         :param first_action_value_param: first argument passed into the action call request to the api. Can be one of the following contents:
             A duration: minutes of intented mowing. Used by START_MOWING_FROM_POINT. Defaults to '30' minutes.
-            A starttime: a datetime without seconds when to start mowing. I.e. '2023-08-12 20:50' used by START_MOWING
+            A starttime: a datetime when to start mowing. I.e. '2023-08-12 20:50' used by START_MOWING
 
         :param second_action_value_param: second argument passed into the action call request to the api. Can be one of the following contents:
             A startpoint: from which the mowing shall start. Used by START_MOWING_FROM_POINT. Defaults to '0'.
-            An endtime: a datetime without seconds when to stop mowing. I.e. '2023-08-12 20:50' used by START_MOWING
+            An endtime: a datetime when to stop mowing. I.e. '2023-08-12 20:50' used by START_MOWING
         :return:
         """
         if not mower_external_id and not mower_id and not mower_name:
@@ -376,9 +392,10 @@ class IMowApi:
                     second_action_value_param = value
 
                 if key == "starttime":
-                    first_action_value_param = value
+                    first_action_value_param = self.validate_and_fix_datetime(value)                       
                 if key == "endtime":
-                    second_action_value_param = value
+                    second_action_value_param = self.validate_and_fix_datetime(value)    
+                        
             logger.debug(
                 f"  -> first_action_value_param: {first_action_value_param} "
             )
@@ -440,16 +457,16 @@ class IMowApi:
 
         payload = json.dumps(action_object)
 
-        response = await self.api_request(url, "POST", payload=payload)
-        if response.ok:
-            logger.debug(
-                f"Success: Created mower (extId:{mower_external_id}) ActionObject with contents:"
-            )
-            logger.debug(f" {action_object}")
-            logger.debug(f" -> (HTTP Status {response.status})")
-        else:
-            logger.error(f"No success with mower-action: {payload}")
-        return response
+        #response = await self.api_request(url, "POST", payload=payload)
+        #if response.ok:
+        #    logger.debug(
+        #        f"Success: Created mower (extId:{mower_external_id}) ActionObject with contents:"
+        #    )
+        #    logger.debug(f" {action_object}")
+        #    logger.debug(f" -> (HTTP Status {response.status})")
+        #else:
+        #    logger.error(f"No success with mower-action: {payload}")
+        return True #response
 
     async def update_setting(
         self, mower_id, setting, new_value
