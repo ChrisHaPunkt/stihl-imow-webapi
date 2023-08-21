@@ -84,9 +84,7 @@ class Messages:
                 "mow",
                 "green",
             ),
-            Message(
-                "1343", "Im Dock", 6, "--", 2, "Im Dock", "dock", "green"
-            ),
+            Message("1343", "Im Dock", 6, "--", 2, "Im Dock", "dock", "green"),
             Message("1344", "Laden", 7, "--", 2, "Laden", "charge", "green"),
             Message(
                 "1345",

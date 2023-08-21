@@ -110,14 +110,16 @@ class MowerState:
     async def intent(
         self,
         imow_action: IMowActions,
-        startpoint: any = "0",
-        duration: any = "30",
+        first_action_value_param: any = "",
+        second_action_value_param: any = "",
+        **kwargs
     ) -> None:
         await self.imow.intent(
             imow_action=imow_action,
-            startpoint=startpoint,
-            duration=duration,
+            first_action_value_param=first_action_value_param,
+            second_action_value_param=second_action_value_param,
             mower_external_id=self.externalId,
+            **kwargs
         )
 
     accountId: str = {str}

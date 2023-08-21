@@ -81,7 +81,6 @@ class IMowApi:
         aiohttp_session: ClientSession = None,
         lang: str = &#34;en&#34;,
     ) -&gt; None:
-
         self.http_session: ClientSession = aiohttp_session
         self.csrf_token: str = &#34;&#34;
         self.requestId: str = &#34;&#34;
@@ -99,7 +98,6 @@ class IMowApi:
         await self.http_session.close()
 
     async def check_api_maintenance(self) -&gt; None:
-
         url = &#34;https://app-api-maintenance-r-euwe-4bf2d8.azurewebsites.net/maintenance/&#34;
 
         headers = {
@@ -114,7 +112,6 @@ class IMowApi:
                 f&#39;serverDisrupted: {status[&#34;serverDisrupted&#34;]}, serverDown: {status[&#34;serverDown&#34;]}, &#39;
                 f&#39;affectedTill {status[&#34;affectedTill&#34;]}&#39;
             )
-            await self.http_session.close()
             raise ApiMaintenanceError(msg)
 
     async def get_token(
@@ -134,7 +131,6 @@ class IMowApi:
         &#34;&#34;&#34;
 
         if not self.access_token or force_reauth:
-
             if email and password:
                 self.api_password = password
                 self.api_email = email
@@ -145,9 +141,7 @@ class IMowApi:
                 self.access_token: str = &#34;&#34;
                 self.token_expires: datetime = None
             if not self.api_email and not self.api_password:
-                raise LoginError(
-                    &#34;Got no credentials to authenticate, please provide&#34;
-                )
+                raise LoginError(&#34;Got no credentials to authenticate, please provide&#34;)
             await self.__authenticate(self.api_email, self.api_password)
             logger.debug(&#34;Get Token: Re-Authenticate&#34;)
 
@@ -158,6 +152,8 @@ class IMowApi:
             return self.access_token
 
     async def api_logout(self):
+        if not self.http_session or self.http_session.closed:
+            self.http_session = aiohttp.ClientSession(raise_for_status=True)
         async with self.http_session.post(
             &#34;https://oauth2.imow.stihl.com/authentication/logout/&#34;,
             data={
@@ -168,12 +164,8 @@ class IMowApi:
             },
         ) as resp:
             await resp.read()
-        self.http_session.cookie_jar.clear_domain(
-            &#34;https://app.imow.stihl.com&#34;
-        )
-        self.http_session.cookie_jar.clear_domain(
-            &#34;https://oauth2.imow.stihl.com/&#34;
-        )
+        self.http_session.cookie_jar.clear_domain(&#34;https://app.imow.stihl.com&#34;)
+        self.http_session.cookie_jar.clear_domain(&#34;https://oauth2.imow.stihl.com/&#34;)
 
     async def validate_token(self, explicit_token: str = None) -&gt; bool:
         old_token = None
@@ -191,7 +183,7 @@ class IMowApi:
 
     async def __authenticate(
         self, email: str, password: str
-    ) -&gt; [str, str, aiohttp.ClientResponse]:
+    ) -&gt; List[str, str, aiohttp.ClientResponse]:
         &#34;&#34;&#34;
         try the authentication request with fetched csrf and requestId payload
         :param email: stihl webapp login email non-url-encoded
@@ -200,9 +192,7 @@ class IMowApi:
         &#34;&#34;&#34;
 
         await self.__fetch_new_csrf_token_and_request_id()
-        url = (
-            f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
-        )
+        url = f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
         encoded_mail = quote(email)
         encoded_password = quote(password)
         payload = (
@@ -212,9 +202,7 @@ class IMowApi:
         headers = {
             &#34;Content-Type&#34;: &#34;application/x-www-form-urlencoded&#34;,
         }
-        response = await self.api_request(
-            url, &#34;POST&#34;, payload=payload, headers=headers
-        )
+        response = await self.api_request(url, &#34;POST&#34;, payload=payload, headers=headers)
 
         response_url_query_args = furl(response.real_url).fragment.args
         if &#34;access_token&#34; not in response_url_query_args:
@@ -228,7 +216,7 @@ class IMowApi:
         )
         return self.access_token, self.token_expires, response
 
-    async def __fetch_new_csrf_token_and_request_id(self) -&gt; [str, str]:
+    async def __fetch_new_csrf_token_and_request_id(self) -&gt; List[str, str]:
         &#34;&#34;&#34;
         Fetch a new csrf_token and requestId to do the authentication as expected by the api
         csrf_token and requestId are used as payload within authentication
@@ -244,12 +232,10 @@ class IMowApi:
 
         soup = BeautifulSoup(await response.text(), &#34;html.parser&#34;)
         try:
-            upstream_csrf_token = soup.find(
-                &#34;input&#34;, {&#34;name&#34;: &#34;csrf-token&#34;}
-            ).get(&#34;value&#34;)
-            upstream_request_id = soup.find(
-                &#34;input&#34;, {&#34;name&#34;: &#34;requestId&#34;}
-            ).get(&#34;value&#34;)
+            upstream_csrf_token = soup.find(&#34;input&#34;, {&#34;name&#34;: &#34;csrf-token&#34;}).get(
+                &#34;value&#34;
+            )
+            upstream_request_id = soup.find(&#34;input&#34;, {&#34;name&#34;: &#34;requestId&#34;}).get(&#34;value&#34;)
         except AttributeError:
             raise ProcessLookupError(
                 &#34;Did not find necessary csrf token and/or request id in html source&#34;
@@ -262,19 +248,13 @@ class IMowApi:
 
     async def fetch_messages(self):
         try:
-            url_en = (
-                &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
-            )
-            async with self.http_session.request(
-                &#34;GET&#34;, url_en
-            ) as response_en:
+            url_en = &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
+            async with self.http_session.request(&#34;GET&#34;, url_en) as response_en:
                 i18n_en = json.loads(await response_en.text())
             self.messages_en = Messages(i18n_en)
             if self.lang != &#34;en&#34;:
                 url_user = f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json&#34;
-                async with self.http_session.request(
-                    &#34;GET&#34;, url_user
-                ) as response_user:
+                async with self.http_session.request(&#34;GET&#34;, url_user) as response_user:
                     i18n_user = json.loads(await response_user.text())
                     self.messages_user = Messages(i18n_user)
             else:
@@ -282,7 +262,6 @@ class IMowApi:
 
         except ClientResponseError as e:
             if e.status == 404:
-                await self.close()
                 raise LanguageNotFoundError(
                     f&#34;Language-File &#39;{self.lang}.json&#39; not found on imow upstream (&#34;
                     f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json)&#34;
@@ -303,10 +282,7 @@ class IMowApi:
             self.http_session = aiohttp.ClientSession(raise_for_status=True)
         if not self.messages_en:
             await self.fetch_messages()
-        if (
-            self.token_expires
-            and (self.token_expires - datetime.now()).days &lt;= 1
-        ):
+        if self.token_expires and (self.token_expires - datetime.now()).days &lt;= 1:
             logger.info(
                 &#34;Fetching new access_token because old one expires in less than 1 day&#34;
             )
@@ -349,8 +325,9 @@ class IMowApi:
         mower_name: str = &#34;&#34;,
         mower_id: str = &#34;&#34;,
         mower_external_id: str = &#34;&#34;,
-        startpoint: any = &#34;0&#34;,
-        duration: any = &#34;30&#34;,
+        first_action_value_param: any = &#34;&#34;,
+        second_action_value_param: any = &#34;&#34;,
+        **kwargs
     ) -&gt; aiohttp.ClientResponse:
         &#34;&#34;&#34;
         Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
@@ -373,13 +350,9 @@ class IMowApi:
                 &#34;Need some mower to work on. Please specify mower_[name|id|action_id]&#34;
             )
         if not mower_external_id and mower_name:
-            mower_external_id = await self.get_mower_action_id_from_name(
-                mower_name
-            )
+            mower_external_id = await self.get_mower_action_id_from_name(mower_name)
         if not mower_external_id and mower_id:
-            mower_external_id = await self.get_mower_action_id_from_id(
-                mower_id
-            )
+            mower_external_id = await self.get_mower_action_id_from_id(mower_id)
 
         if len(mower_external_id) &lt; 16:
             raise AttributeError(
@@ -388,18 +361,49 @@ class IMowApi:
 
         url = f&#34;{IMOW_API_URI}/mower-actions/&#34;
 
-        # Check if the user provides a timestamp as duration. We need to pass this plain if so (starttime)
-        first_action_value_appendix = f&#34;, {duration if &#39;-&#39; in str(duration) else str(int(duration) / 10)}&#34;
-        if &#34;-&#34; in str(duration) and startpoint == &#34;0&#34;:
-            second_action_value_appendix = &#34;&#34;
-        else:
-            second_action_value_appendix = f&#34;, {str(startpoint)}&#34;
+        for key, value in kwargs.items():
+            logger.debug(&#34;{0} = {1}&#34;.format(key, value))
+            if key == &#34;duration&#34;:
+                first_action_value_param = value
+            if key == &#34;startpoint&#34;:
+                second_action_value_param = value
+                
+            if key == &#34;starttime&#34;:
+                first_action_value_param = value
+            if key == &#34;endtime&#34;:
+                second_action_value_param = value
+                
+        # Build other action values depending on given ACTION
+        if (
+            imow_action == IMowActions.START_MOWING_FROM_POINT
+        ):  # Add the duration and startpoint parameter
+            duration = (
+                str(int(first_action_value_param) / 10)
+                if first_action_value_param
+                else 30 / 10
+            )
+            startpoint = (
+                str(second_action_value_param) if second_action_value_param else &#34;0&#34;
+            )
 
-        action_value = (
-            f&#34;{mower_external_id}{first_action_value_appendix}{second_action_value_appendix}&#34;
-            if imow_action == IMowActions.START_MOWING
-            else mower_external_id
-        )
+            action_value = f&#34;{mower_external_id},{duration},{startpoint}&#34;
+
+        elif imow_action == IMowActions.START_MOWING:  # by start- and endtime
+            starttime = (
+                str(first_action_value_param)
+                if first_action_value_param
+                else datetime.now().strftime(&#34;%Y-%m-%d %H:%M&#34;)
+            )
+            endtime = (
+                str(second_action_value_param) if second_action_value_param != &#34;&#34; else None
+            )
+            if endtime:
+                action_value = f&#34;{mower_external_id},{starttime},{endtime}&#34;
+            else:
+                action_value = f&#34;{mower_external_id},{starttime}&#34;
+
+        else:
+            action_value = mower_external_id
 
         action_object = {
             &#34;actionName&#34;: imow_action.value,
@@ -408,16 +412,15 @@ class IMowApi:
             # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,StartTime,EndTime&gt;
         }
         logger.debug(f&#34;Intend: {action_object}&#34;)
+        print(f&#34;Intend: {action_object}&#34;)
 
         payload = json.dumps(action_object)
 
-        response = await self.api_request(url, &#34;POST&#34;, payload=payload)
+      #  response = await self.api_request(url, &#34;POST&#34;, payload=payload)
         logger.debug(f&#34;Sent mower {mower_external_id} to {imow_action}&#34;)
-        return response
+        return True # response
 
-    async def update_setting(
-        self, mower_id, setting, new_value
-    ) -&gt; MowerState:
+    async def update_setting(self, mower_id, setting, new_value) -&gt; MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
 
         payload_fields = {
@@ -470,9 +473,7 @@ class IMowApi:
         for mower in await self.receive_mowers():
             if mower.name == mower_name:
                 return mower.status
-        raise LookupError(
-            f&#34;Mower with name {mower_name} not found in upstream&#34;
-        )
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
 
     async def get_status_by_id(self, mower_id=(str, int)) -&gt; dict:
         if not type(mower_id) == str:
@@ -482,9 +483,7 @@ class IMowApi:
             response = await self.receive_mower_by_id(mower_id)
             return response.status
         except ConnectionError:
-            raise LookupError(
-                f&#34;Mower with id {mower_id} not found in upstream&#34;
-            )
+            raise LookupError(f&#34;Mower with id {mower_id} not found in upstream&#34;)
 
     async def get_status_by_action_id(self, mower_action_id: str) -&gt; dict:
         logger.debug(f&#34;get_status_by_action_id: {mower_action_id}&#34;)
@@ -500,9 +499,7 @@ class IMowApi:
         for mower in await self.receive_mowers():
             if mower.name == mower_name:
                 return mower.externalId
-        raise LookupError(
-            f&#34;Mower with name {mower_name} not found in upstream&#34;
-        )
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
 
     async def get_mower_action_id_from_id(self, mower_id: str) -&gt; str:
         logger.debug(f&#34;get_mower_action_id_from_id: {mower_id}&#34;)
@@ -510,18 +507,14 @@ class IMowApi:
             response = await self.receive_mower_by_id(mower_id)
             return response.externalId
         except ConnectionError:
-            raise LookupError(
-                f&#34;Mower with id {mower_id} not found in upstream&#34;
-            )
+            raise LookupError(f&#34;Mower with id {mower_id} not found in upstream&#34;)
 
     async def get_mower_id_from_name(self, mower_name: str) -&gt; str:
         logger.debug(f&#34;get_mower_id_from_name: {mower_name}&#34;)
         for mower in await self.receive_mowers():
             if mower.name == mower_name:
                 return mower.id
-        raise LookupError(
-            f&#34;Mower with name {mower_name} not found in upstream&#34;
-        )
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
 
     async def receive_mowers(self) -&gt; List[MowerState]:
         logger.debug(&#34;receive_mowers:&#34;)
@@ -538,15 +531,11 @@ class IMowApi:
             if mower.name == mower_name:
                 logger.debug(mower)
                 return mower
-        raise LookupError(
-            f&#34;Mower with name {mower_name} not found in upstream&#34;
-        )
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
 
     async def receive_mower_by_id(self, mower_id: str) -&gt; MowerState:
         logger.debug(f&#34;receive_mower: {mower_id}&#34;)
-        response = await self.api_request(
-            f&#34;{IMOW_API_URI}/mowers/{mower_id}/&#34;, &#34;GET&#34;
-        )
+        response = await self.api_request(f&#34;{IMOW_API_URI}/mowers/{mower_id}/&#34;, &#34;GET&#34;)
         mower = MowerState(json.loads(await response.text()), self)
         logger.debug(mower)
         return mower
@@ -560,9 +549,7 @@ class IMowApi:
         logger.debug(stats)
         return stats
 
-    async def receive_mower_week_mow_time_in_hours(
-        self, mower_id: str
-    ) -&gt; dict:
+    async def receive_mower_week_mow_time_in_hours(self, mower_id: str) -&gt; dict:
         logger.debug(f&#34;receive_mower_week_mow_time_in_hours: {mower_id}&#34;)
         response = await self.api_request(
             f&#34;{IMOW_API_URI}/mowers/{mower_id}/statistics/week-mow-time-in-hours/&#34;,
@@ -610,7 +597,6 @@ class IMowApi:
         aiohttp_session: ClientSession = None,
         lang: str = &#34;en&#34;,
     ) -&gt; None:
-
         self.http_session: ClientSession = aiohttp_session
         self.csrf_token: str = &#34;&#34;
         self.requestId: str = &#34;&#34;
@@ -628,7 +614,6 @@ class IMowApi:
         await self.http_session.close()
 
     async def check_api_maintenance(self) -&gt; None:
-
         url = &#34;https://app-api-maintenance-r-euwe-4bf2d8.azurewebsites.net/maintenance/&#34;
 
         headers = {
@@ -643,7 +628,6 @@ class IMowApi:
                 f&#39;serverDisrupted: {status[&#34;serverDisrupted&#34;]}, serverDown: {status[&#34;serverDown&#34;]}, &#39;
                 f&#39;affectedTill {status[&#34;affectedTill&#34;]}&#39;
             )
-            await self.http_session.close()
             raise ApiMaintenanceError(msg)
 
     async def get_token(
@@ -663,7 +647,6 @@ class IMowApi:
         &#34;&#34;&#34;
 
         if not self.access_token or force_reauth:
-
             if email and password:
                 self.api_password = password
                 self.api_email = email
@@ -674,9 +657,7 @@ class IMowApi:
                 self.access_token: str = &#34;&#34;
                 self.token_expires: datetime = None
             if not self.api_email and not self.api_password:
-                raise LoginError(
-                    &#34;Got no credentials to authenticate, please provide&#34;
-                )
+                raise LoginError(&#34;Got no credentials to authenticate, please provide&#34;)
             await self.__authenticate(self.api_email, self.api_password)
             logger.debug(&#34;Get Token: Re-Authenticate&#34;)
 
@@ -687,6 +668,8 @@ class IMowApi:
             return self.access_token
 
     async def api_logout(self):
+        if not self.http_session or self.http_session.closed:
+            self.http_session = aiohttp.ClientSession(raise_for_status=True)
         async with self.http_session.post(
             &#34;https://oauth2.imow.stihl.com/authentication/logout/&#34;,
             data={
@@ -697,12 +680,8 @@ class IMowApi:
             },
         ) as resp:
             await resp.read()
-        self.http_session.cookie_jar.clear_domain(
-            &#34;https://app.imow.stihl.com&#34;
-        )
-        self.http_session.cookie_jar.clear_domain(
-            &#34;https://oauth2.imow.stihl.com/&#34;
-        )
+        self.http_session.cookie_jar.clear_domain(&#34;https://app.imow.stihl.com&#34;)
+        self.http_session.cookie_jar.clear_domain(&#34;https://oauth2.imow.stihl.com/&#34;)
 
     async def validate_token(self, explicit_token: str = None) -&gt; bool:
         old_token = None
@@ -720,7 +699,7 @@ class IMowApi:
 
     async def __authenticate(
         self, email: str, password: str
-    ) -&gt; [str, str, aiohttp.ClientResponse]:
+    ) -&gt; List[str, str, aiohttp.ClientResponse]:
         &#34;&#34;&#34;
         try the authentication request with fetched csrf and requestId payload
         :param email: stihl webapp login email non-url-encoded
@@ -729,9 +708,7 @@ class IMowApi:
         &#34;&#34;&#34;
 
         await self.__fetch_new_csrf_token_and_request_id()
-        url = (
-            f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
-        )
+        url = f&#34;{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}&#34;
         encoded_mail = quote(email)
         encoded_password = quote(password)
         payload = (
@@ -741,9 +718,7 @@ class IMowApi:
         headers = {
             &#34;Content-Type&#34;: &#34;application/x-www-form-urlencoded&#34;,
         }
-        response = await self.api_request(
-            url, &#34;POST&#34;, payload=payload, headers=headers
-        )
+        response = await self.api_request(url, &#34;POST&#34;, payload=payload, headers=headers)
 
         response_url_query_args = furl(response.real_url).fragment.args
         if &#34;access_token&#34; not in response_url_query_args:
@@ -757,7 +732,7 @@ class IMowApi:
         )
         return self.access_token, self.token_expires, response
 
-    async def __fetch_new_csrf_token_and_request_id(self) -&gt; [str, str]:
+    async def __fetch_new_csrf_token_and_request_id(self) -&gt; List[str, str]:
         &#34;&#34;&#34;
         Fetch a new csrf_token and requestId to do the authentication as expected by the api
         csrf_token and requestId are used as payload within authentication
@@ -773,12 +748,10 @@ class IMowApi:
 
         soup = BeautifulSoup(await response.text(), &#34;html.parser&#34;)
         try:
-            upstream_csrf_token = soup.find(
-                &#34;input&#34;, {&#34;name&#34;: &#34;csrf-token&#34;}
-            ).get(&#34;value&#34;)
-            upstream_request_id = soup.find(
-                &#34;input&#34;, {&#34;name&#34;: &#34;requestId&#34;}
-            ).get(&#34;value&#34;)
+            upstream_csrf_token = soup.find(&#34;input&#34;, {&#34;name&#34;: &#34;csrf-token&#34;}).get(
+                &#34;value&#34;
+            )
+            upstream_request_id = soup.find(&#34;input&#34;, {&#34;name&#34;: &#34;requestId&#34;}).get(&#34;value&#34;)
         except AttributeError:
             raise ProcessLookupError(
                 &#34;Did not find necessary csrf token and/or request id in html source&#34;
@@ -791,19 +764,13 @@ class IMowApi:
 
     async def fetch_messages(self):
         try:
-            url_en = (
-                &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
-            )
-            async with self.http_session.request(
-                &#34;GET&#34;, url_en
-            ) as response_en:
+            url_en = &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
+            async with self.http_session.request(&#34;GET&#34;, url_en) as response_en:
                 i18n_en = json.loads(await response_en.text())
             self.messages_en = Messages(i18n_en)
             if self.lang != &#34;en&#34;:
                 url_user = f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json&#34;
-                async with self.http_session.request(
-                    &#34;GET&#34;, url_user
-                ) as response_user:
+                async with self.http_session.request(&#34;GET&#34;, url_user) as response_user:
                     i18n_user = json.loads(await response_user.text())
                     self.messages_user = Messages(i18n_user)
             else:
@@ -811,7 +778,6 @@ class IMowApi:
 
         except ClientResponseError as e:
             if e.status == 404:
-                await self.close()
                 raise LanguageNotFoundError(
                     f&#34;Language-File &#39;{self.lang}.json&#39; not found on imow upstream (&#34;
                     f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json)&#34;
@@ -832,10 +798,7 @@ class IMowApi:
             self.http_session = aiohttp.ClientSession(raise_for_status=True)
         if not self.messages_en:
             await self.fetch_messages()
-        if (
-            self.token_expires
-            and (self.token_expires - datetime.now()).days &lt;= 1
-        ):
+        if self.token_expires and (self.token_expires - datetime.now()).days &lt;= 1:
             logger.info(
                 &#34;Fetching new access_token because old one expires in less than 1 day&#34;
             )
@@ -878,8 +841,9 @@ class IMowApi:
         mower_name: str = &#34;&#34;,
         mower_id: str = &#34;&#34;,
         mower_external_id: str = &#34;&#34;,
-        startpoint: any = &#34;0&#34;,
-        duration: any = &#34;30&#34;,
+        first_action_value_param: any = &#34;&#34;,
+        second_action_value_param: any = &#34;&#34;,
+        **kwargs
     ) -&gt; aiohttp.ClientResponse:
         &#34;&#34;&#34;
         Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
@@ -902,13 +866,9 @@ class IMowApi:
                 &#34;Need some mower to work on. Please specify mower_[name|id|action_id]&#34;
             )
         if not mower_external_id and mower_name:
-            mower_external_id = await self.get_mower_action_id_from_name(
-                mower_name
-            )
+            mower_external_id = await self.get_mower_action_id_from_name(mower_name)
         if not mower_external_id and mower_id:
-            mower_external_id = await self.get_mower_action_id_from_id(
-                mower_id
-            )
+            mower_external_id = await self.get_mower_action_id_from_id(mower_id)
 
         if len(mower_external_id) &lt; 16:
             raise AttributeError(
@@ -917,18 +877,49 @@ class IMowApi:
 
         url = f&#34;{IMOW_API_URI}/mower-actions/&#34;
 
-        # Check if the user provides a timestamp as duration. We need to pass this plain if so (starttime)
-        first_action_value_appendix = f&#34;, {duration if &#39;-&#39; in str(duration) else str(int(duration) / 10)}&#34;
-        if &#34;-&#34; in str(duration) and startpoint == &#34;0&#34;:
-            second_action_value_appendix = &#34;&#34;
-        else:
-            second_action_value_appendix = f&#34;, {str(startpoint)}&#34;
+        for key, value in kwargs.items():
+            logger.debug(&#34;{0} = {1}&#34;.format(key, value))
+            if key == &#34;duration&#34;:
+                first_action_value_param = value
+            if key == &#34;startpoint&#34;:
+                second_action_value_param = value
+                
+            if key == &#34;starttime&#34;:
+                first_action_value_param = value
+            if key == &#34;endtime&#34;:
+                second_action_value_param = value
+                
+        # Build other action values depending on given ACTION
+        if (
+            imow_action == IMowActions.START_MOWING_FROM_POINT
+        ):  # Add the duration and startpoint parameter
+            duration = (
+                str(int(first_action_value_param) / 10)
+                if first_action_value_param
+                else 30 / 10
+            )
+            startpoint = (
+                str(second_action_value_param) if second_action_value_param else &#34;0&#34;
+            )
 
-        action_value = (
-            f&#34;{mower_external_id}{first_action_value_appendix}{second_action_value_appendix}&#34;
-            if imow_action == IMowActions.START_MOWING
-            else mower_external_id
-        )
+            action_value = f&#34;{mower_external_id},{duration},{startpoint}&#34;
+
+        elif imow_action == IMowActions.START_MOWING:  # by start- and endtime
+            starttime = (
+                str(first_action_value_param)
+                if first_action_value_param
+                else datetime.now().strftime(&#34;%Y-%m-%d %H:%M&#34;)
+            )
+            endtime = (
+                str(second_action_value_param) if second_action_value_param != &#34;&#34; else None
+            )
+            if endtime:
+                action_value = f&#34;{mower_external_id},{starttime},{endtime}&#34;
+            else:
+                action_value = f&#34;{mower_external_id},{starttime}&#34;
+
+        else:
+            action_value = mower_external_id
 
         action_object = {
             &#34;actionName&#34;: imow_action.value,
@@ -937,16 +928,15 @@ class IMowApi:
             # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,StartTime,EndTime&gt;
         }
         logger.debug(f&#34;Intend: {action_object}&#34;)
+        print(f&#34;Intend: {action_object}&#34;)
 
         payload = json.dumps(action_object)
 
-        response = await self.api_request(url, &#34;POST&#34;, payload=payload)
+      #  response = await self.api_request(url, &#34;POST&#34;, payload=payload)
         logger.debug(f&#34;Sent mower {mower_external_id} to {imow_action}&#34;)
-        return response
+        return True # response
 
-    async def update_setting(
-        self, mower_id, setting, new_value
-    ) -&gt; MowerState:
+    async def update_setting(self, mower_id, setting, new_value) -&gt; MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
 
         payload_fields = {
@@ -999,9 +989,7 @@ class IMowApi:
         for mower in await self.receive_mowers():
             if mower.name == mower_name:
                 return mower.status
-        raise LookupError(
-            f&#34;Mower with name {mower_name} not found in upstream&#34;
-        )
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
 
     async def get_status_by_id(self, mower_id=(str, int)) -&gt; dict:
         if not type(mower_id) == str:
@@ -1011,9 +999,7 @@ class IMowApi:
             response = await self.receive_mower_by_id(mower_id)
             return response.status
         except ConnectionError:
-            raise LookupError(
-                f&#34;Mower with id {mower_id} not found in upstream&#34;
-            )
+            raise LookupError(f&#34;Mower with id {mower_id} not found in upstream&#34;)
 
     async def get_status_by_action_id(self, mower_action_id: str) -&gt; dict:
         logger.debug(f&#34;get_status_by_action_id: {mower_action_id}&#34;)
@@ -1029,9 +1015,7 @@ class IMowApi:
         for mower in await self.receive_mowers():
             if mower.name == mower_name:
                 return mower.externalId
-        raise LookupError(
-            f&#34;Mower with name {mower_name} not found in upstream&#34;
-        )
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
 
     async def get_mower_action_id_from_id(self, mower_id: str) -&gt; str:
         logger.debug(f&#34;get_mower_action_id_from_id: {mower_id}&#34;)
@@ -1039,18 +1023,14 @@ class IMowApi:
             response = await self.receive_mower_by_id(mower_id)
             return response.externalId
         except ConnectionError:
-            raise LookupError(
-                f&#34;Mower with id {mower_id} not found in upstream&#34;
-            )
+            raise LookupError(f&#34;Mower with id {mower_id} not found in upstream&#34;)
 
     async def get_mower_id_from_name(self, mower_name: str) -&gt; str:
         logger.debug(f&#34;get_mower_id_from_name: {mower_name}&#34;)
         for mower in await self.receive_mowers():
             if mower.name == mower_name:
                 return mower.id
-        raise LookupError(
-            f&#34;Mower with name {mower_name} not found in upstream&#34;
-        )
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
 
     async def receive_mowers(self) -&gt; List[MowerState]:
         logger.debug(&#34;receive_mowers:&#34;)
@@ -1067,15 +1047,11 @@ class IMowApi:
             if mower.name == mower_name:
                 logger.debug(mower)
                 return mower
-        raise LookupError(
-            f&#34;Mower with name {mower_name} not found in upstream&#34;
-        )
+        raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)
 
     async def receive_mower_by_id(self, mower_id: str) -&gt; MowerState:
         logger.debug(f&#34;receive_mower: {mower_id}&#34;)
-        response = await self.api_request(
-            f&#34;{IMOW_API_URI}/mowers/{mower_id}/&#34;, &#34;GET&#34;
-        )
+        response = await self.api_request(f&#34;{IMOW_API_URI}/mowers/{mower_id}/&#34;, &#34;GET&#34;)
         mower = MowerState(json.loads(await response.text()), self)
         logger.debug(mower)
         return mower
@@ -1089,9 +1065,7 @@ class IMowApi:
         logger.debug(stats)
         return stats
 
-    async def receive_mower_week_mow_time_in_hours(
-        self, mower_id: str
-    ) -&gt; dict:
+    async def receive_mower_week_mow_time_in_hours(self, mower_id: str) -&gt; dict:
         logger.debug(f&#34;receive_mower_week_mow_time_in_hours: {mower_id}&#34;)
         response = await self.api_request(
             f&#34;{IMOW_API_URI}/mowers/{mower_id}/statistics/week-mow-time-in-hours/&#34;,
@@ -1122,6 +1096,8 @@ class IMowApi:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">async def api_logout(self):
+    if not self.http_session or self.http_session.closed:
+        self.http_session = aiohttp.ClientSession(raise_for_status=True)
     async with self.http_session.post(
         &#34;https://oauth2.imow.stihl.com/authentication/logout/&#34;,
         data={
@@ -1132,12 +1108,8 @@ class IMowApi:
         },
     ) as resp:
         await resp.read()
-    self.http_session.cookie_jar.clear_domain(
-        &#34;https://app.imow.stihl.com&#34;
-    )
-    self.http_session.cookie_jar.clear_domain(
-        &#34;https://oauth2.imow.stihl.com/&#34;
-    )</code></pre>
+    self.http_session.cookie_jar.clear_domain(&#34;https://app.imow.stihl.com&#34;)
+    self.http_session.cookie_jar.clear_domain(&#34;https://oauth2.imow.stihl.com/&#34;)</code></pre>
 </details>
 </dd>
 <dt id="imow.api.IMowApi.api_request"><code class="name flex">
@@ -1169,10 +1141,7 @@ class IMowApi:
         self.http_session = aiohttp.ClientSession(raise_for_status=True)
     if not self.messages_en:
         await self.fetch_messages()
-    if (
-        self.token_expires
-        and (self.token_expires - datetime.now()).days &lt;= 1
-    ):
+    if self.token_expires and (self.token_expires - datetime.now()).days &lt;= 1:
         logger.info(
             &#34;Fetching new access_token because old one expires in less than 1 day&#34;
         )
@@ -1220,7 +1189,6 @@ class IMowApi:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">async def check_api_maintenance(self) -&gt; None:
-
     url = &#34;https://app-api-maintenance-r-euwe-4bf2d8.azurewebsites.net/maintenance/&#34;
 
     headers = {
@@ -1235,7 +1203,6 @@ class IMowApi:
             f&#39;serverDisrupted: {status[&#34;serverDisrupted&#34;]}, serverDown: {status[&#34;serverDown&#34;]}, &#39;
             f&#39;affectedTill {status[&#34;affectedTill&#34;]}&#39;
         )
-        await self.http_session.close()
         raise ApiMaintenanceError(msg)</code></pre>
 </details>
 </dd>
@@ -1265,19 +1232,13 @@ class IMowApi:
 </summary>
 <pre><code class="python">async def fetch_messages(self):
     try:
-        url_en = (
-            &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
-        )
-        async with self.http_session.request(
-            &#34;GET&#34;, url_en
-        ) as response_en:
+        url_en = &#34;https://app.imow.stihl.com/assets/i18n/animations/en.json&#34;
+        async with self.http_session.request(&#34;GET&#34;, url_en) as response_en:
             i18n_en = json.loads(await response_en.text())
         self.messages_en = Messages(i18n_en)
         if self.lang != &#34;en&#34;:
             url_user = f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json&#34;
-            async with self.http_session.request(
-                &#34;GET&#34;, url_user
-            ) as response_user:
+            async with self.http_session.request(&#34;GET&#34;, url_user) as response_user:
                 i18n_user = json.loads(await response_user.text())
                 self.messages_user = Messages(i18n_user)
         else:
@@ -1285,7 +1246,6 @@ class IMowApi:
 
     except ClientResponseError as e:
         if e.status == 404:
-            await self.close()
             raise LanguageNotFoundError(
                 f&#34;Language-File &#39;{self.lang}.json&#39; not found on imow upstream (&#34;
                 f&#34;https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json)&#34;
@@ -1307,9 +1267,7 @@ class IMowApi:
         response = await self.receive_mower_by_id(mower_id)
         return response.externalId
     except ConnectionError:
-        raise LookupError(
-            f&#34;Mower with id {mower_id} not found in upstream&#34;
-        )</code></pre>
+        raise LookupError(f&#34;Mower with id {mower_id} not found in upstream&#34;)</code></pre>
 </details>
 </dd>
 <dt id="imow.api.IMowApi.get_mower_action_id_from_name"><code class="name flex">
@@ -1326,9 +1284,7 @@ class IMowApi:
     for mower in await self.receive_mowers():
         if mower.name == mower_name:
             return mower.externalId
-    raise LookupError(
-        f&#34;Mower with name {mower_name} not found in upstream&#34;
-    )</code></pre>
+    raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)</code></pre>
 </details>
 </dd>
 <dt id="imow.api.IMowApi.get_mower_id_from_name"><code class="name flex">
@@ -1345,9 +1301,7 @@ class IMowApi:
     for mower in await self.receive_mowers():
         if mower.name == mower_name:
             return mower.id
-    raise LookupError(
-        f&#34;Mower with name {mower_name} not found in upstream&#34;
-    )</code></pre>
+    raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)</code></pre>
 </details>
 </dd>
 <dt id="imow.api.IMowApi.get_status_by_action_id"><code class="name flex">
@@ -1386,9 +1340,7 @@ class IMowApi:
         response = await self.receive_mower_by_id(mower_id)
         return response.status
     except ConnectionError:
-        raise LookupError(
-            f&#34;Mower with id {mower_id} not found in upstream&#34;
-        )</code></pre>
+        raise LookupError(f&#34;Mower with id {mower_id} not found in upstream&#34;)</code></pre>
 </details>
 </dd>
 <dt id="imow.api.IMowApi.get_status_by_name"><code class="name flex">
@@ -1405,9 +1357,7 @@ class IMowApi:
     for mower in await self.receive_mowers():
         if mower.name == mower_name:
             return mower.status
-    raise LookupError(
-        f&#34;Mower with name {mower_name} not found in upstream&#34;
-    )</code></pre>
+    raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)</code></pre>
 </details>
 </dd>
 <dt id="imow.api.IMowApi.get_token"><code class="name flex">
@@ -1441,7 +1391,6 @@ class IMowApi:
     &#34;&#34;&#34;
 
     if not self.access_token or force_reauth:
-
         if email and password:
             self.api_password = password
             self.api_email = email
@@ -1452,9 +1401,7 @@ class IMowApi:
             self.access_token: str = &#34;&#34;
             self.token_expires: datetime = None
         if not self.api_email and not self.api_password:
-            raise LoginError(
-                &#34;Got no credentials to authenticate, please provide&#34;
-            )
+            raise LoginError(&#34;Got no credentials to authenticate, please provide&#34;)
         await self.__authenticate(self.api_email, self.api_password)
         logger.debug(&#34;Get Token: Re-Authenticate&#34;)
 
@@ -1466,7 +1413,7 @@ class IMowApi:
 </details>
 </dd>
 <dt id="imow.api.IMowApi.intent"><code class="name flex">
-<span>async def <span class="ident">intent</span></span>(<span>self, imow_action: IMowActions, mower_name: str = '', mower_id: str = '', mower_external_id: str = '', startpoint: any = '0', duration: any = '30') ‑> aiohttp.client_reqrep.ClientResponse</span>
+<span>async def <span class="ident">intent</span></span>(<span>self, imow_action: IMowActions, mower_name: str = '', mower_id: str = '', mower_external_id: str = '', first_action_value_param: any = '', second_action_value_param: any = '', **kwargs) ‑> aiohttp.client_reqrep.ClientResponse</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
@@ -1491,8 +1438,9 @@ This is looked up, if only mower_name or mower_id is provided</p>
     mower_name: str = &#34;&#34;,
     mower_id: str = &#34;&#34;,
     mower_external_id: str = &#34;&#34;,
-    startpoint: any = &#34;0&#34;,
-    duration: any = &#34;30&#34;,
+    first_action_value_param: any = &#34;&#34;,
+    second_action_value_param: any = &#34;&#34;,
+    **kwargs
 ) -&gt; aiohttp.ClientResponse:
     &#34;&#34;&#34;
     Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
@@ -1515,13 +1463,9 @@ This is looked up, if only mower_name or mower_id is provided</p>
             &#34;Need some mower to work on. Please specify mower_[name|id|action_id]&#34;
         )
     if not mower_external_id and mower_name:
-        mower_external_id = await self.get_mower_action_id_from_name(
-            mower_name
-        )
+        mower_external_id = await self.get_mower_action_id_from_name(mower_name)
     if not mower_external_id and mower_id:
-        mower_external_id = await self.get_mower_action_id_from_id(
-            mower_id
-        )
+        mower_external_id = await self.get_mower_action_id_from_id(mower_id)
 
     if len(mower_external_id) &lt; 16:
         raise AttributeError(
@@ -1530,18 +1474,49 @@ This is looked up, if only mower_name or mower_id is provided</p>
 
     url = f&#34;{IMOW_API_URI}/mower-actions/&#34;
 
-    # Check if the user provides a timestamp as duration. We need to pass this plain if so (starttime)
-    first_action_value_appendix = f&#34;, {duration if &#39;-&#39; in str(duration) else str(int(duration) / 10)}&#34;
-    if &#34;-&#34; in str(duration) and startpoint == &#34;0&#34;:
-        second_action_value_appendix = &#34;&#34;
-    else:
-        second_action_value_appendix = f&#34;, {str(startpoint)}&#34;
+    for key, value in kwargs.items():
+        logger.debug(&#34;{0} = {1}&#34;.format(key, value))
+        if key == &#34;duration&#34;:
+            first_action_value_param = value
+        if key == &#34;startpoint&#34;:
+            second_action_value_param = value
+            
+        if key == &#34;starttime&#34;:
+            first_action_value_param = value
+        if key == &#34;endtime&#34;:
+            second_action_value_param = value
+            
+    # Build other action values depending on given ACTION
+    if (
+        imow_action == IMowActions.START_MOWING_FROM_POINT
+    ):  # Add the duration and startpoint parameter
+        duration = (
+            str(int(first_action_value_param) / 10)
+            if first_action_value_param
+            else 30 / 10
+        )
+        startpoint = (
+            str(second_action_value_param) if second_action_value_param else &#34;0&#34;
+        )
 
-    action_value = (
-        f&#34;{mower_external_id}{first_action_value_appendix}{second_action_value_appendix}&#34;
-        if imow_action == IMowActions.START_MOWING
-        else mower_external_id
-    )
+        action_value = f&#34;{mower_external_id},{duration},{startpoint}&#34;
+
+    elif imow_action == IMowActions.START_MOWING:  # by start- and endtime
+        starttime = (
+            str(first_action_value_param)
+            if first_action_value_param
+            else datetime.now().strftime(&#34;%Y-%m-%d %H:%M&#34;)
+        )
+        endtime = (
+            str(second_action_value_param) if second_action_value_param != &#34;&#34; else None
+        )
+        if endtime:
+            action_value = f&#34;{mower_external_id},{starttime},{endtime}&#34;
+        else:
+            action_value = f&#34;{mower_external_id},{starttime}&#34;
+
+    else:
+        action_value = mower_external_id
 
     action_object = {
         &#34;actionName&#34;: imow_action.value,
@@ -1550,12 +1525,13 @@ This is looked up, if only mower_name or mower_id is provided</p>
         # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,StartTime,EndTime&gt;
     }
     logger.debug(f&#34;Intend: {action_object}&#34;)
+    print(f&#34;Intend: {action_object}&#34;)
 
     payload = json.dumps(action_object)
 
-    response = await self.api_request(url, &#34;POST&#34;, payload=payload)
+  #  response = await self.api_request(url, &#34;POST&#34;, payload=payload)
     logger.debug(f&#34;Sent mower {mower_external_id} to {imow_action}&#34;)
-    return response</code></pre>
+    return True # response</code></pre>
 </details>
 </dd>
 <dt id="imow.api.IMowApi.receive_mower_by_id"><code class="name flex">
@@ -1569,9 +1545,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
 </summary>
 <pre><code class="python">async def receive_mower_by_id(self, mower_id: str) -&gt; MowerState:
     logger.debug(f&#34;receive_mower: {mower_id}&#34;)
-    response = await self.api_request(
-        f&#34;{IMOW_API_URI}/mowers/{mower_id}/&#34;, &#34;GET&#34;
-    )
+    response = await self.api_request(f&#34;{IMOW_API_URI}/mowers/{mower_id}/&#34;, &#34;GET&#34;)
     mower = MowerState(json.loads(await response.text()), self)
     logger.debug(mower)
     return mower</code></pre>
@@ -1592,9 +1566,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
         if mower.name == mower_name:
             logger.debug(mower)
             return mower
-    raise LookupError(
-        f&#34;Mower with name {mower_name} not found in upstream&#34;
-    )</code></pre>
+    raise LookupError(f&#34;Mower with name {mower_name} not found in upstream&#34;)</code></pre>
 </details>
 </dd>
 <dt id="imow.api.IMowApi.receive_mower_start_points"><code class="name flex">
@@ -1644,9 +1616,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">async def receive_mower_week_mow_time_in_hours(
-    self, mower_id: str
-) -&gt; dict:
+<pre><code class="python">async def receive_mower_week_mow_time_in_hours(self, mower_id: str) -&gt; dict:
     logger.debug(f&#34;receive_mower_week_mow_time_in_hours: {mower_id}&#34;)
     response = await self.api_request(
         f&#34;{IMOW_API_URI}/mowers/{mower_id}/statistics/week-mow-time-in-hours/&#34;,
@@ -1685,9 +1655,7 @@ This is looked up, if only mower_name or mower_id is provided</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">async def update_setting(
-    self, mower_id, setting, new_value
-) -&gt; MowerState:
+<pre><code class="python">async def update_setting(self, mower_id, setting, new_value) -&gt; MowerState:
     mower_state = await self.receive_mower_by_id(mower_id)
 
     payload_fields = {

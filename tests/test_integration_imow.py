@@ -124,10 +124,10 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
             msg="Expected 201 HTTP Code",
         )
 
-    def test_intent_start_mowing(self):
+    def test_intent_start_mowing_from_point(self):
         result = self.loop.run_until_complete(
             self.imow.intent(
-                IMowActions.START_MOWING,
+                IMowActions.START_MOWING_FROM_POINT,
                 mower_id=self.test_mower.id,
                 duration=60,
                 startpoint=2,
@@ -139,10 +139,10 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
             msg="Expected 201 HTTP Code",
         )
 
-    def test_intent_start_mowing_with_defaults(self):
+    def test_intent_start_mowing_from_point_with_defaults(self):
         result = self.loop.run_until_complete(
             self.imow.intent(
-                IMowActions.START_MOWING, mower_id=self.test_mower.id
+                IMowActions.START_MOWING_FROM_POINT, mower_id=self.test_mower.id
             )
         )
         self.assertIs(

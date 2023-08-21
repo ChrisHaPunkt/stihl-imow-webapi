@@ -126,7 +126,7 @@ async def main():
         for i in range(len(startpoints)):
             print("Startpoint {}: {}".format(i, startpoints[i]))
             
-        await mower.intent(IMowActions.START_MOWING, startpoint=1)
+        await mower.intent(IMowActions._START_MOWING_FROM_POINT, startpoint=1)
 
 
 if __name__ == "__main__":

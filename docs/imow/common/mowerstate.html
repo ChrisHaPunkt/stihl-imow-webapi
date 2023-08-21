@@ -62,7 +62,6 @@ class MowerState:
         )
 
     def update_state_messages(self):
-
         if self.status[&#34;mainState&#34;] != self.ERROR_MAINSTATE_CODE:
             (
                 self.stateMessage[&#34;short&#34;],
@@ -77,7 +76,6 @@ class MowerState:
             self.stateMessage[&#34;errorId&#34;] = &#34;&#34;
 
         else:
-
             (
                 self.stateMessage[&#34;short&#34;],
                 self.stateMessage[&#34;long&#34;],
@@ -108,9 +106,7 @@ class MowerState:
             ) = self.imow.messages_en.get_error_message(
                 short_code=self.status[&#34;extraStatus&#34;]
             )
-        cleaned_msg = (
-            state_msg_short.upper().replace(&#34; &#34;, &#34;_&#34;).replace(&#34;.&#34;, &#34;&#34;)
-        )
+        cleaned_msg = state_msg_short.upper().replace(&#34; &#34;, &#34;_&#34;).replace(&#34;.&#34;, &#34;&#34;)
         self.machineState = cleaned_msg
 
     async def update_from_upstream(self):
@@ -140,14 +136,17 @@ class MowerState:
     async def intent(
         self,
         imow_action: IMowActions,
-        startpoint: any = &#34;0&#34;,
-        duration: any = &#34;30&#34;,
+        first_action_value_param: any = &#34;&#34;,
+        second_action_value_param: any = &#34;&#34;,
+        **kwargs
     ) -&gt; None:
+        
         await self.imow.intent(
             imow_action=imow_action,
-            startpoint=startpoint,
-            duration=duration,
+            first_action_value_param=first_action_value_param,
+            second_action_value_param=second_action_value_param,
             mower_external_id=self.externalId,
+            **kwargs
         )
 
     accountId: str = {str}
@@ -254,7 +253,6 @@ class MowerState:
         )
 
     def update_state_messages(self):
-
         if self.status[&#34;mainState&#34;] != self.ERROR_MAINSTATE_CODE:
             (
                 self.stateMessage[&#34;short&#34;],
@@ -269,7 +267,6 @@ class MowerState:
             self.stateMessage[&#34;errorId&#34;] = &#34;&#34;
 
         else:
-
             (
                 self.stateMessage[&#34;short&#34;],
                 self.stateMessage[&#34;long&#34;],
@@ -300,9 +297,7 @@ class MowerState:
             ) = self.imow.messages_en.get_error_message(
                 short_code=self.status[&#34;extraStatus&#34;]
             )
-        cleaned_msg = (
-            state_msg_short.upper().replace(&#34; &#34;, &#34;_&#34;).replace(&#34;.&#34;, &#34;&#34;)
-        )
+        cleaned_msg = state_msg_short.upper().replace(&#34; &#34;, &#34;_&#34;).replace(&#34;.&#34;, &#34;&#34;)
         self.machineState = cleaned_msg
 
     async def update_from_upstream(self):
@@ -332,14 +327,17 @@ class MowerState:
     async def intent(
         self,
         imow_action: IMowActions,
-        startpoint: any = &#34;0&#34;,
-        duration: any = &#34;30&#34;,
+        first_action_value_param: any = &#34;&#34;,
+        second_action_value_param: any = &#34;&#34;,
+        **kwargs
     ) -&gt; None:
+        
         await self.imow.intent(
             imow_action=imow_action,
-            startpoint=startpoint,
-            duration=duration,
+            first_action_value_param=first_action_value_param,
+            second_action_value_param=second_action_value_param,
             mower_external_id=self.externalId,
+            **kwargs
         )
 
     accountId: str = {str}
@@ -592,9 +590,7 @@ class MowerState:
         ) = self.imow.messages_en.get_error_message(
             short_code=self.status[&#34;extraStatus&#34;]
         )
-    cleaned_msg = (
-        state_msg_short.upper().replace(&#34; &#34;, &#34;_&#34;).replace(&#34;.&#34;, &#34;&#34;)
-    )
+    cleaned_msg = state_msg_short.upper().replace(&#34; &#34;, &#34;_&#34;).replace(&#34;.&#34;, &#34;&#34;)
     self.machineState = cleaned_msg</code></pre>
 </details>
 </dd>
@@ -678,7 +674,7 @@ class MowerState:
 </details>
 </dd>
 <dt id="imow.common.mowerstate.MowerState.intent"><code class="name flex">
-<span>async def <span class="ident">intent</span></span>(<span>self, imow_action: <a title="imow.common.actions.IMowActions" href="actions.html#imow.common.actions.IMowActions">IMowActions</a>, startpoint: <built-in function any> = '0', duration: <built-in function any> = '30') ‑> None</span>
+<span>async def <span class="ident">intent</span></span>(<span>self, imow_action: <a title="imow.common.actions.IMowActions" href="actions.html#imow.common.actions.IMowActions">IMowActions</a>, first_action_value_param: <built-in function any> = '', second_action_value_param: <built-in function any> = '', **kwargs) ‑> None</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -689,14 +685,17 @@ class MowerState:
 <pre><code class="python">async def intent(
     self,
     imow_action: IMowActions,
-    startpoint: any = &#34;0&#34;,
-    duration: any = &#34;30&#34;,
+    first_action_value_param: any = &#34;&#34;,
+    second_action_value_param: any = &#34;&#34;,
+    **kwargs
 ) -&gt; None:
+    
     await self.imow.intent(
         imow_action=imow_action,
-        startpoint=startpoint,
-        duration=duration,
+        first_action_value_param=first_action_value_param,
+        second_action_value_param=second_action_value_param,
         mower_external_id=self.externalId,
+        **kwargs
     )</code></pre>
 </details>
 </dd>
@@ -756,7 +755,6 @@ class MowerState:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def update_state_messages(self):
-
     if self.status[&#34;mainState&#34;] != self.ERROR_MAINSTATE_CODE:
         (
             self.stateMessage[&#34;short&#34;],
@@ -771,7 +769,6 @@ class MowerState:
         self.stateMessage[&#34;errorId&#34;] = &#34;&#34;
 
     else:
-
         (
             self.stateMessage[&#34;short&#34;],
             self.stateMessage[&#34;long&#34;],
