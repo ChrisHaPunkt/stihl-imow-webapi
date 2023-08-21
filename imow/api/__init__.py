@@ -138,7 +138,9 @@ class IMowApi:
             },
         ) as resp:
             await resp.read()
-        self.http_session.cookie_jar.clear_domain("https://app.imow.stihl.com")
+        self.http_session.cookie_jar.clear_domain(
+            "https://app.imow.stihl.com"
+        )
         self.http_session.cookie_jar.clear_domain(
             "https://oauth2.imow.stihl.com/"
         )
@@ -168,7 +170,9 @@ class IMowApi:
         """
 
         await self.__fetch_new_csrf_token_and_request_id()
-        url = f"{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}"
+        url = (
+            f"{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}"
+        )
         encoded_mail = quote(email)
         encoded_password = quote(password)
         payload = (
@@ -231,7 +235,9 @@ class IMowApi:
             url_en = (
                 "https://app.imow.stihl.com/assets/i18n/animations/en.json"
             )
-            async with self.http_session.request("GET", url_en) as response_en:
+            async with self.http_session.request(
+                "GET", url_en
+            ) as response_en:
                 i18n_en = json.loads(await response_en.text())
             self.messages_en = Messages(i18n_en)
             if self.lang != "en":
@@ -331,7 +337,7 @@ class IMowApi:
         :param first_action_value_param: first argument passed into the action call request to the api. Can be one of the following contents:
             A duration: minutes of intented mowing. Used by START_MOWING_FROM_POINT. Defaults to '30' minutes.
             A starttime: a datetime without seconds when to start mowing. I.e. '2023-08-12 20:50' used by START_MOWING
-            
+
         :param second_action_value_param: second argument passed into the action call request to the api. Can be one of the following contents:
             A startpoint: from which the mowing shall start. Used by START_MOWING_FROM_POINT. Defaults to '0'.
             An endtime: a datetime without seconds when to stop mowing. I.e. '2023-08-12 20:50' used by START_MOWING
@@ -359,7 +365,9 @@ class IMowApi:
 
         given_kwargs = kwargs.items()
         if len(given_kwargs) > 0:
-            logger.debug("Translating given intent **kwargs to action_value_param")
+            logger.debug(
+                "Translating given intent **kwargs to action_value_param"
+            )
             for key, value in given_kwargs:
                 logger.debug("  {0} = {1}".format(key, value))
                 if key == "duration":
@@ -371,10 +379,16 @@ class IMowApi:
                     first_action_value_param = value
                 if key == "endtime":
                     second_action_value_param = value
-            logger.debug(f'  -> first_action_value_param: {first_action_value_param} ')
-            logger.debug(f'  -> second_action_value_param: {second_action_value_param} ')
+            logger.debug(
+                f"  -> first_action_value_param: {first_action_value_param} "
+            )
+            logger.debug(
+                f"  -> second_action_value_param: {second_action_value_param} "
+            )
 
-        logger.debug(f'Build action object for: {imow_action} -> "{imow_action.value}"')
+        logger.debug(
+            f'Build action object for: {imow_action} -> "{imow_action.value}"'
+        )
         # Build other action values depending on given ACTION
         if (
             imow_action == IMowActions.START_MOWING_FROM_POINT
@@ -392,7 +406,9 @@ class IMowApi:
 
             action_value = f"{mower_external_id},{duration},{startpoint}"
 
-        elif imow_action == IMowActions.START_MOWING:  # by start- and/or endtime
+        elif (
+            imow_action == IMowActions.START_MOWING
+        ):  # by start- and/or endtime
             starttime = (
                 str(first_action_value_param)
                 if first_action_value_param
@@ -417,22 +433,27 @@ class IMowApi:
             # "0000000123456789,15,0" <MowerExternalId,DurationInMunitesDividedBy10,StartPoint>
             # "0000000123456789,15,0" <MowerExternalId,StartTime,EndTime>
         }
-        logger.debug(f"Intent sent as request body to imow api for mower with identifier: '{mower_name}/{mower_id}/{mower_external_id}'")
-        logger.debug(f"  {action_object}")
+        logger.debug(
+            f"Intent sent as request body to imow api for mower with identifier: '{mower_name}/{mower_id}/{mower_external_id}'"
+        )
+        logger.info(f"  {action_object}")
 
         payload = json.dumps(action_object)
 
         response = await self.api_request(url, "POST", payload=payload)
         if response.ok:
-            logger.debug(f"Success: Created mower (extId:{mower_external_id}) ActionObject with contents:")
+            logger.debug(
+                f"Success: Created mower (extId:{mower_external_id}) ActionObject with contents:"
+            )
             logger.debug(f" {action_object}")
             logger.debug(f" -> (HTTP Status {response.status})")
-
         else:
-            logger.error(f'No success with mower-action: {payload}')
+            logger.error(f"No success with mower-action: {payload}")
         return response
 
-    async def update_setting(self, mower_id, setting, new_value) -> MowerState:
+    async def update_setting(
+        self, mower_id, setting, new_value
+    ) -> MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
 
         payload_fields = {
