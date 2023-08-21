@@ -106,7 +106,9 @@ class MowerState:
             ) = self.imow.messages_en.get_error_message(
                 short_code=self.status[&#34;extraStatus&#34;]
             )
-        cleaned_msg = state_msg_short.upper().replace(&#34; &#34;, &#34;_&#34;).replace(&#34;.&#34;, &#34;&#34;)
+        cleaned_msg = (
+            state_msg_short.upper().replace(&#34; &#34;, &#34;_&#34;).replace(&#34;.&#34;, &#34;&#34;)
+        )
         self.machineState = cleaned_msg
 
     async def update_from_upstream(self):
@@ -140,7 +142,6 @@ class MowerState:
         second_action_value_param: any = &#34;&#34;,
         **kwargs
     ) -&gt; None:
-        
         await self.imow.intent(
             imow_action=imow_action,
             first_action_value_param=first_action_value_param,
@@ -297,7 +298,9 @@ class MowerState:
             ) = self.imow.messages_en.get_error_message(
                 short_code=self.status[&#34;extraStatus&#34;]
             )
-        cleaned_msg = state_msg_short.upper().replace(&#34; &#34;, &#34;_&#34;).replace(&#34;.&#34;, &#34;&#34;)
+        cleaned_msg = (
+            state_msg_short.upper().replace(&#34; &#34;, &#34;_&#34;).replace(&#34;.&#34;, &#34;&#34;)
+        )
         self.machineState = cleaned_msg
 
     async def update_from_upstream(self):
@@ -331,7 +334,6 @@ class MowerState:
         second_action_value_param: any = &#34;&#34;,
         **kwargs
     ) -&gt; None:
-        
         await self.imow.intent(
             imow_action=imow_action,
             first_action_value_param=first_action_value_param,
@@ -590,7 +592,9 @@ class MowerState:
         ) = self.imow.messages_en.get_error_message(
             short_code=self.status[&#34;extraStatus&#34;]
         )
-    cleaned_msg = state_msg_short.upper().replace(&#34; &#34;, &#34;_&#34;).replace(&#34;.&#34;, &#34;&#34;)
+    cleaned_msg = (
+        state_msg_short.upper().replace(&#34; &#34;, &#34;_&#34;).replace(&#34;.&#34;, &#34;&#34;)
+    )
     self.machineState = cleaned_msg</code></pre>
 </details>
 </dd>
@@ -689,7 +693,6 @@ class MowerState:
     second_action_value_param: any = &#34;&#34;,
     **kwargs
 ) -&gt; None:
-    
     await self.imow.intent(
         imow_action=imow_action,
         first_action_value_param=first_action_value_param,
