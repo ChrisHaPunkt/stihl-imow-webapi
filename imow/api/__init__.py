@@ -431,18 +431,18 @@ class IMowApi:
         ):  # by start- and/or endtime
             starttime = (
                 str(first_action_value_param)
-                if first_action_value_param
-                else datetime.now().strftime("%Y-%m-%d %H:%M")
+                if first_action_value_param != ""
+                else None
             )
             endtime = (
                 str(second_action_value_param)
                 if second_action_value_param != ""
                 else None
             )
-            if endtime:
-                action_value = f"{mower_external_id},{starttime},{endtime}"
+            if starttime:
+                action_value = f"{mower_external_id},{endtime},{starttime}"
             else:
-                action_value = f"{mower_external_id},{starttime}"
+                action_value = f"{mower_external_id},{endtime}"
 
         else:
             action_value = mower_external_id
@@ -451,7 +451,7 @@ class IMowApi:
             "actionName": imow_action.value,
             "actionValue": action_value
             # "0000000123456789,15,0" <MowerExternalId,DurationInMunitesDividedBy10,StartPoint>
-            # "0000000123456789,15,0" <MowerExternalId,StartTime,EndTime>
+            # "0000000123456789,15,0" <MowerExternalId,EndTime,StartTime>
         }
         logger.debug(
             f"Intent sent as request body to imow api for mower with identifier: '{mower_name}/{mower_id}/{mower_external_id}'"
