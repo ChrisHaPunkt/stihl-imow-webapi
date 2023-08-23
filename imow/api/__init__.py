@@ -437,7 +437,7 @@ class IMowApi:
             endtime = (
                 str(second_action_value_param)
                 if second_action_value_param != ""
-                else None
+                else (datetime.now() + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M")
             )
             if starttime:
                 action_value = f"{mower_external_id},{endtime},{starttime}"
