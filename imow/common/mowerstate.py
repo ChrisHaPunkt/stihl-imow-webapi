@@ -24,7 +24,10 @@ class MowerState:
 
     def replace_state(self, upstream: dict):
         self.__dict__.update(
-            map(lambda kv: (kv[0].replace(" ", "_"), kv[1]), upstream.items())
+            map(
+                lambda kv: (kv[0].replace(" ", "_"), kv[1]),
+                upstream.items(),
+            )
         )
         self.update_state_messages()
 

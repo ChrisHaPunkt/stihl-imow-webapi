@@ -5,11 +5,11 @@ import json
 import logging
 import sys
 from datetime import datetime, timedelta
-from typing import Tuple, Union, List
+from typing import Tuple, Union, List, Any
 from urllib.parse import quote
 
 import aiohttp
-from aiohttp import ClientSession, ClientResponseError
+from aiohttp import ClientSession, ClientResponseError, ClientResponse
 from bs4 import BeautifulSoup
 from furl import furl
 
@@ -42,6 +42,26 @@ if (
     and sys.platform.startswith("win")
 ):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+
+def validate_and_fix_datetime(value) -> str:
+    """
+    Try to convert and validate the given string from "%Y-%m-%d %H:%M" or "%Y-%m-%d %H:%M:%S into a datetime object
+    and give the needed "%Y-%m-%d %H:%M" string back.
+    :param value: the string tobe checked :return: the correctly formated string
+    """
+    try:
+        datetime_object = datetime.strptime(value, "%Y-%m-%d %H:%M")
+        return datetime_object.strftime("%Y-%m-%d %H:%M")
+    except ValueError as ve:
+        logger.warning(
+            f"  Try fixing given time format because {ve} in {value}"
+        )
+        try:
+            datetime_object = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+            return datetime_object.strftime("%Y-%m-%d %H:%M")
+        except ValueError as ve2:
+            raise ValueError(f'Unsupported "time" argument: {value} -> {ve2}')
 
 
 class IMowApi:
@@ -159,7 +179,7 @@ class IMowApi:
 
     async def __authenticate(
         self, email: str, password: str
-    ) -> List[str, str, aiohttp.ClientResponse]:
+    ) -> tuple[Any, datetime, ClientResponse]:
         """
         try the authentication request with fetched csrf and requestId payload
         :param email: stihl webapp login email non-url-encoded
@@ -194,7 +214,9 @@ class IMowApi:
         )
         return self.access_token, self.token_expires, response
 
-    async def __fetch_new_csrf_token_and_request_id(self) -> List[str, str]:
+    async def __fetch_new_csrf_token_and_request_id(
+        self,
+    ) -> tuple[str | list[str] | None, str | list[str] | None]:
         """
         Fetch a new csrf_token and requestId to do the authentication as expected by the api
         csrf_token and requestId are used as payload within authentication
@@ -306,27 +328,6 @@ class IMowApi:
                 await self.check_api_maintenance()
             raise e
 
-    def validate_and_fix_datetime(self, value) -> str:
-        """
-        Try to convert and validate the given string from "%Y-%m-%d %H:%M" or "%Y-%m-%d %H:%M:%S into a datetime object and give the needed "%Y-%m-%d %H:%M" string back.
-        :param value: the string tobe checked
-        :return: the correctly formated string
-        """
-        try:
-            datetime_object = datetime.strptime(value, "%Y-%m-%d %H:%M")
-            return datetime_object.strftime("%Y-%m-%d %H:%M")
-        except ValueError as ve:
-            logger.warn(
-                f"  Try fixing given time format because {ve} in {value}"
-            )
-            try:
-                datetime_object = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
-                return datetime_object.strftime("%Y-%m-%d %H:%M")
-            except ValueError as ve2:
-                raise ValueError(
-                    f'Unsupported "time" argument: {value} -> {ve2}'
-                )
-
     async def intent(
         self,
         imow_action: IMowActions,
@@ -390,20 +391,19 @@ class IMowApi:
                 if key == "startpoint":
                     second_action_value_param = value
 
-                if key == "starttime":
-                    first_action_value_param = self.validate_and_fix_datetime(
-                        value
-                    )
                 if key == "endtime":
-                    second_action_value_param = self.validate_and_fix_datetime(
+                    first_action_value_param = validate_and_fix_datetime(value)
+
+                if key == "starttime":
+                    second_action_value_param = validate_and_fix_datetime(
                         value
                     )
 
             logger.debug(
-                f"  -> first_action_value_param: {first_action_value_param} "
+                f"  -> first_action_value_param (end-time / duration): {first_action_value_param} "
             )
             logger.debug(
-                f"  -> second_action_value_param: {second_action_value_param} "
+                f"  -> second_action_value_param (start-time / startpoint): {second_action_value_param} "
             )
 
         logger.debug(
@@ -429,16 +429,30 @@ class IMowApi:
         elif (
             imow_action == IMowActions.START_MOWING
         ):  # by start- and/or endtime
-            starttime = (
-                str(first_action_value_param)
-                if first_action_value_param != ""
-                else None
-            )
-            endtime = (
-                str(second_action_value_param)
-                if second_action_value_param != ""
-                else (datetime.now() + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M")
-            )
+            if first_action_value_param != "":
+                endtime = str(first_action_value_param)
+            else:
+                raise AttributeError(
+                    "Time when to end is necessary. Please provide as 2nd function call argument or as keyword-"
+                    "argument 'endtime=\"%Y-%m-%d %H:%M\"'"
+                )
+
+            if second_action_value_param != "":
+                starttime = str(second_action_value_param)
+
+            else:
+                # if only starttime given, create an endtime 2 hours after given starttime
+                starttime = None
+                # if starttime:
+                #     endtime = (
+                #         datetime.strptime(starttime, "%Y-%m-%d %H:%M")
+                #         + timedelta(hours=2)
+                #     ).strftime("%Y-%m-%d %H:%M")
+                # else:
+                #     endtime = (
+                #         datetime.now() + timedelta(hours=2)
+                #     ).strftime("%Y-%m-%d %H:%M")
+
             if starttime:
                 action_value = f"{mower_external_id},{endtime},{starttime}"
             else:
