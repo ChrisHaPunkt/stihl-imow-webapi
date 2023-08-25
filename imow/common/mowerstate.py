@@ -115,6 +115,7 @@ class MowerState:
         imow_action: IMowActions,
         first_action_value_param: any = "",
         second_action_value_param: any = "",
+        test_mode: bool = False,
         **kwargs
     ) -> None:
         await self.imow.intent(
@@ -122,6 +123,7 @@ class MowerState:
             first_action_value_param=first_action_value_param,
             second_action_value_param=second_action_value_param,
             mower_external_id=self.externalId,
+            test_mode=test_mode,
             **kwargs
         )
 

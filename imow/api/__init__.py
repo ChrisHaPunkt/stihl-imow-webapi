@@ -336,6 +336,7 @@ class IMowApi:
         mower_external_id: str = "",
         first_action_value_param: any = "",
         second_action_value_param: any = "",
+        test_mode: bool = False,
         **kwargs,
     ) -> aiohttp.ClientResponse:
         """
@@ -357,8 +358,11 @@ class IMowApi:
         :param second_action_value_param: second argument passed into the action call request to the api. Can be one of the following contents:
             A startpoint: from which the mowing shall start. Used by START_MOWING_FROM_POINT. Defaults to '0'.
             An endtime: a datetime when to stop mowing. I.e. '2023-08-12 20:50' used by START_MOWING
+        :param test_mode: Do not issue the request to the server
         :return:
         """
+        if test_mode:
+            logger.warning("TEST_MODE: Request will not be issued to server.")
         if not mower_external_id and not mower_id and not mower_name:
             raise AttributeError(
                 "Need some mower to work on. Please specify mower_[name|id|action_id]"
@@ -437,24 +441,22 @@ class IMowApi:
                     "argument 'endtime=\"%Y-%m-%d %H:%M\"'"
                 )
 
-            if second_action_value_param != "":
-                starttime = str(second_action_value_param)
-
-            else:
-                # if only starttime given, create an endtime 2 hours after given starttime
-                starttime = None
-                # if starttime:
-                #     endtime = (
-                #         datetime.strptime(starttime, "%Y-%m-%d %H:%M")
-                #         + timedelta(hours=2)
-                #     ).strftime("%Y-%m-%d %H:%M")
-                # else:
-                #     endtime = (
-                #         datetime.now() + timedelta(hours=2)
-                #     ).strftime("%Y-%m-%d %H:%M")
+            starttime = (
+                str(second_action_value_param)
+                if second_action_value_param != ""
+                else None
+            )
 
             if starttime:
-                action_value = f"{mower_external_id},{endtime},{starttime}"
+                # Make sure endtime is after starttime
+                if datetime.strptime(
+                    starttime, "%Y-%m-%d %H:%M"
+                ) < datetime.strptime(endtime, "%Y-%m-%d %H:%M"):
+                    action_value = f"{mower_external_id},{endtime},{starttime}"
+                else:
+                    raise AttributeError(
+                        f"Time when to end: {endtime} is not afer time to start: {starttime}. This has to be until time travel."
+                    )
             else:
                 action_value = f"{mower_external_id},{endtime}"
 
@@ -474,16 +476,24 @@ class IMowApi:
 
         payload = json.dumps(action_object)
 
-        response = await self.api_request(url, "POST", payload=payload)
-        if response.ok:
-            logger.debug(
-                f"Success: Created mower (extId:{mower_external_id}) ActionObject with contents:"
+        if not test_mode:
+            response = await self.api_request(url, "POST", payload=payload)
+
+            if response.ok:
+                logger.debug(
+                    f"Success: Created mower (extId:{mower_external_id}) ActionObject with contents:"
+                )
+                logger.debug(f" {action_object}")
+                logger.debug(f" -> (HTTP Status {response.status})")
+            else:
+                logger.error(f"No success with mower-action: {payload}")
+            return response
+        else:
+            logger.warning(
+                f"TEST_MODE: (NOT) Created mower (extId:{mower_external_id}) ActionObject with contents:"
             )
             logger.debug(f" {action_object}")
-            logger.debug(f" -> (HTTP Status {response.status})")
-        else:
-            logger.error(f"No success with mower-action: {payload}")
-        return response
+            return True
 
     async def update_setting(self, mower_id, setting, new_value) -> MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
