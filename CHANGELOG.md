@@ -1,4 +1,15 @@
 # Changelog
+## Version 0.8.0 (2023-08-26)
+This release focuses on support for imow 600 series. They need another action for mowing action calls.
+
+### BREAKING CHANGE
+The iMow action `IMowActions.START_MOWING` now creates a `startMowing` action and no longer a `startMowingFromPoint` action.
+To issue a `startMowingFromPoint`, the new `IMowAction.START_MOWING_FROM_POINT` needs to be used.
+
+#### Added 
+- keywork arguments `starttime` and `endtime` in `IMow.intent()` call to be used with IMowActions.START_MOWING
+- Updated Readme with `IMow.intent` exampes
+- added debug log output in `intent()` call
 
 ## Version 0.7.10 (2023-05-13)
 - Bugfix http_session not present on logout

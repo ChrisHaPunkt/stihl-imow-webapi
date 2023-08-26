@@ -453,12 +453,12 @@ class IMowApi:
                 ).strftime("%Y-%m-%d %H:%M")
             elif not starttime and not endtime:
                 # Run for 2 hours from now if no time is given
-                logging.warning(
-                    f"No start- or endtime is given. Creating an action object with endtime 2 hours from now based from this machines local timezone"
+                now = datetime.now()
+                logger.warning(
+                    f"No start- or endtime is given. Creating an action object with endtime 2 hours from now"
+                    f"based from this machines local timezone. datetime.now() gives {now.strftime('%Y-%m-%d %H:%M')}."
                 )
-                endtime = (datetime.now() + timedelta(hours=2)).strftime(
-                    "%Y-%m-%d %H:%M"
-                )
+                endtime = (now + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M")
 
             if starttime:
                 # Make sure endtime is after starttime
