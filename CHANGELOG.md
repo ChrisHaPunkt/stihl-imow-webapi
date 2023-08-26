@@ -1,7 +1,7 @@
 # Changelog
-## Version 0.8.0 (2023-08-26)
-This release focuses on support for imow 600 series. They need another action for mowing action calls.
-
+## Version 0.8.2 (2023-08-26)
+### Fix
+- validation of values in keyword arguments
 ### BREAKING CHANGE
 The iMow action `IMowActions.START_MOWING` now creates a `startMowing` action and no longer a `startMowingFromPoint` action.
 To issue a `startMowingFromPoint`, the new `IMowAction.START_MOWING_FROM_POINT` needs to be used.
