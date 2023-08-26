@@ -24,7 +24,10 @@ class MowerState:
 
     def replace_state(self, upstream: dict):
         self.__dict__.update(
-            map(lambda kv: (kv[0].replace(" ", "_"), kv[1]), upstream.items())
+            map(
+                lambda kv: (kv[0].replace(" ", "_"), kv[1]),
+                upstream.items(),
+            )
         )
         self.update_state_messages()
 
@@ -110,14 +113,18 @@ class MowerState:
     async def intent(
         self,
         imow_action: IMowActions,
-        startpoint: any = "0",
-        duration: any = "30",
+        first_action_value_param: any = "",
+        second_action_value_param: any = "",
+        test_mode: bool = False,
+        **kwargs
     ) -> None:
         await self.imow.intent(
             imow_action=imow_action,
-            startpoint=startpoint,
-            duration=duration,
+            first_action_value_param=first_action_value_param,
+            second_action_value_param=second_action_value_param,
             mower_external_id=self.externalId,
+            test_mode=test_mode,
+            **kwargs
         )
 
     accountId: str = {str}

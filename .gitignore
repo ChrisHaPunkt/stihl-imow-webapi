@@ -138,4 +138,5 @@ test-*.py
 # intelliJ’s project specific settings files
 .idea
 secrets.py
+my_secrets.py
 main.py

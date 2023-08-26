@@ -57,14 +57,19 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
 
         token_new, expire_time = self.loop.run_until_complete(
             self.imow.get_token(
-                EMAIL, PASSWORD, force_reauth=True, return_expire_time=True
+                EMAIL,
+                PASSWORD,
+                force_reauth=True,
+                return_expire_time=True,
             )
         )
         self.assertIs(
             len(token_new), 98, msg="Expected new token has 98 chars"
         )
         self.assertNotEqual(
-            token_old, token_new, msg="Expected old and new token differ"
+            token_old,
+            token_new,
+            msg="Expected old and new token differ",
         )
 
     def test_validate_token(self):
@@ -124,10 +129,10 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
             msg="Expected 201 HTTP Code",
         )
 
-    def test_intent_start_mowing(self):
+    def test_intent_start_mowing_from_point(self):
         result = self.loop.run_until_complete(
             self.imow.intent(
-                IMowActions.START_MOWING,
+                IMowActions.START_MOWING_FROM_POINT,
                 mower_id=self.test_mower.id,
                 duration=60,
                 startpoint=2,
@@ -139,10 +144,11 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
             msg="Expected 201 HTTP Code",
         )
 
-    def test_intent_start_mowing_with_defaults(self):
+    def test_intent_start_mowing_from_point_with_defaults(self):
         result = self.loop.run_until_complete(
             self.imow.intent(
-                IMowActions.START_MOWING, mower_id=self.test_mower.id
+                IMowActions.START_MOWING_FROM_POINT,
+                mower_id=self.test_mower.id,
             )
         )
         self.assertIs(
