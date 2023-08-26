@@ -433,19 +433,32 @@ class IMowApi:
         elif (
             imow_action == IMowActions.START_MOWING
         ):  # by start- and/or endtime
-            if first_action_value_param != "":
-                endtime = str(first_action_value_param)
-            else:
-                raise AttributeError(
-                    "Time when to end is necessary. Please provide as 2nd function call argument or as keyword-"
-                    "argument 'endtime=\"%Y-%m-%d %H:%M\"'"
-                )
-
+            endtime = (
+                str(first_action_value_param)
+                if first_action_value_param != ""
+                else None
+            )
             starttime = (
                 str(second_action_value_param)
                 if second_action_value_param != ""
                 else None
             )
+
+            # Create some defaults
+            if starttime and not endtime:
+                # Run for 2 hours from start time if only a start time is given
+                endtime = (
+                    datetime.strptime(starttime, "%Y-%m-%d %H:%M")
+                    + timedelta(hours=2)
+                ).strftime("%Y-%m-%d %H:%M")
+            elif not starttime and not endtime:
+                # Run for 2 hours from now if no time is given
+                logging.warning(
+                    f"No start- or endtime is given. Creating an action object with endtime 2 hours from now based from this machines local timezone"
+                )
+                endtime = (datetime.now() + timedelta(hours=2)).strftime(
+                    "%Y-%m-%d %H:%M"
+                )
 
             if starttime:
                 # Make sure endtime is after starttime
@@ -492,7 +505,7 @@ class IMowApi:
             logger.warning(
                 f"TEST_MODE: (NOT) Created mower (extId:{mower_external_id}) ActionObject with contents:"
             )
-            logger.debug(f" {action_object}")
+            logger.warning(f"  {action_object}")
             return True
 
     async def update_setting(self, mower_id, setting, new_value) -> MowerState:
