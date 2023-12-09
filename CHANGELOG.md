@@ -1,5 +1,7 @@
 # Changelog
 
+## Version 0.7.10-a (2023-12-09)
+- loosen requirements versions
 ## Version 0.7.10 (2023-05-13)
 - Bugfix http_session not present on logout
 ## Version 0.7.9 (2023-05-13)
