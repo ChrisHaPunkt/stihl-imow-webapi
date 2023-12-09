@@ -5,3 +5,4 @@ setuptools
 pytest
 black
 flake8
+pdoc3

@@ -52,7 +52,10 @@ class MowerState:
 
     def replace_state(self, upstream: dict):
         self.__dict__.update(
-            map(lambda kv: (kv[0].replace(&#34; &#34;, &#34;_&#34;), kv[1]), upstream.items())
+            map(
+                lambda kv: (kv[0].replace(&#34; &#34;, &#34;_&#34;), kv[1]),
+                upstream.items(),
+            )
         )
         self.update_state_messages()
 
@@ -140,6 +143,7 @@ class MowerState:
         imow_action: IMowActions,
         first_action_value_param: any = &#34;&#34;,
         second_action_value_param: any = &#34;&#34;,
+        test_mode: bool = False,
         **kwargs
     ) -&gt; None:
         await self.imow.intent(
@@ -147,6 +151,7 @@ class MowerState:
             first_action_value_param=first_action_value_param,
             second_action_value_param=second_action_value_param,
             mower_external_id=self.externalId,
+            test_mode=test_mode,
             **kwargs
         )
 
@@ -244,7 +249,10 @@ class MowerState:
 
     def replace_state(self, upstream: dict):
         self.__dict__.update(
-            map(lambda kv: (kv[0].replace(&#34; &#34;, &#34;_&#34;), kv[1]), upstream.items())
+            map(
+                lambda kv: (kv[0].replace(&#34; &#34;, &#34;_&#34;), kv[1]),
+                upstream.items(),
+            )
         )
         self.update_state_messages()
 
@@ -332,6 +340,7 @@ class MowerState:
         imow_action: IMowActions,
         first_action_value_param: any = &#34;&#34;,
         second_action_value_param: any = &#34;&#34;,
+        test_mode: bool = False,
         **kwargs
     ) -&gt; None:
         await self.imow.intent(
@@ -339,6 +348,7 @@ class MowerState:
             first_action_value_param=first_action_value_param,
             second_action_value_param=second_action_value_param,
             mower_external_id=self.externalId,
+            test_mode=test_mode,
             **kwargs
         )
 
@@ -678,7 +688,7 @@ class MowerState:
 </details>
 </dd>
 <dt id="imow.common.mowerstate.MowerState.intent"><code class="name flex">
-<span>async def <span class="ident">intent</span></span>(<span>self, imow_action: <a title="imow.common.actions.IMowActions" href="actions.html#imow.common.actions.IMowActions">IMowActions</a>, first_action_value_param: <built-in function any> = '', second_action_value_param: <built-in function any> = '', **kwargs) ‑> None</span>
+<span>async def <span class="ident">intent</span></span>(<span>self, imow_action: <a title="imow.common.actions.IMowActions" href="actions.html#imow.common.actions.IMowActions">IMowActions</a>, first_action_value_param: <built-in function any> = '', second_action_value_param: <built-in function any> = '', test_mode: bool = False, **kwargs) ‑> None</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -691,6 +701,7 @@ class MowerState:
     imow_action: IMowActions,
     first_action_value_param: any = &#34;&#34;,
     second_action_value_param: any = &#34;&#34;,
+    test_mode: bool = False,
     **kwargs
 ) -&gt; None:
     await self.imow.intent(
@@ -698,6 +709,7 @@ class MowerState:
         first_action_value_param=first_action_value_param,
         second_action_value_param=second_action_value_param,
         mower_external_id=self.externalId,
+        test_mode=test_mode,
         **kwargs
     )</code></pre>
 </details>
@@ -713,7 +725,10 @@ class MowerState:
 </summary>
 <pre><code class="python">def replace_state(self, upstream: dict):
     self.__dict__.update(
-        map(lambda kv: (kv[0].replace(&#34; &#34;, &#34;_&#34;), kv[1]), upstream.items())
+        map(
+            lambda kv: (kv[0].replace(&#34; &#34;, &#34;_&#34;), kv[1]),
+            upstream.items(),
+        )
     )
     self.update_state_messages()</code></pre>
 </details>

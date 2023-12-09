@@ -33,11 +33,11 @@ import json
 import logging
 import sys
 from datetime import datetime, timedelta
-from typing import Tuple, Union, List
+from typing import Tuple, Union, List, Any
 from urllib.parse import quote
 
 import aiohttp
-from aiohttp import ClientSession, ClientResponseError
+from aiohttp import ClientSession, ClientResponseError, ClientResponse
 from bs4 import BeautifulSoup
 from furl import furl
 
@@ -70,6 +70,26 @@ if (
     and sys.platform.startswith(&#34;win&#34;)
 ):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+
+def validate_and_fix_datetime(value) -&gt; str:
+    &#34;&#34;&#34;
+    Try to convert and validate the given string from &#34;%Y-%m-%d %H:%M&#34; or &#34;%Y-%m-%d %H:%M:%S into a datetime object
+    and give the needed &#34;%Y-%m-%d %H:%M&#34; string back.
+    :param value: the string tobe checked :return: the correctly formated string
+    &#34;&#34;&#34;
+    try:
+        datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M&#34;)
+        return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
+    except ValueError as ve:
+        logger.warning(
+            f&#34;  Try fixing given time format because {ve} in {value}&#34;
+        )
+        try:
+            datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M:%S&#34;)
+            return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
+        except ValueError as ve2:
+            raise ValueError(f&#39;Unsupported &#34;time&#34; argument: {value} -&gt; {ve2}&#39;)
 
 
 class IMowApi:
@@ -187,7 +207,7 @@ class IMowApi:
 
     async def __authenticate(
         self, email: str, password: str
-    ) -&gt; List[str, str, aiohttp.ClientResponse]:
+    ) -&gt; tuple[Any, datetime, ClientResponse]:
         &#34;&#34;&#34;
         try the authentication request with fetched csrf and requestId payload
         :param email: stihl webapp login email non-url-encoded
@@ -222,7 +242,9 @@ class IMowApi:
         )
         return self.access_token, self.token_expires, response
 
-    async def __fetch_new_csrf_token_and_request_id(self) -&gt; List[str, str]:
+    async def __fetch_new_csrf_token_and_request_id(
+        self,
+    ) -&gt; tuple[str | list[str] | None, str | list[str] | None]:
         &#34;&#34;&#34;
         Fetch a new csrf_token and requestId to do the authentication as expected by the api
         csrf_token and requestId are used as payload within authentication
@@ -334,27 +356,6 @@ class IMowApi:
                 await self.check_api_maintenance()
             raise e
 
-    def validate_and_fix_datetime(self, value) -&gt; str:
-        &#34;&#34;&#34;
-        Try to convert and validate the given string from &#34;%Y-%m-%d %H:%M&#34; or &#34;%Y-%m-%d %H:%M:%S into a datetime object and give the needed &#34;%Y-%m-%d %H:%M&#34; string back.
-        :param value: the string tobe checked
-        :return: the correctly formated string
-        &#34;&#34;&#34;
-        try:
-            datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M&#34;)
-            return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
-        except ValueError as ve:
-            logger.warn(
-                f&#34;  Try fixing given time format because {ve} in {value}&#34;
-            )
-            try:
-                datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M:%S&#34;)
-                return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
-            except ValueError as ve2:
-                raise ValueError(
-                    f&#39;Unsupported &#34;time&#34; argument: {value} -&gt; {ve2}&#39;
-                )
-
     async def intent(
         self,
         imow_action: IMowActions,
@@ -363,6 +364,7 @@ class IMowApi:
         mower_external_id: str = &#34;&#34;,
         first_action_value_param: any = &#34;&#34;,
         second_action_value_param: any = &#34;&#34;,
+        test_mode: bool = False,
         **kwargs,
     ) -&gt; aiohttp.ClientResponse:
         &#34;&#34;&#34;
@@ -384,8 +386,11 @@ class IMowApi:
         :param second_action_value_param: second argument passed into the action call request to the api. Can be one of the following contents:
             A startpoint: from which the mowing shall start. Used by START_MOWING_FROM_POINT. Defaults to &#39;0&#39;.
             An endtime: a datetime when to stop mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
+        :param test_mode: Do not issue the request to the server
         :return:
         &#34;&#34;&#34;
+        if test_mode:
+            logger.warning(&#34;TEST_MODE: Request will not be issued to server.&#34;)
         if not mower_external_id and not mower_id and not mower_name:
             raise AttributeError(
                 &#34;Need some mower to work on. Please specify mower_[name|id|action_id]&#34;
@@ -413,25 +418,24 @@ class IMowApi:
             )
             for key, value in given_kwargs:
                 logger.debug(&#34;  {0} = {1}&#34;.format(key, value))
-                if key == &#34;duration&#34;:
+                if key == &#34;duration&#34; and value:
                     first_action_value_param = value
-                if key == &#34;startpoint&#34;:
+                if key == &#34;startpoint&#34; and value:
                     second_action_value_param = value
 
-                if key == &#34;starttime&#34;:
-                    first_action_value_param = self.validate_and_fix_datetime(
-                        value
-                    )
-                if key == &#34;endtime&#34;:
-                    second_action_value_param = self.validate_and_fix_datetime(
+                if key == &#34;endtime&#34; and value:
+                    first_action_value_param = validate_and_fix_datetime(value)
+
+                if key == &#34;starttime&#34; and value:
+                    second_action_value_param = validate_and_fix_datetime(
                         value
                     )
 
             logger.debug(
-                f&#34;  -&gt; first_action_value_param: {first_action_value_param} &#34;
+                f&#34;  -&gt; first_action_value_param (end-time / duration): {first_action_value_param} &#34;
             )
             logger.debug(
-                f&#34;  -&gt; second_action_value_param: {second_action_value_param} &#34;
+                f&#34;  -&gt; second_action_value_param (start-time / startpoint): {second_action_value_param} &#34;
             )
 
         logger.debug(
@@ -457,20 +461,45 @@ class IMowApi:
         elif (
             imow_action == IMowActions.START_MOWING
         ):  # by start- and/or endtime
-            starttime = (
-                str(first_action_value_param)
-                if first_action_value_param
-                else datetime.now().strftime(&#34;%Y-%m-%d %H:%M&#34;)
-            )
             endtime = (
+                str(first_action_value_param)
+                if first_action_value_param != &#34;&#34;
+                else None
+            )
+            starttime = (
                 str(second_action_value_param)
                 if second_action_value_param != &#34;&#34;
                 else None
             )
-            if endtime:
-                action_value = f&#34;{mower_external_id},{starttime},{endtime}&#34;
+
+            # Create some defaults
+            if starttime and not endtime:
+                # Run for 2 hours from start time if only a start time is given
+                endtime = (
+                    datetime.strptime(starttime, &#34;%Y-%m-%d %H:%M&#34;)
+                    + timedelta(hours=2)
+                ).strftime(&#34;%Y-%m-%d %H:%M&#34;)
+            elif not starttime and not endtime:
+                # Run for 2 hours from now if no time is given
+                now = datetime.now()
+                logger.warning(
+                    f&#34;No start- or endtime is given. Creating an action object with endtime 2 hours from now&#34;
+                    f&#34;based from this machines local timezone. datetime.now() gives {now.strftime(&#39;%Y-%m-%d %H:%M&#39;)}.&#34;
+                )
+                endtime = (now + timedelta(hours=2)).strftime(&#34;%Y-%m-%d %H:%M&#34;)
+
+            if starttime:
+                # Make sure endtime is after starttime
+                if datetime.strptime(
+                    starttime, &#34;%Y-%m-%d %H:%M&#34;
+                ) &lt; datetime.strptime(endtime, &#34;%Y-%m-%d %H:%M&#34;):
+                    action_value = f&#34;{mower_external_id},{endtime},{starttime}&#34;
+                else:
+                    raise AttributeError(
+                        f&#34;Time when to end: {endtime} is not afer time to start: {starttime}. This has to be until time travel.&#34;
+                    )
             else:
-                action_value = f&#34;{mower_external_id},{starttime}&#34;
+                action_value = f&#34;{mower_external_id},{endtime}&#34;
 
         else:
             action_value = mower_external_id
@@ -479,7 +508,7 @@ class IMowApi:
             &#34;actionName&#34;: imow_action.value,
             &#34;actionValue&#34;: action_value
             # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,DurationInMunitesDividedBy10,StartPoint&gt;
-            # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,StartTime,EndTime&gt;
+            # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,EndTime,StartTime&gt;
         }
         logger.debug(
             f&#34;Intent sent as request body to imow api for mower with identifier: &#39;{mower_name}/{mower_id}/{mower_external_id}&#39;&#34;
@@ -488,16 +517,24 @@ class IMowApi:
 
         payload = json.dumps(action_object)
 
-        response = await self.api_request(url, &#34;POST&#34;, payload=payload)
-        if response.ok:
-            logger.debug(
-                f&#34;Success: Created mower (extId:{mower_external_id}) ActionObject with contents:&#34;
-            )
-            logger.debug(f&#34; {action_object}&#34;)
-            logger.debug(f&#34; -&gt; (HTTP Status {response.status})&#34;)
+        if not test_mode:
+            response = await self.api_request(url, &#34;POST&#34;, payload=payload)
+
+            if response.ok:
+                logger.debug(
+                    f&#34;Success: Created mower (extId:{mower_external_id}) ActionObject with contents:&#34;
+                )
+                logger.debug(f&#34; {action_object}&#34;)
+                logger.debug(f&#34; -&gt; (HTTP Status {response.status})&#34;)
+            else:
+                logger.error(f&#34;No success with mower-action: {payload}&#34;)
+            return response
         else:
-            logger.error(f&#34;No success with mower-action: {payload}&#34;)
-        return response
+            logger.warning(
+                f&#34;TEST_MODE: (NOT) Created mower (extId:{mower_external_id}) ActionObject with contents:&#34;
+            )
+            logger.warning(f&#34;  {action_object}&#34;)
+            return True
 
     async def update_setting(self, mower_id, setting, new_value) -&gt; MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
@@ -672,6 +709,40 @@ class IMowApi:
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="imow.api.validate_and_fix_datetime"><code class="name flex">
+<span>def <span class="ident">validate_and_fix_datetime</span></span>(<span>value) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Try to convert and validate the given string from "%Y-%m-%d %H:%M" or "%Y-%m-%d %H:%M:%S into a datetime object
+and give the needed "%Y-%m-%d %H:%M" string back.
+:param value: the string tobe checked :return: the correctly formated string</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def validate_and_fix_datetime(value) -&gt; str:
+    &#34;&#34;&#34;
+    Try to convert and validate the given string from &#34;%Y-%m-%d %H:%M&#34; or &#34;%Y-%m-%d %H:%M:%S into a datetime object
+    and give the needed &#34;%Y-%m-%d %H:%M&#34; string back.
+    :param value: the string tobe checked :return: the correctly formated string
+    &#34;&#34;&#34;
+    try:
+        datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M&#34;)
+        return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
+    except ValueError as ve:
+        logger.warning(
+            f&#34;  Try fixing given time format because {ve} in {value}&#34;
+        )
+        try:
+            datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M:%S&#34;)
+            return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
+        except ValueError as ve2:
+            raise ValueError(f&#39;Unsupported &#34;time&#34; argument: {value} -&gt; {ve2}&#39;)</code></pre>
+</details>
+</dd>
+</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
@@ -801,7 +872,7 @@ class IMowApi:
 
     async def __authenticate(
         self, email: str, password: str
-    ) -&gt; List[str, str, aiohttp.ClientResponse]:
+    ) -&gt; tuple[Any, datetime, ClientResponse]:
         &#34;&#34;&#34;
         try the authentication request with fetched csrf and requestId payload
         :param email: stihl webapp login email non-url-encoded
@@ -836,7 +907,9 @@ class IMowApi:
         )
         return self.access_token, self.token_expires, response
 
-    async def __fetch_new_csrf_token_and_request_id(self) -&gt; List[str, str]:
+    async def __fetch_new_csrf_token_and_request_id(
+        self,
+    ) -&gt; tuple[str | list[str] | None, str | list[str] | None]:
         &#34;&#34;&#34;
         Fetch a new csrf_token and requestId to do the authentication as expected by the api
         csrf_token and requestId are used as payload within authentication
@@ -948,27 +1021,6 @@ class IMowApi:
                 await self.check_api_maintenance()
             raise e
 
-    def validate_and_fix_datetime(self, value) -&gt; str:
-        &#34;&#34;&#34;
-        Try to convert and validate the given string from &#34;%Y-%m-%d %H:%M&#34; or &#34;%Y-%m-%d %H:%M:%S into a datetime object and give the needed &#34;%Y-%m-%d %H:%M&#34; string back.
-        :param value: the string tobe checked
-        :return: the correctly formated string
-        &#34;&#34;&#34;
-        try:
-            datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M&#34;)
-            return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
-        except ValueError as ve:
-            logger.warn(
-                f&#34;  Try fixing given time format because {ve} in {value}&#34;
-            )
-            try:
-                datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M:%S&#34;)
-                return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
-            except ValueError as ve2:
-                raise ValueError(
-                    f&#39;Unsupported &#34;time&#34; argument: {value} -&gt; {ve2}&#39;
-                )
-
     async def intent(
         self,
         imow_action: IMowActions,
@@ -977,6 +1029,7 @@ class IMowApi:
         mower_external_id: str = &#34;&#34;,
         first_action_value_param: any = &#34;&#34;,
         second_action_value_param: any = &#34;&#34;,
+        test_mode: bool = False,
         **kwargs,
     ) -&gt; aiohttp.ClientResponse:
         &#34;&#34;&#34;
@@ -998,8 +1051,11 @@ class IMowApi:
         :param second_action_value_param: second argument passed into the action call request to the api. Can be one of the following contents:
             A startpoint: from which the mowing shall start. Used by START_MOWING_FROM_POINT. Defaults to &#39;0&#39;.
             An endtime: a datetime when to stop mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
+        :param test_mode: Do not issue the request to the server
         :return:
         &#34;&#34;&#34;
+        if test_mode:
+            logger.warning(&#34;TEST_MODE: Request will not be issued to server.&#34;)
         if not mower_external_id and not mower_id and not mower_name:
             raise AttributeError(
                 &#34;Need some mower to work on. Please specify mower_[name|id|action_id]&#34;
@@ -1027,25 +1083,24 @@ class IMowApi:
             )
             for key, value in given_kwargs:
                 logger.debug(&#34;  {0} = {1}&#34;.format(key, value))
-                if key == &#34;duration&#34;:
+                if key == &#34;duration&#34; and value:
                     first_action_value_param = value
-                if key == &#34;startpoint&#34;:
+                if key == &#34;startpoint&#34; and value:
                     second_action_value_param = value
 
-                if key == &#34;starttime&#34;:
-                    first_action_value_param = self.validate_and_fix_datetime(
-                        value
-                    )
-                if key == &#34;endtime&#34;:
-                    second_action_value_param = self.validate_and_fix_datetime(
+                if key == &#34;endtime&#34; and value:
+                    first_action_value_param = validate_and_fix_datetime(value)
+
+                if key == &#34;starttime&#34; and value:
+                    second_action_value_param = validate_and_fix_datetime(
                         value
                     )
 
             logger.debug(
-                f&#34;  -&gt; first_action_value_param: {first_action_value_param} &#34;
+                f&#34;  -&gt; first_action_value_param (end-time / duration): {first_action_value_param} &#34;
             )
             logger.debug(
-                f&#34;  -&gt; second_action_value_param: {second_action_value_param} &#34;
+                f&#34;  -&gt; second_action_value_param (start-time / startpoint): {second_action_value_param} &#34;
             )
 
         logger.debug(
@@ -1071,20 +1126,45 @@ class IMowApi:
         elif (
             imow_action == IMowActions.START_MOWING
         ):  # by start- and/or endtime
-            starttime = (
-                str(first_action_value_param)
-                if first_action_value_param
-                else datetime.now().strftime(&#34;%Y-%m-%d %H:%M&#34;)
-            )
             endtime = (
+                str(first_action_value_param)
+                if first_action_value_param != &#34;&#34;
+                else None
+            )
+            starttime = (
                 str(second_action_value_param)
                 if second_action_value_param != &#34;&#34;
                 else None
             )
-            if endtime:
-                action_value = f&#34;{mower_external_id},{starttime},{endtime}&#34;
+
+            # Create some defaults
+            if starttime and not endtime:
+                # Run for 2 hours from start time if only a start time is given
+                endtime = (
+                    datetime.strptime(starttime, &#34;%Y-%m-%d %H:%M&#34;)
+                    + timedelta(hours=2)
+                ).strftime(&#34;%Y-%m-%d %H:%M&#34;)
+            elif not starttime and not endtime:
+                # Run for 2 hours from now if no time is given
+                now = datetime.now()
+                logger.warning(
+                    f&#34;No start- or endtime is given. Creating an action object with endtime 2 hours from now&#34;
+                    f&#34;based from this machines local timezone. datetime.now() gives {now.strftime(&#39;%Y-%m-%d %H:%M&#39;)}.&#34;
+                )
+                endtime = (now + timedelta(hours=2)).strftime(&#34;%Y-%m-%d %H:%M&#34;)
+
+            if starttime:
+                # Make sure endtime is after starttime
+                if datetime.strptime(
+                    starttime, &#34;%Y-%m-%d %H:%M&#34;
+                ) &lt; datetime.strptime(endtime, &#34;%Y-%m-%d %H:%M&#34;):
+                    action_value = f&#34;{mower_external_id},{endtime},{starttime}&#34;
+                else:
+                    raise AttributeError(
+                        f&#34;Time when to end: {endtime} is not afer time to start: {starttime}. This has to be until time travel.&#34;
+                    )
             else:
-                action_value = f&#34;{mower_external_id},{starttime}&#34;
+                action_value = f&#34;{mower_external_id},{endtime}&#34;
 
         else:
             action_value = mower_external_id
@@ -1093,7 +1173,7 @@ class IMowApi:
             &#34;actionName&#34;: imow_action.value,
             &#34;actionValue&#34;: action_value
             # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,DurationInMunitesDividedBy10,StartPoint&gt;
-            # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,StartTime,EndTime&gt;
+            # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,EndTime,StartTime&gt;
         }
         logger.debug(
             f&#34;Intent sent as request body to imow api for mower with identifier: &#39;{mower_name}/{mower_id}/{mower_external_id}&#39;&#34;
@@ -1102,16 +1182,24 @@ class IMowApi:
 
         payload = json.dumps(action_object)
 
-        response = await self.api_request(url, &#34;POST&#34;, payload=payload)
-        if response.ok:
-            logger.debug(
-                f&#34;Success: Created mower (extId:{mower_external_id}) ActionObject with contents:&#34;
-            )
-            logger.debug(f&#34; {action_object}&#34;)
-            logger.debug(f&#34; -&gt; (HTTP Status {response.status})&#34;)
+        if not test_mode:
+            response = await self.api_request(url, &#34;POST&#34;, payload=payload)
+
+            if response.ok:
+                logger.debug(
+                    f&#34;Success: Created mower (extId:{mower_external_id}) ActionObject with contents:&#34;
+                )
+                logger.debug(f&#34; {action_object}&#34;)
+                logger.debug(f&#34; -&gt; (HTTP Status {response.status})&#34;)
+            else:
+                logger.error(f&#34;No success with mower-action: {payload}&#34;)
+            return response
         else:
-            logger.error(f&#34;No success with mower-action: {payload}&#34;)
-        return response
+            logger.warning(
+                f&#34;TEST_MODE: (NOT) Created mower (extId:{mower_external_id}) ActionObject with contents:&#34;
+            )
+            logger.warning(f&#34;  {action_object}&#34;)
+            return True
 
     async def update_setting(self, mower_id, setting, new_value) -&gt; MowerState:
         mower_state = await self.receive_mower_by_id(mower_id)
@@ -1631,7 +1719,7 @@ class IMowApi:
 </details>
 </dd>
 <dt id="imow.api.IMowApi.intent"><code class="name flex">
-<span>async def <span class="ident">intent</span></span>(<span>self, imow_action: IMowActions, mower_name: str = '', mower_id: str = '', mower_external_id: str = '', first_action_value_param: any = '', second_action_value_param: any = '', **kwargs) ‑> aiohttp.client_reqrep.ClientResponse</span>
+<span>async def <span class="ident">intent</span></span>(<span>self, imow_action: IMowActions, mower_name: str = '', mower_id: str = '', mower_external_id: str = '', first_action_value_param: any = '', second_action_value_param: any = '', test_mode: bool = False, **kwargs) ‑> aiohttp.client_reqrep.ClientResponse</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Intent to do a action. This seems to create a job object upstream. The action object contains an action Enum,
@@ -1649,6 +1737,7 @@ A starttime: a datetime when to start mowing. I.e. '2023-08-12 20:50' used by ST
 <p>:param second_action_value_param: second argument passed into the action call request to the api. Can be one of the following contents:
 A startpoint: from which the mowing shall start. Used by START_MOWING_FROM_POINT. Defaults to '0'.
 An endtime: a datetime when to stop mowing. I.e. '2023-08-12 20:50' used by START_MOWING
+:param test_mode: Do not issue the request to the server
 :return:</p></div>
 <details class="source">
 <summary>
@@ -1662,6 +1751,7 @@ An endtime: a datetime when to stop mowing. I.e. '2023-08-12 20:50' used by STAR
     mower_external_id: str = &#34;&#34;,
     first_action_value_param: any = &#34;&#34;,
     second_action_value_param: any = &#34;&#34;,
+    test_mode: bool = False,
     **kwargs,
 ) -&gt; aiohttp.ClientResponse:
     &#34;&#34;&#34;
@@ -1683,8 +1773,11 @@ An endtime: a datetime when to stop mowing. I.e. '2023-08-12 20:50' used by STAR
     :param second_action_value_param: second argument passed into the action call request to the api. Can be one of the following contents:
         A startpoint: from which the mowing shall start. Used by START_MOWING_FROM_POINT. Defaults to &#39;0&#39;.
         An endtime: a datetime when to stop mowing. I.e. &#39;2023-08-12 20:50&#39; used by START_MOWING
+    :param test_mode: Do not issue the request to the server
     :return:
     &#34;&#34;&#34;
+    if test_mode:
+        logger.warning(&#34;TEST_MODE: Request will not be issued to server.&#34;)
     if not mower_external_id and not mower_id and not mower_name:
         raise AttributeError(
             &#34;Need some mower to work on. Please specify mower_[name|id|action_id]&#34;
@@ -1712,25 +1805,24 @@ An endtime: a datetime when to stop mowing. I.e. '2023-08-12 20:50' used by STAR
         )
         for key, value in given_kwargs:
             logger.debug(&#34;  {0} = {1}&#34;.format(key, value))
-            if key == &#34;duration&#34;:
+            if key == &#34;duration&#34; and value:
                 first_action_value_param = value
-            if key == &#34;startpoint&#34;:
+            if key == &#34;startpoint&#34; and value:
                 second_action_value_param = value
 
-            if key == &#34;starttime&#34;:
-                first_action_value_param = self.validate_and_fix_datetime(
-                    value
-                )
-            if key == &#34;endtime&#34;:
-                second_action_value_param = self.validate_and_fix_datetime(
+            if key == &#34;endtime&#34; and value:
+                first_action_value_param = validate_and_fix_datetime(value)
+
+            if key == &#34;starttime&#34; and value:
+                second_action_value_param = validate_and_fix_datetime(
                     value
                 )
 
         logger.debug(
-            f&#34;  -&gt; first_action_value_param: {first_action_value_param} &#34;
+            f&#34;  -&gt; first_action_value_param (end-time / duration): {first_action_value_param} &#34;
         )
         logger.debug(
-            f&#34;  -&gt; second_action_value_param: {second_action_value_param} &#34;
+            f&#34;  -&gt; second_action_value_param (start-time / startpoint): {second_action_value_param} &#34;
         )
 
     logger.debug(
@@ -1756,20 +1848,45 @@ An endtime: a datetime when to stop mowing. I.e. '2023-08-12 20:50' used by STAR
     elif (
         imow_action == IMowActions.START_MOWING
     ):  # by start- and/or endtime
-        starttime = (
-            str(first_action_value_param)
-            if first_action_value_param
-            else datetime.now().strftime(&#34;%Y-%m-%d %H:%M&#34;)
-        )
         endtime = (
+            str(first_action_value_param)
+            if first_action_value_param != &#34;&#34;
+            else None
+        )
+        starttime = (
             str(second_action_value_param)
             if second_action_value_param != &#34;&#34;
             else None
         )
-        if endtime:
-            action_value = f&#34;{mower_external_id},{starttime},{endtime}&#34;
+
+        # Create some defaults
+        if starttime and not endtime:
+            # Run for 2 hours from start time if only a start time is given
+            endtime = (
+                datetime.strptime(starttime, &#34;%Y-%m-%d %H:%M&#34;)
+                + timedelta(hours=2)
+            ).strftime(&#34;%Y-%m-%d %H:%M&#34;)
+        elif not starttime and not endtime:
+            # Run for 2 hours from now if no time is given
+            now = datetime.now()
+            logger.warning(
+                f&#34;No start- or endtime is given. Creating an action object with endtime 2 hours from now&#34;
+                f&#34;based from this machines local timezone. datetime.now() gives {now.strftime(&#39;%Y-%m-%d %H:%M&#39;)}.&#34;
+            )
+            endtime = (now + timedelta(hours=2)).strftime(&#34;%Y-%m-%d %H:%M&#34;)
+
+        if starttime:
+            # Make sure endtime is after starttime
+            if datetime.strptime(
+                starttime, &#34;%Y-%m-%d %H:%M&#34;
+            ) &lt; datetime.strptime(endtime, &#34;%Y-%m-%d %H:%M&#34;):
+                action_value = f&#34;{mower_external_id},{endtime},{starttime}&#34;
+            else:
+                raise AttributeError(
+                    f&#34;Time when to end: {endtime} is not afer time to start: {starttime}. This has to be until time travel.&#34;
+                )
         else:
-            action_value = f&#34;{mower_external_id},{starttime}&#34;
+            action_value = f&#34;{mower_external_id},{endtime}&#34;
 
     else:
         action_value = mower_external_id
@@ -1778,7 +1895,7 @@ An endtime: a datetime when to stop mowing. I.e. '2023-08-12 20:50' used by STAR
         &#34;actionName&#34;: imow_action.value,
         &#34;actionValue&#34;: action_value
         # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,DurationInMunitesDividedBy10,StartPoint&gt;
-        # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,StartTime,EndTime&gt;
+        # &#34;0000000123456789,15,0&#34; &lt;MowerExternalId,EndTime,StartTime&gt;
     }
     logger.debug(
         f&#34;Intent sent as request body to imow api for mower with identifier: &#39;{mower_name}/{mower_id}/{mower_external_id}&#39;&#34;
@@ -1787,16 +1904,24 @@ An endtime: a datetime when to stop mowing. I.e. '2023-08-12 20:50' used by STAR
 
     payload = json.dumps(action_object)
 
-    response = await self.api_request(url, &#34;POST&#34;, payload=payload)
-    if response.ok:
-        logger.debug(
-            f&#34;Success: Created mower (extId:{mower_external_id}) ActionObject with contents:&#34;
-        )
-        logger.debug(f&#34; {action_object}&#34;)
-        logger.debug(f&#34; -&gt; (HTTP Status {response.status})&#34;)
+    if not test_mode:
+        response = await self.api_request(url, &#34;POST&#34;, payload=payload)
+
+        if response.ok:
+            logger.debug(
+                f&#34;Success: Created mower (extId:{mower_external_id}) ActionObject with contents:&#34;
+            )
+            logger.debug(f&#34; {action_object}&#34;)
+            logger.debug(f&#34; -&gt; (HTTP Status {response.status})&#34;)
+        else:
+            logger.error(f&#34;No success with mower-action: {payload}&#34;)
+        return response
     else:
-        logger.error(f&#34;No success with mower-action: {payload}&#34;)
-    return response</code></pre>
+        logger.warning(
+            f&#34;TEST_MODE: (NOT) Created mower (extId:{mower_external_id}) ActionObject with contents:&#34;
+        )
+        logger.warning(f&#34;  {action_object}&#34;)
+        return True</code></pre>
 </details>
 </dd>
 <dt id="imow.api.IMowApi.receive_mower_by_id"><code class="name flex">
@@ -1977,39 +2102,6 @@ An endtime: a datetime when to stop mowing. I.e. '2023-08-12 20:50' used by STAR
         return await self.receive_mower_by_id(mower_id)</code></pre>
 </details>
 </dd>
-<dt id="imow.api.IMowApi.validate_and_fix_datetime"><code class="name flex">
-<span>def <span class="ident">validate_and_fix_datetime</span></span>(<span>self, value) ‑> str</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Try to convert and validate the given string from "%Y-%m-%d %H:%M" or "%Y-%m-%d %H:%M:%S into a datetime object and give the needed "%Y-%m-%d %H:%M" string back.
-:param value: the string tobe checked
-:return: the correctly formated string</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def validate_and_fix_datetime(self, value) -&gt; str:
-    &#34;&#34;&#34;
-    Try to convert and validate the given string from &#34;%Y-%m-%d %H:%M&#34; or &#34;%Y-%m-%d %H:%M:%S into a datetime object and give the needed &#34;%Y-%m-%d %H:%M&#34; string back.
-    :param value: the string tobe checked
-    :return: the correctly formated string
-    &#34;&#34;&#34;
-    try:
-        datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M&#34;)
-        return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
-    except ValueError as ve:
-        logger.warn(
-            f&#34;  Try fixing given time format because {ve} in {value}&#34;
-        )
-        try:
-            datetime_object = datetime.strptime(value, &#34;%Y-%m-%d %H:%M:%S&#34;)
-            return datetime_object.strftime(&#34;%Y-%m-%d %H:%M&#34;)
-        except ValueError as ve2:
-            raise ValueError(
-                f&#39;Unsupported &#34;time&#34; argument: {value} -&gt; {ve2}&#39;
-            )</code></pre>
-</details>
-</dd>
 <dt id="imow.api.IMowApi.validate_token"><code class="name flex">
 <span>async def <span class="ident">validate_token</span></span>(<span>self, explicit_token: str = None) ‑> bool</span>
 </code></dt>
@@ -2050,6 +2142,11 @@ An endtime: a datetime when to stop mowing. I.e. '2023-08-12 20:50' used by STAR
 <li><code><a title="imow" href="../index.html">imow</a></code></li>
 </ul>
 </li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="imow.api.validate_and_fix_datetime" href="#imow.api.validate_and_fix_datetime">validate_and_fix_datetime</a></code></li>
+</ul>
+</li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
@@ -2075,7 +2172,6 @@ An endtime: a datetime when to stop mowing. I.e. '2023-08-12 20:50' used by STAR
 <li><code><a title="imow.api.IMowApi.receive_mower_week_mow_time_in_hours" href="#imow.api.IMowApi.receive_mower_week_mow_time_in_hours">receive_mower_week_mow_time_in_hours</a></code></li>
 <li><code><a title="imow.api.IMowApi.receive_mowers" href="#imow.api.IMowApi.receive_mowers">receive_mowers</a></code></li>
 <li><code><a title="imow.api.IMowApi.update_setting" href="#imow.api.IMowApi.update_setting">update_setting</a></code></li>
-<li><code><a title="imow.api.IMowApi.validate_and_fix_datetime" href="#imow.api.IMowApi.validate_and_fix_datetime">validate_and_fix_datetime</a></code></li>
 <li><code><a title="imow.api.IMowApi.validate_token" href="#imow.api.IMowApi.validate_token">validate_token</a></code></li>
 </ul>
 </li>
