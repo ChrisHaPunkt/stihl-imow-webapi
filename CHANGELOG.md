@@ -1,6 +1,6 @@
 # Changelog
 
-## Version 0.8.3 (2023-12-09)
+## Version 0.8.4 (2023-12-09)
 ### Fix
 - Loosen the version requirements for dependency libs
 - update the tested python version placed inside setup and PyPi to python 3.12
