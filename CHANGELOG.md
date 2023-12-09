@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.7.6-1 (2023-12-09)
+- loosen package requirements lib versions to add compatibility in HA >= 2023.12
+
 ## Version 0.7.6 (2022-03-05)
 
 ### Dependency updates
