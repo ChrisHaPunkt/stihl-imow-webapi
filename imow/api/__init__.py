@@ -398,7 +398,7 @@ class IMowApi:
                 if key == "endtime" and value:
                     first_action_value_param = validate_and_fix_datetime(value)
 
-                if key == "starttime" and value :
+                if key == "starttime" and value:
                     second_action_value_param = validate_and_fix_datetime(
                         value
                     )

@@ -1,4 +1,4 @@
-__version__ = "0.8.2"
+__version__ = "0.8.3"
 package_name = "imow"
 python_major = "3"
-python_minor = "8"
+python_minor = "12"

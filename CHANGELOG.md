@@ -1,4 +1,10 @@
 # Changelog
+
+## Version 0.8.3 (2023-12-09)
+### Fix
+- Loosen the version requirements for dependency libs
+- update the tested python version placed inside setup and PyPi to python 3.12
+
 ## Version 0.8.2 (2023-08-26)
 ### Fix
 - validation of values in keyword arguments
