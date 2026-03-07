@@ -122,21 +122,26 @@ class IMowApi:
         :return: tuple, the access token and a datetime object containing the expire date
         """
 
+        # If we don't have a token or reauthentication was requested, authenticate.
         if not self.access_token or force_reauth:
-            if email and password:
-                self.api_password = password
-                self.api_email = email
+            # Prefer caller-supplied credentials. Do NOT persist plaintext passwords on the instance.
+            creds_email = email if email else self.api_email
+            creds_password = password if password else self.api_password
+
             if force_reauth:
                 await self.api_logout()
                 self.csrf_token = ""
                 self.requestId = ""
                 self.access_token: str = ""
                 self.token_expires: datetime = None
-            if not self.api_email and not self.api_password:
+
+            if not creds_email or not creds_password:
                 raise LoginError(
                     "Got no credentials to authenticate, please provide"
                 )
-            await self.__authenticate(self.api_email, self.api_password)
+
+            # Call authenticate with local variables; do not store password/email on the instance.
+            await self.__authenticate(creds_email, creds_password)
             logger.debug("Get Token: Re-Authenticate")
 
         await self.validate_token()
@@ -189,12 +194,14 @@ class IMowApi:
 
         await self.__fetch_new_csrf_token_and_request_id()
         url = f"{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}"
-        encoded_mail = quote(email)
-        encoded_password = quote(password)
-        payload = (
-            f"mail={encoded_mail}&password={encoded_password}"
-            f"&csrf-token={self.csrf_token}&requestId={self.requestId} "
-        )
+
+        # Use a payload dict and form-encoding instead of manual string concatenation.
+        payload = {
+            "mail": email,
+            "password": password,
+            "csrf-token": self.csrf_token,
+            "requestId": self.requestId,
+        }
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
         }
