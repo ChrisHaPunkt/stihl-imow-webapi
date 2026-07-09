@@ -8,6 +8,11 @@ IMOW_MAINTENANCE_URI = (
     "https://app-api-maintenance-r-euwe-4bf2d8.azurewebsites.net/maintenance/"
 )
 
+# Endpoint returning the authenticated user's account/profile. The ``id`` here
+# is the stable STIHL account identifier and does not change when the account
+# e-mail address changes.
+IMOW_USER_API_URI = "https://app-api-user-r-euwe-d14e28.azurewebsites.net"
+
 # Base URL for the bundled i18n message files fetched from the SPA.
 IMOW_I18N_BASE_URI = "https://app.imow.stihl.com/assets/i18n/animations"
 

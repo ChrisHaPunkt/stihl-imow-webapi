@@ -23,6 +23,7 @@ from imow.common.consts import (
     IMOW_OAUTH_CLIENT_ID,
     IMOW_COOKIE_HOSTS,
     IMOW_MAINTENANCE_URI,
+    IMOW_USER_API_URI,
     IMOW_I18N_BASE_URI,
 )
 from imow.common.exceptions import (
@@ -945,6 +946,17 @@ class IMowApi:
         for mower in mowers:
             logger.debug("  - %s", mower.name)
         return mowers
+
+    async def receive_account(self) -> dict:
+        """Return the authenticated user's account/profile.
+
+        Mirrors the app's ``GET /me/`` call. The returned ``id`` is the stable
+        STIHL account identifier and does not change when the account e-mail
+        address changes, which makes it a good key for consumers that need a
+        durable account reference.
+        """
+        logger.debug("receive_account: ")
+        return await self._request_json(f"{IMOW_USER_API_URI}/me/", "GET")
 
     async def receive_mower_by_name(self, mower_name: str) -> MowerState:
         logger.debug("get_mower_from_name: %s", mower_name)

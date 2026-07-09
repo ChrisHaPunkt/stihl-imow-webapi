@@ -23,6 +23,7 @@ from imow.common.consts import (
     IMOW_I18N_BASE_URI,
     IMOW_MAINTENANCE_URI,
     IMOW_OAUTH_URI,
+    IMOW_USER_API_URI,
 )
 from imow.common.exceptions import (
     ApiMaintenanceError,
@@ -504,6 +505,19 @@ class TestApiRequest:
             mocked.get(f"{IMOW_API_URI}/mowers/31466/", payload=MOWER_PAYLOAD)
             mower = await api.receive_mower_by_id("31466")
             assert mower.externalId == "0000000123456789"
+        await api.close()
+
+    @pytest.mark.asyncio
+    async def test_receive_account_parses_payload(self):
+        api = _make_api()
+        with aioresponses() as mocked:
+            mocked.get(
+                f"{IMOW_USER_API_URI}/me/",
+                payload={"id": "45480", "primaryMail": "a@b.c"},
+            )
+            account = await api.receive_account()
+            assert account["id"] == "45480"
+            assert account["primaryMail"] == "a@b.c"
         await api.close()
 
     @pytest.mark.asyncio

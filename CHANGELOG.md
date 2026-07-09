@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.11.0 (2026-07-09)
+### Added
+- `receive_account()`: fetches the authenticated user's account/profile from the
+  app's `GET /me/` endpoint. The returned `id` is the stable STIHL account
+  identifier (unchanged when the account e-mail changes), which gives consumers
+  a durable account key that does not depend on any mower being present.
+
 ## Version 0.10.0 (2026-07-09)
 ### Fixed
 - Packaging: relax `requires-python` from `>=3.14` to `>=3.13` (3.14 made the
