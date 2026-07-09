@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import logging
+import os
+import random
 import sys
 from datetime import datetime, timedelta
 from typing import Tuple, Union, List, Any
@@ -14,7 +17,13 @@ from bs4 import BeautifulSoup
 from furl import furl
 
 from imow.common.actions import IMowActions
-from imow.common.consts import IMOW_OAUTH_URI, IMOW_API_URI
+from imow.common.consts import (
+    IMOW_OAUTH_URI,
+    IMOW_API_URI,
+    IMOW_APP_URI,
+    IMOW_OAUTH_CLIENT_ID,
+    IMOW_COOKIE_HOSTS,
+)
 from imow.common.exceptions import (
     LoginError,
     ApiMaintenanceError,
@@ -54,9 +63,7 @@ def validate_and_fix_datetime(value) -> str:
         datetime_object = datetime.strptime(value, "%Y-%m-%d %H:%M")
         return datetime_object.strftime("%Y-%m-%d %H:%M")
     except ValueError as ve:
-        logger.warning(
-            f"  Try fixing given time format because {ve} in {value}"
-        )
+        logger.warning(f"  Try fixing given time format because {ve} in {value}")
         try:
             datetime_object = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
             return datetime_object.strftime("%Y-%m-%d %H:%M")
@@ -83,11 +90,64 @@ class IMowApi:
         self.lang = lang
         self.messages_user = None
         self.messages_en = None
+        # Only close sessions we created ourselves; never a caller-injected one.
+        self._owns_session: bool = aiohttp_session is None
+        # Serialize (re)authentication so concurrent callers don't trigger
+        # parallel logins that race on csrf_token/access_token.
+        self._auth_lock: asyncio.Lock = asyncio.Lock()
+        # Per-login OAuth state (CSRF protection for the redirect).
+        self._oauth_state: str = ""
+
+    # Number of days before expiry at which we proactively re-authenticate.
+    _TOKEN_REFRESH_LEEWAY_SECONDS = 86400
 
     async def close(self):
-        """Cleanup the aiohttp Session"""
-        await asyncio.sleep(0.250)
-        await self.http_session.close()
+        """Cleanup the aiohttp Session.
+
+        Only closes the session if this instance created it. A caller-injected
+        session (e.g. Home Assistant's shared/created client session) is owned by
+        the caller and must not be closed here.
+        """
+        if self._owns_session and self.http_session and not self.http_session.closed:
+            await asyncio.sleep(0.250)
+            await self.http_session.close()
+
+    def _ensure_session(self) -> None:
+        """Make sure we have a usable aiohttp session, creating an owned one."""
+        if not self.http_session or self.http_session.closed:
+            self.http_session = aiohttp.ClientSession(raise_for_status=True)
+            self._owns_session = True
+
+    def _clear_stihl_cookies(self) -> None:
+        """Clear STIHL auth/session cookies from the active jar.
+
+        Prevents a stale session cookie from redirecting the login GET to the
+        already-authenticated SPA shell (which lacks the csrf-token/requestId
+        inputs). Works whether the session is owned or injected.
+        """
+        if not self.http_session or self.http_session.closed:
+            return
+        jar = self.http_session.cookie_jar
+        clear_domain = getattr(jar, "clear_domain", None)
+        if clear_domain is None:
+            jar.clear()
+            return
+        for host in IMOW_COOKIE_HOSTS:
+            clear_domain(host)
+
+    def _token_needs_refresh(self) -> bool:
+        """Whether the current token should be proactively re-authenticated.
+
+        Unknown expiry (``token_expires is None``) returns ``False`` so we don't
+        needlessly re-login for injected tokens; a stale token is handled via the
+        401 retry path in ``api_request`` instead.
+        """
+        if not self.access_token:
+            return True
+        if self.token_expires is None:
+            return False
+        remaining = (self.token_expires - datetime.now()).total_seconds()
+        return remaining <= self._TOKEN_REFRESH_LEEWAY_SECONDS
 
     async def check_api_maintenance(self) -> None:
         url = "https://app-api-maintenance-r-euwe-4bf2d8.azurewebsites.net/maintenance/"
@@ -95,7 +155,9 @@ class IMowApi:
         headers = {
             "Authorization": "",
         }
-        response = await self.api_request(url, "GET", headers=headers)
+        response = await self.api_request(
+            url, "GET", headers=headers, authenticated=False
+        )
         status = json.loads(await response.text())
         logger.debug(status)
         if status["serverDisrupted"] or status["serverDown"]:
@@ -122,46 +184,58 @@ class IMowApi:
         :return: tuple, the access token and a datetime object containing the expire date
         """
 
-        if not self.access_token or force_reauth:
-            if email and password:
-                self.api_password = password
-                self.api_email = email
-            if force_reauth:
-                await self.api_logout()
-                self.csrf_token = ""
-                self.requestId = ""
-                self.access_token: str = ""
-                self.token_expires: datetime = None
-            if not self.api_email and not self.api_password:
-                raise LoginError(
-                    "Got no credentials to authenticate, please provide"
-                )
-            await self.__authenticate(self.api_email, self.api_password)
-            logger.debug("Get Token: Re-Authenticate")
+        if email and password:
+            self.api_password = password
+            self.api_email = email
 
-        await self.validate_token()
+        # Capture the token before waiting on the lock so we can detect whether
+        # another coroutine already (re)authenticated while we were queued.
+        token_before = self.access_token
+
+        async with self._auth_lock:
+            another_refresh_happened = (
+                force_reauth and self.access_token and self.access_token != token_before
+            )
+            need_auth = (
+                not self.access_token
+                or (force_reauth and not another_refresh_happened)
+                or self._token_needs_refresh()
+            )
+
+            if need_auth:
+                if force_reauth:
+                    await self.api_logout()
+                    self.csrf_token = ""
+                    self.requestId = ""
+                    self.access_token = ""
+                    self.token_expires = None
+                if not self.api_email and not self.api_password:
+                    raise LoginError(
+                        "Got no credentials to authenticate, please provide"
+                    )
+                logger.debug("Get Token: (re-)authenticating")
+                await self.__authenticate(self.api_email, self.api_password)
+
         if return_expire_time:
             return self.access_token, self.token_expires
         else:
             return self.access_token
 
     async def api_logout(self):
-        if not self.http_session or self.http_session.closed:
-            self.http_session = aiohttp.ClientSession(raise_for_status=True)
-        async with self.http_session.post(
-            "https://oauth2.imow.stihl.com/authentication/logout/",
-            data={
-                "csrf-token": self.csrf_token,
-                "logoutUrl": "https://app.imow.stihl.com",
-                "clientId": "9526273B-1477-47C6-801C-4356F58EF883",
-                "cancelUrl": "https://app.imow.stihl.com",
-            },
-        ) as resp:
-            await resp.read()
-        self.http_session.cookie_jar.clear_domain("https://app.imow.stihl.com")
-        self.http_session.cookie_jar.clear_domain(
-            "https://oauth2.imow.stihl.com/"
-        )
+        self._ensure_session()
+        if self.csrf_token:
+            async with self.http_session.post(
+                f"{IMOW_OAUTH_URI}/authentication/logout/",
+                data={
+                    "csrf-token": self.csrf_token,
+                    "logoutUrl": IMOW_APP_URI,
+                    "clientId": IMOW_OAUTH_CLIENT_ID,
+                    "cancelUrl": IMOW_APP_URI,
+                },
+            ) as resp:
+                await resp.read()
+        # clear_domain expects a host, not a URL.
+        self._clear_stihl_cookies()
 
     async def validate_token(self, explicit_token: str = None) -> bool:
         old_token = None
@@ -189,17 +263,17 @@ class IMowApi:
 
         await self.__fetch_new_csrf_token_and_request_id()
         url = f"{IMOW_OAUTH_URI}/authentication/authenticate/?lang={self.lang}"
-        encoded_mail = quote(email)
-        encoded_password = quote(password)
-        payload = (
-            f"mail={encoded_mail}&password={encoded_password}"
-            f"&csrf-token={self.csrf_token}&requestId={self.requestId} "
-        )
+        payload = {
+            "mail": email,
+            "password": password,
+            "csrf-token": self.csrf_token,
+            "requestId": self.requestId,
+        }
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
         }
         response = await self.api_request(
-            url, "POST", payload=payload, headers=headers
+            url, "POST", payload=payload, headers=headers, authenticated=False
         )
 
         response_url_query_args = furl(response.real_url).fragment.args
@@ -222,25 +296,79 @@ class IMowApi:
         csrf_token and requestId are used as payload within authentication
         """
 
-        # URL needs whole redirect query parameter
-        url = (
-            f"{IMOW_OAUTH_URI}/authentication/?lang=de_DE&authorizationRedirectUrl=https%3A%2F%2Foauth2"
-            ".imow.stihl.com%2Fauthorization%2F%3Fresponse_type%3Dtoken%26client_id%3D9526273B-1477-47C6-801C"
-            "-4356F58EF883%26redirect_uri%3Dhttps%253A%252F%252Fapp.imow.stihl.com%252F%2523%252Fauthorize%26state"
-        )
-        response = await self.api_request(url, "GET")
+        # Start each login from a clean cookie state so we always land on the
+        # login form and never on the already-authenticated SPA shell.
+        self._clear_stihl_cookies()
 
-        soup = BeautifulSoup(await response.text(), "html.parser")
-        try:
-            upstream_csrf_token = soup.find(
-                "input", {"name": "csrf-token"}
-            ).get("value")
-            upstream_request_id = soup.find(
-                "input", {"name": "requestId"}
-            ).get("value")
-        except AttributeError:
-            raise ProcessLookupError(
-                "Did not find necessary csrf token and/or request id in html source"
+        # Generate a fresh OAuth state (CSRF protection for the redirect).
+        # os.urandom (not the stdlib ``secrets`` module) is used deliberately to
+        # avoid clashing with a repo-root ``secrets.py`` on the import path.
+        self._oauth_state = (
+            base64.urlsafe_b64encode(os.urandom(30)).rstrip(b"=").decode()
+        )
+        authorization_redirect = (
+            f"{IMOW_OAUTH_URI}/authorization/"
+            f"?response_type=token"
+            f"&client_id={IMOW_OAUTH_CLIENT_ID}"
+            f"&redirect_uri={quote(f'{IMOW_APP_URI}/#/authorize', safe='')}"
+            f"&state={self._oauth_state}"
+        )
+        url = (
+            f"{IMOW_OAUTH_URI}/authentication/"
+            f"?lang=de_DE"
+            f"&authorizationRedirectUrl={quote(authorization_redirect, safe='')}"
+        )
+        response = await self.api_request(url, "GET", authenticated=False)
+
+        html = await response.text()
+
+        # Diagnostic: log which backend framework serves the login page.
+        # Helps identify the upstream stack (e.g. Microsoft-IIS/ASP.NET, Express,
+        # PHP) without guessing, and surfaces when we land on an unexpected page.
+        logger.debug(
+            "Auth login page served by: status=%s, final_url=%s, "
+            "Server=%r, X-Powered-By=%r, Content-Type=%r",
+            response.status,
+            str(response.real_url),
+            response.headers.get("Server"),
+            response.headers.get("X-Powered-By"),
+            response.headers.get("Content-Type"),
+        )
+
+        soup = BeautifulSoup(html, "html.parser")
+
+        csrf_input = soup.find("input", {"name": "csrf-token"})
+        request_id_input = soup.find("input", {"name": "requestId"})
+
+        upstream_csrf_token = (
+            csrf_input.get("value") if csrf_input is not None else None
+        )
+        if not upstream_csrf_token:
+            # Fall back to the <meta name="csrf-token"> tag if the hidden input
+            # is missing (e.g. markup change).
+            meta_csrf = soup.find("meta", {"name": "csrf-token"})
+            upstream_csrf_token = (
+                meta_csrf.get("content") if meta_csrf is not None else None
+            )
+        upstream_request_id = (
+            request_id_input.get("value") if request_id_input is not None else None
+        )
+
+        if not upstream_csrf_token or not upstream_request_id:
+            # Distinguish the common failure modes for a clear, actionable error.
+            if soup.find("stihl-imow-root") is not None:
+                detail = (
+                    "landed on the already-authenticated SPA shell instead of "
+                    "the login form (stale session cookies)"
+                )
+            elif "maintenance" in html.lower():
+                detail = "the upstream appears to be under maintenance"
+            else:
+                detail = "the login form did not contain the expected fields"
+            raise LoginError(
+                "Could not obtain csrf-token/requestId from the STIHL login "
+                f"page: {detail} "
+                f"(status={response.status}, url={response.real_url})."
             )
 
         self.csrf_token = upstream_csrf_token
@@ -250,17 +378,13 @@ class IMowApi:
 
     async def fetch_messages(self):
         try:
-            url_en = (
-                "https://app.imow.stihl.com/assets/i18n/animations/en.json"
-            )
+            url_en = "https://app.imow.stihl.com/assets/i18n/animations/en.json"
             async with self.http_session.request("GET", url_en) as response_en:
                 i18n_en = json.loads(await response_en.text())
             self.messages_en = Messages(i18n_en)
             if self.lang != "en":
                 url_user = f"https://app.imow.stihl.com/assets/i18n/animations/{self.lang}.json"
-                async with self.http_session.request(
-                    "GET", url_user
-                ) as response_user:
+                async with self.http_session.request("GET", url_user) as response_user:
                     i18n_user = json.loads(await response_user.text())
                     self.messages_user = Messages(i18n_user)
             else:
@@ -274,7 +398,13 @@ class IMowApi:
                 )
 
     async def api_request(
-        self, url, method, payload=None, headers=None
+        self,
+        url,
+        method,
+        payload=None,
+        headers=None,
+        authenticated: bool = True,
+        _is_retry: bool = False,
     ) -> aiohttp.ClientResponse:
         """
         Do a standardized request against the stihl imow webapi, with predefined headers
@@ -282,20 +412,23 @@ class IMowApi:
         :param method: The Method to use
         :param payload: optional payload
         :param headers: optional update headers
+        :param authenticated: whether this request needs a valid bearer token.
+            Set to ``False`` for the auth handshake and maintenance probe to avoid
+            recursive re-authentication / lock re-entrancy.
+        :param _is_retry: internal flag to prevent infinite 401 re-auth loops.
         :return: the aiohttp.ClientResponse
         """
-        if not self.http_session or self.http_session.closed:
-            self.http_session = aiohttp.ClientSession(raise_for_status=True)
+        self._ensure_session()
         if not self.messages_en:
             await self.fetch_messages()
-        if (
-            self.token_expires
-            and (self.token_expires - datetime.now()).days <= 1
-        ):
-            logger.info(
-                "Fetching new access_token because old one expires in less than 1 day"
-            )
-            await self.get_token(force_reauth=True)
+
+        if authenticated:
+            if not self.access_token and (self.api_email and self.api_password):
+                # No token yet but we can obtain one.
+                await self.get_token()
+            elif self.token_expires and self._token_needs_refresh():
+                logger.info("Fetching new access_token because old one expires soon")
+                await self.get_token(force_reauth=True)
 
         if not payload:
             payload = {}
@@ -316,17 +449,55 @@ class IMowApi:
         }
         if headers:
             headers_obj.update(headers)
-        try:
-            async with self.http_session.request(
-                method, url, headers=headers_obj, data=payload
-            ) as response:
+
+        max_attempts = 3 if method == "GET" else 1
+        for attempt in range(1, max_attempts + 1):
+            try:
+                response = await self.http_session.request(
+                    method, url, headers=headers_obj, data=payload
+                )
+                # Buffer the body so the response stays usable after the
+                # connection is released back to the pool.
                 await response.read()
                 response.raise_for_status()
                 return response
-        except ClientResponseError as e:
-            if e.status == 500:
-                await self.check_api_maintenance()
-            raise e
+            except ClientResponseError as e:
+                if (
+                    authenticated
+                    and e.status == 401
+                    and not _is_retry
+                    and (self.api_email and self.api_password)
+                ):
+                    logger.info("Got HTTP 401, re-authenticating once and retrying")
+                    await self.get_token(force_reauth=True)
+                    return await self.api_request(
+                        url,
+                        method,
+                        payload=payload,
+                        headers=headers,
+                        authenticated=authenticated,
+                        _is_retry=True,
+                    )
+                if e.status == 500:
+                    await self.check_api_maintenance()
+                raise e
+            except (
+                aiohttp.ClientConnectionError,
+                asyncio.TimeoutError,
+            ) as e:
+                if attempt >= max_attempts:
+                    raise e
+                backoff = 0.5 * (2 ** (attempt - 1)) + random.uniform(0, 0.25)
+                logger.debug(
+                    "Transient error on %s %s (attempt %s/%s): %s; retrying in %.2fs",
+                    method,
+                    url,
+                    attempt,
+                    max_attempts,
+                    e,
+                    backoff,
+                )
+                await asyncio.sleep(backoff)
 
     async def intent(
         self,
@@ -368,13 +539,9 @@ class IMowApi:
                 "Need some mower to work on. Please specify mower_[name|id|action_id]"
             )
         if not mower_external_id and mower_name:
-            mower_external_id = await self.get_mower_action_id_from_name(
-                mower_name
-            )
+            mower_external_id = await self.get_mower_action_id_from_name(mower_name)
         if not mower_external_id and mower_id:
-            mower_external_id = await self.get_mower_action_id_from_id(
-                mower_id
-            )
+            mower_external_id = await self.get_mower_action_id_from_id(mower_id)
 
         if len(mower_external_id) < 16:
             raise AttributeError(
@@ -385,9 +552,7 @@ class IMowApi:
 
         given_kwargs = kwargs.items()
         if len(given_kwargs) > 0:
-            logger.debug(
-                "Translating given intent **kwargs to action_value_param"
-            )
+            logger.debug("Translating given intent **kwargs to action_value_param")
             for key, value in given_kwargs:
                 logger.debug("  {0} = {1}".format(key, value))
                 if key == "duration" and value:
@@ -399,9 +564,7 @@ class IMowApi:
                     first_action_value_param = validate_and_fix_datetime(value)
 
                 if key == "starttime" and value:
-                    second_action_value_param = validate_and_fix_datetime(
-                        value
-                    )
+                    second_action_value_param = validate_and_fix_datetime(value)
 
             logger.debug(
                 f"  -> first_action_value_param (end-time / duration): {first_action_value_param} "
@@ -410,9 +573,7 @@ class IMowApi:
                 f"  -> second_action_value_param (start-time / startpoint): {second_action_value_param} "
             )
 
-        logger.debug(
-            f'Build action object for: {imow_action} -> "{imow_action.value}"'
-        )
+        logger.debug(f'Build action object for: {imow_action} -> "{imow_action.value}"')
         # Build other action values depending on given ACTION
         if (
             imow_action == IMowActions.START_MOWING_FROM_POINT
@@ -423,16 +584,12 @@ class IMowApi:
                 else 30 / 10
             )
             startpoint = (
-                str(second_action_value_param)
-                if second_action_value_param
-                else "0"
+                str(second_action_value_param) if second_action_value_param else "0"
             )
 
             action_value = f"{mower_external_id},{duration},{startpoint}"
 
-        elif (
-            imow_action == IMowActions.START_MOWING
-        ):  # by start- and/or endtime
+        elif imow_action == IMowActions.START_MOWING:  # by start- and/or endtime
             endtime = (
                 str(first_action_value_param)
                 if first_action_value_param != ""
@@ -448,8 +605,7 @@ class IMowApi:
             if starttime and not endtime:
                 # Run for 2 hours from start time if only a start time is given
                 endtime = (
-                    datetime.strptime(starttime, "%Y-%m-%d %H:%M")
-                    + timedelta(hours=2)
+                    datetime.strptime(starttime, "%Y-%m-%d %H:%M") + timedelta(hours=2)
                 ).strftime("%Y-%m-%d %H:%M")
             elif not starttime and not endtime:
                 # Run for 2 hours from now if no time is given
@@ -462,9 +618,9 @@ class IMowApi:
 
             if starttime:
                 # Make sure endtime is after starttime
-                if datetime.strptime(
-                    starttime, "%Y-%m-%d %H:%M"
-                ) < datetime.strptime(endtime, "%Y-%m-%d %H:%M"):
+                if datetime.strptime(starttime, "%Y-%m-%d %H:%M") < datetime.strptime(
+                    endtime, "%Y-%m-%d %H:%M"
+                ):
                     action_value = f"{mower_external_id},{endtime},{starttime}"
                 else:
                     raise AttributeError(
@@ -478,7 +634,7 @@ class IMowApi:
 
         action_object = {
             "actionName": imow_action.value,
-            "actionValue": action_value
+            "actionValue": action_value,
             # "0000000123456789,15,0" <MowerExternalId,DurationInMunitesDividedBy10,StartPoint>
             # "0000000123456789,15,0" <MowerExternalId,EndTime,StartTime>
         }
@@ -561,9 +717,7 @@ class IMowApi:
         for mower in await self.receive_mowers():
             if mower.name == mower_name:
                 return mower.status
-        raise LookupError(
-            f"Mower with name {mower_name} not found in upstream"
-        )
+        raise LookupError(f"Mower with name {mower_name} not found in upstream")
 
     async def get_status_by_id(self, mower_id=(str, int)) -> dict:
         if not type(mower_id) == str:
@@ -573,9 +727,7 @@ class IMowApi:
             response = await self.receive_mower_by_id(mower_id)
             return response.status
         except ConnectionError:
-            raise LookupError(
-                f"Mower with id {mower_id} not found in upstream"
-            )
+            raise LookupError(f"Mower with id {mower_id} not found in upstream")
 
     async def get_status_by_action_id(self, mower_action_id: str) -> dict:
         logger.debug(f"get_status_by_action_id: {mower_action_id}")
@@ -591,9 +743,7 @@ class IMowApi:
         for mower in await self.receive_mowers():
             if mower.name == mower_name:
                 return mower.externalId
-        raise LookupError(
-            f"Mower with name {mower_name} not found in upstream"
-        )
+        raise LookupError(f"Mower with name {mower_name} not found in upstream")
 
     async def get_mower_action_id_from_id(self, mower_id: str) -> str:
         logger.debug(f"get_mower_action_id_from_id: {mower_id}")
@@ -602,18 +752,14 @@ class IMowApi:
             logger.debug(f" - {response.externalId}")
             return response.externalId
         except ConnectionError:
-            raise LookupError(
-                f"Mower with id {mower_id} not found in upstream"
-            )
+            raise LookupError(f"Mower with id {mower_id} not found in upstream")
 
     async def get_mower_id_from_name(self, mower_name: str) -> str:
         logger.debug(f"get_mower_id_from_name: {mower_name}")
         for mower in await self.receive_mowers():
             if mower.name == mower_name:
                 return mower.id
-        raise LookupError(
-            f"Mower with name {mower_name} not found in upstream"
-        )
+        raise LookupError(f"Mower with name {mower_name} not found in upstream")
 
     async def receive_mowers(self) -> List[MowerState]:
         logger.debug("receive_mowers: ")
@@ -631,15 +777,11 @@ class IMowApi:
             if mower.name == mower_name:
                 logger.debug(mower)
                 return mower
-        raise LookupError(
-            f"Mower with name {mower_name} not found in upstream"
-        )
+        raise LookupError(f"Mower with name {mower_name} not found in upstream")
 
     async def receive_mower_by_id(self, mower_id: str) -> MowerState:
         logger.debug(f"receive_mower: {mower_id}")
-        response = await self.api_request(
-            f"{IMOW_API_URI}/mowers/{mower_id}/", "GET"
-        )
+        response = await self.api_request(f"{IMOW_API_URI}/mowers/{mower_id}/", "GET")
         mower = MowerState(json.loads(await response.text()), self)
         logger.debug(mower)
         return mower
@@ -653,9 +795,7 @@ class IMowApi:
         logger.debug(stats)
         return stats
 
-    async def receive_mower_week_mow_time_in_hours(
-        self, mower_id: str
-    ) -> dict:
+    async def receive_mower_week_mow_time_in_hours(self, mower_id: str) -> dict:
         logger.debug(f"receive_mower_week_mow_time_in_hours: {mower_id}")
         response = await self.api_request(
             f"{IMOW_API_URI}/mowers/{mower_id}/statistics/week-mow-time-in-hours/",

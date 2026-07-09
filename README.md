@@ -33,19 +33,20 @@ https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=
 
 ### Prerequisites
 
-Python 3.8+ is required to run this application, other than that there are no prerequisites for the project, as the
-dependencies are included in the repository.
+Python 3.14+ is required to run this application. Development uses
+[uv](https://docs.astral.sh/uv/) for environment and package management.
 
 ### Installing
 
-To install the library is as simple as cloning the repository and running
+For development, clone the repository and let uv create the environment
+(it will fetch Python 3.14 automatically per `.python-version`):
 
 ```bash
-pip install -e .
+uv sync --group dev
 ```
 
-It is recommended to create an virtual environment prior to installing this library. Alternatively, you can also install
-this library via Pip:
+Run commands inside the environment with `uv run`, e.g. `uv run pytest`.
+Alternatively, install the published library into your own environment:
 
 ```bash
 pip install imow-webapi

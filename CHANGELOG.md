@@ -1,5 +1,25 @@
 # Changelog
 
+## Version 0.9.0 (2026-07-09)
+### Fixed
+- Authentication robustness: isolate STIHL session cookies (fixes the login
+  landing on the already-authenticated SPA shell, which raised a misleading
+  `ProcessLookupError`). Logout now clears cookies by host correctly.
+- Serialize (re)authentication with a lock and single-flight double-check so
+  concurrent callers don't trigger parallel logins.
+- Proactively refresh tokens with a known expiry and recover from a stale token
+  via a one-shot 401 → re-auth → retry.
+- Retry transient GET failures with bounded exponential backoff.
+- `api_request` now buffers the response body correctly instead of returning a
+  released response context.
+### Changed
+- Harden CSRF/requestId scraping: fall back to the `<meta>` tag, detect the SPA
+  shell / maintenance page, and raise a typed `LoginError` with diagnostics.
+- Generate a real random OAuth `state`; only close aiohttp sessions the library
+  created itself (never a caller-injected one).
+- Packaging moved to `pyproject.toml` (PEP 621) with the hatchling build backend
+  and `uv` for builds/dev environments; `setup.py` removed.
+
 ## Version 0.8.4 (2023-12-09)
 ### Fix
 - Loosen the version requirements for dependency libs

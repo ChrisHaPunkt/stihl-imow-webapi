@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "imow-webapi"
+dynamic = ["version"]
+description = "A library to authenticate and interact with STIHL iMow mowers using their WebAPI"
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "ChrisHaPunkt" }]
+keywords = ["stihl", "imow", "mower", "api"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "aiohttp~=3.9",
+    "beautifulsoup4~=4.12",
+    "furl>=2.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/ChrisHaPunkt/stihl-imow-webapi"
+Documentation = "https://chrishapunkt.github.io/stihl-imow-webapi/imow"
+Repository = "https://github.com/ChrisHaPunkt/stihl-imow-webapi"
+Changelog = "https://github.com/ChrisHaPunkt/stihl-imow-webapi/blob/master/CHANGELOG.md"
+
+# Dev tooling is managed as a PEP 735 dependency group; `uv sync` installs it by
+# default. Install with `uv sync` (or `uv sync --group dev`).
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "black",
+    "flake8",
+    "pdoc3",
+]
+
+# Read the single source of truth for the version straight from the package.
+[tool.hatch.version]
+path = "imow/common/package_descriptions.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["imow"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/imow",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/LICENSE",
+]
+
+[tool.black]
+line-length = 88
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
