@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "imow-webapi"
 dynamic = ["version"]
-description = "A library to authenticate and interact with STIHL iMow mowers using their WebAPI"
+description = "A library to authenticate and interact with STIHL iMow (up to Gen4) mowers using their WebAPI"
 readme = "README.md"
 requires-python = ">=3.13"
 license = "MIT"
