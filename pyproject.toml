@@ -7,7 +7,7 @@ name = "imow-webapi"
 dynamic = ["version"]
 description = "A library to authenticate and interact with STIHL iMow mowers using their WebAPI"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "ChrisHaPunkt" }]
@@ -18,9 +18,13 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
+    # `~=3.9` is `>=3.9,<4`, so it accepts the aiohttp pinned by both current
+    # Home Assistant stable (3.13.x) and HA's dependency-next (3.14.x). Do not
+    # cap below 3.14 here — only the *test* tooling (aioresponses) needs that.
     "aiohttp~=3.9",
     "beautifulsoup4~=4.12",
     "furl>=2.1",
@@ -38,8 +42,18 @@ Changelog = "https://github.com/ChrisHaPunkt/stihl-imow-webapi/blob/master/CHANG
 dev = [
     "pytest",
     "pytest-asyncio",
+    # TEST-ONLY constraint (does not affect what users install):
+    # aioresponses (latest 0.7.9) can't mock aiohttp >= 3.14 — its ClientResponse
+    # gained a required `stream_writer` kwarg. Tracked upstream in
+    # https://github.com/pnuckowski/aioresponses/issues/289 (open). Until that
+    # ships, pin the test aiohttp below 3.14 so the mocked HTTP layer works.
+    # HA stable uses aiohttp 3.13.x, so this still matches the primary target.
+    # Remove this cap once aioresponses supports 3.14.
+    "aiohttp<3.14",
+    "aioresponses",
     "black",
     "flake8",
+    "mypy",
     "pdoc3",
 ]
 
@@ -60,6 +74,13 @@ include = [
 
 [tool.black]
 line-length = 88
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+files = ["imow"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -27,9 +27,13 @@ class Message:
 
 class Messages:
     def __init__(self, i18n: dict):
-        """Class to match a shortCode (mower.status['extraStatus']) to an error 'id' and give back the translated
-        messages.
-        i18n: An upstream language dict, fetched from imow api
+        """Resolve a shortCode to a message id and its translated text.
+
+        The shortCode is ``mower.status['mainState']`` (status) or
+        ``mower.status['extraStatus']`` (error).
+
+        Args:
+            i18n: An upstream language dict fetched from the imow API.
         """
         self.i18n = i18n
         self.success_messages = [
@@ -312,7 +316,7 @@ class Messages:
                 13,
                 "Fachhändler",
                 60,
-                "Interner Fehl`er",
+                "Interner Fehler",
                 "retailer",
                 "red",
             ),
@@ -1268,7 +1272,7 @@ class Messages:
             ),
             Message(
                 "2110",
-                "iMow woanders installiert, aber es wurde keine Neuinstallation durchgeführt",
+                "iMow woanders installiert, aber es wurde keine Neuinstallation durchgeführt",  # noqa: E501
                 109,
                 "Prüfen",
                 99,
@@ -1648,22 +1652,37 @@ class Messages:
             ),
         ]
 
+        # Index by shortCode for O(1) lookup instead of scanning per call.
+        self._success_by_code = {m.shortCode: m for m in self.success_messages}
+        self._error_by_code = {m.shortCode: m for m in self.error_messages}
+
+    def _i18n(self, key: str) -> str:
+        """Look up a translated string, raising a typed error if it's missing."""
+        try:
+            return self.i18n[key]
+        except KeyError as err:
+            raise MessageNotFoundError(
+                f"i18n key {key!r} not found in language file"
+            ) from err
+
     def get_error_message(self, short_code) -> Tuple[str, str, str, str]:
-        for message in self.error_messages:
-            if message.shortCode == short_code:
-                return (
-                    self.i18n[f"message_M{message.id}_short"],
-                    self.i18n[f"message_M{message.id}_long"],
-                    f"M{message.id}",
-                    f"{message.message}",
-                )
-        raise MessageNotFoundError(f"No error message found for {short_code}")
+        message = self._error_by_code.get(short_code)
+        if message is None:
+            raise MessageNotFoundError(f"No error message found for {short_code}")
+        return (
+            self._i18n(f"message_M{message.id}_short"),
+            self._i18n(f"message_M{message.id}_long"),
+            f"M{message.id}",
+            f"{message.message}",
+        )
 
     def get_status_message(self, short_code) -> Tuple[str, str]:
-        for message in self.success_messages:
-            if message.shortCode == short_code:
-                return (
-                    self.i18n[f"viking_mainstate_{message.picture}_short"],
-                    self.i18n[f"viking_mainstate_{message.picture}_short"],
-                )
-        raise MessageNotFoundError(f"No message found for {short_code}")
+        message = self._success_by_code.get(short_code)
+        if message is None:
+            raise MessageNotFoundError(f"No message found for {short_code}")
+        short = self._i18n(f"viking_mainstate_{message.picture}_short")
+        # Prefer the dedicated "_long" text; fall back to "_short" if the
+        # upstream language file doesn't provide a long variant.
+        long_key = f"viking_mainstate_{message.picture}_long"
+        long = self.i18n.get(long_key, short)
+        return short, long

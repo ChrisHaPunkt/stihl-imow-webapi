@@ -2,6 +2,7 @@
 import asyncio
 import http
 import logging
+import os
 import unittest
 
 import aiohttp
@@ -9,10 +10,36 @@ import aiohttp
 from imow.api import IMowApi
 from imow.common.actions import IMowActions
 from imow.common.mowerstate import MowerState
-from secrets import *
 
 logger = logging.getLogger("imow")
 logger.setLevel(logging.DEBUG)
+
+
+def _load_credentials():
+    """Read credentials from env vars, falling back to a repo-root secrets file.
+
+    Env vars (``IMOW_EMAIL`` / ``IMOW_PASSWORD`` / ``IMOW_MOWER_NAME``) are
+    preferred; they avoid shadowing the stdlib ``secrets`` module. For backward
+    compatibility a repo-root ``secrets.py`` with ``EMAIL`` / ``PASSWORD`` /
+    ``MOWER_NAME`` is still supported.
+    """
+    email = os.environ.get("IMOW_EMAIL")
+    password = os.environ.get("IMOW_PASSWORD")
+    mower_name = os.environ.get("IMOW_MOWER_NAME")
+    if not (email and password and mower_name):
+        try:
+            import importlib
+
+            creds = importlib.import_module("secrets")
+            email = email or getattr(creds, "EMAIL", None)
+            password = password or getattr(creds, "PASSWORD", None)
+            mower_name = mower_name or getattr(creds, "MOWER_NAME", None)
+        except (ImportError, AttributeError):
+            pass
+    return email, password, mower_name
+
+
+EMAIL, PASSWORD, MOWER_NAME = _load_credentials()
 
 
 class TestIMowApiOnlineIntegration(unittest.TestCase):
@@ -46,7 +73,7 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
         self.imow.csrf_token = ""
         self.loop.run_until_complete(self.imow.api_logout())
         self.imow.csrf_token = old_csrf
-        self.assertIs(
+        self.assertEqual(
             len(self.imow.access_token),
             98,
             msg="Expected new token has 98 chars",
@@ -63,9 +90,7 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
                 return_expire_time=True,
             )
         )
-        self.assertIs(
-            len(token_new), 98, msg="Expected new token has 98 chars"
-        )
+        self.assertEqual(len(token_new), 98, msg="Expected new token has 98 chars")
         self.assertNotEqual(
             token_old,
             token_new,
@@ -73,36 +98,28 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
         )
 
     def test_validate_token(self):
-        self.assertTrue(
-            self.loop.run_until_complete(self.imow.validate_token())
-        )
+        self.assertTrue(self.loop.run_until_complete(self.imow.validate_token()))
 
     def test_validate_token_invalid(self):
         with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):
             self.loop.run_until_complete(
                 self.imow.validate_token(
-                    "MTAyMTQ1NTZAMzU3MTE4MjQ2ZGUwOGNmMDFiZDc4NTBmOTVmNmRhNTA0NzNlNjI0NTBmZTIzN2RkNzA1YTI1YWIwOTUxYmRhOB"
+                    "MTAyMTQ1NTZAMzU3MTE4MjQ2ZGUwOGNmMDFiZDc4NTBmOTVmNmRhNTA0NzNlNjI0NTBmZTIzN2RkNzA1YTI1YWIwOTUxYmRhOB"  # noqa: E501
                 )
             )
 
     def test_get_mowers(self):
         result = self.loop.run_until_complete(self.imow.receive_mowers())
-        self.assertIsInstance(
-            result, list, msg="Expected array with mowers returned"
-        )
+        self.assertIsInstance(result, list, msg="Expected array with mowers returned")
 
     def test_get_mower(self):
         result = self.loop.run_until_complete(
             self.imow.receive_mower_by_id(mower_id=self.test_mower.id)
         )
-        self.assertIsInstance(
-            result, MowerState, msg="Expected Mower class returned"
-        )
+        self.assertIsInstance(result, MowerState, msg="Expected Mower class returned")
 
     def test_get_status_by_name(self):
-        result = self.loop.run_until_complete(
-            self.imow.get_status_by_name(MOWER_NAME)
-        )
+        result = self.loop.run_until_complete(self.imow.get_status_by_name(MOWER_NAME))
         self.assertIn(
             result["online"],
             [True, False],
@@ -110,20 +127,17 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
         )
 
     def test_get_status_by_wrong_id(self):
-        with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):
-            result = self.loop.run_until_complete(
-                self.imow.get_status_by_id(
-                    mower_id=int(self.test_mower.id) + 1
-                )
+        # A non-existent id now maps to LookupError (was raw ClientResponseError).
+        with self.assertRaises(LookupError):
+            self.loop.run_until_complete(
+                self.imow.get_status_by_id(mower_id=int(self.test_mower.id) + 1)
             )
 
     def test_intent_to_dock_by_id(self):
         result = self.loop.run_until_complete(
-            self.imow.intent(
-                IMowActions.TO_DOCKING, mower_id=self.test_mower.id
-            )
+            self.imow.intent(IMowActions.TO_DOCKING, mower_id=self.test_mower.id)
         )
-        self.assertIs(
+        self.assertEqual(
             result.status,
             int(http.HTTPStatus.CREATED),
             msg="Expected 201 HTTP Code",
@@ -138,7 +152,7 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
                 startpoint=2,
             )
         )
-        self.assertIs(
+        self.assertEqual(
             result.status,
             int(http.HTTPStatus.CREATED),
             msg="Expected 201 HTTP Code",
@@ -151,7 +165,7 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
                 mower_id=self.test_mower.id,
             )
         )
-        self.assertIs(
+        self.assertEqual(
             result.status,
             int(http.HTTPStatus.CREATED),
             msg="Expected 201 HTTP Code",
@@ -161,7 +175,7 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
         result = self.loop.run_until_complete(
             self.imow.intent(IMowActions.TO_DOCKING, self.test_mower.name)
         )
-        self.assertIs(
+        self.assertEqual(
             result.status,
             int(http.HTTPStatus.CREATED),
             msg="Expected 201 HTTP Code",
@@ -174,7 +188,7 @@ class TestIMowApiOnlineIntegration(unittest.TestCase):
                 mower_external_id=self.test_mower.externalId,
             )
         )
-        self.assertIs(
+        self.assertEqual(
             result.status,
             int(http.HTTPStatus.CREATED),
             msg="Expected 201 HTTP Code",

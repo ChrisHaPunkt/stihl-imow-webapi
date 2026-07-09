@@ -1,5 +1,53 @@
 # Changelog
 
+## Version 0.10.0 (2026-07-09)
+### Fixed
+- Packaging: relax `requires-python` from `>=3.14` to `>=3.13` (3.14 made the
+  package uninstallable on current Home Assistant stable, which targets 3.13).
+  The runtime `aiohttp~=3.9` bound keeps working on both HA stable (aiohttp
+  3.13.x) and HA dependency-next (aiohttp 3.14.x). Dropped the strippable
+  `assert`-based version guard and the import-time global asyncio
+  event-loop-policy side effect.
+- Maintenance probe no longer risks infinite recursion: a 500 from the
+  maintenance endpoint itself is not fed back into the maintenance check
+  (new internal `_probe` guard).
+- `MowerState` no longer crashes on partial payloads: a missing `status` block or
+  an unknown state/error code degrades to `machineState = "UNKNOWN"` instead of
+  raising. Upstream keys can no longer clobber the client back-reference
+  (`imow`) or the derived message fields.
+- `fetch_messages` re-raises non-404 HTTP errors instead of silently leaving the
+  message tables unset.
+- `get_status_by_id` / `get_mower_action_id_from_id` map a 404 to `LookupError`
+  (the previous `except ConnectionError` was dead code and never fired).
+- `get_status_message` now returns distinct short/long text (falling back to the
+  short text when the language file has no long variant).
+### Changed
+- Added `receive_mower_state_with_statistics(mower_id)`: fetches a mower's
+  state, paces the follow-up statistics request (avoiding upstream timeouts),
+  and returns the state with `statistics` attached. Consumers no longer need to
+  pace these two calls themselves.
+- Type safety: added `Optional[...]` annotations throughout, replaced the builtin
+  `any` used as an annotation with `typing.Any`, added a `py.typed` marker, and
+  the package now type-checks clean under `mypy`.
+- `MowerState`'s misleading "type stub" block (which assigned `set`/`None`
+  objects as class defaults) is replaced with annotation-only field declarations
+  that document the payload without creating runtime values.
+- Read endpoints share a single `_request_json` helper and `response.json()`
+  instead of hand-rolled `json.loads(await response.text())`; request headers
+  are centralised in one `_default_headers()`.
+- `intent()` value construction is extracted into tested pure helpers, validates
+  unknown keyword arguments, enforces an exactly-16-char external id, raises
+  `ValueError` (not `AttributeError`) for bad arguments, and returns `None` (not
+  `True`) in `test_mode`.
+- Token-expiry math uses timezone-aware UTC.
+- Errors now share a common `IMowError` base class for easy broad handling.
+- Added an offline unit-test suite (`aioresponses`) covering the intent-value
+  builders, CSRF scraping and failure modes, token handling, the maintenance
+  recursion guard, and session ownership; integration tests read credentials
+  from `IMOW_*` env vars (falling back to a repo-root secrets file). The dev
+  group pins `aiohttp<3.14` for tests only (aioresponses can't mock aiohttp 3.14
+  yet — pnuckowski/aioresponses#289); this does not constrain the runtime.
+
 ## Version 0.9.0 (2026-07-09)
 ### Fixed
 - Authentication robustness: isolate STIHL session cookies (fixes the login
