@@ -6,13 +6,13 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - main
       - v0_2_*
       - rec-*
       - dev-*
   pull_request:
     branches:
-      - master
+      - main
       - v0_2_*
       - rec-*
       - dev-*
