@@ -1,0 +1,87 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "imow-webapi"
+dynamic = ["version"]
+description = "A library to authenticate and interact with STIHL iMow mowers using their WebAPI"
+readme = "README.md"
+requires-python = ">=3.13"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "ChrisHaPunkt" }]
+keywords = ["stihl", "imow", "mower", "api"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    # `~=3.9` is `>=3.9,<4`, so it accepts the aiohttp pinned by both current
+    # Home Assistant stable (3.13.x) and HA's dependency-next (3.14.x). Do not
+    # cap below 3.14 here — only the *test* tooling (aioresponses) needs that.
+    "aiohttp~=3.9",
+    "beautifulsoup4~=4.12",
+    "furl>=2.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/ChrisHaPunkt/stihl-imow-webapi"
+Documentation = "https://chrishapunkt.github.io/stihl-imow-webapi/imow"
+Repository = "https://github.com/ChrisHaPunkt/stihl-imow-webapi"
+Changelog = "https://github.com/ChrisHaPunkt/stihl-imow-webapi/blob/master/CHANGELOG.md"
+
+# Dev tooling is managed as a PEP 735 dependency group; `uv sync` installs it by
+# default. Install with `uv sync` (or `uv sync --group dev`).
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    # TEST-ONLY constraint (does not affect what users install):
+    # aioresponses (latest 0.7.9) can't mock aiohttp >= 3.14 — its ClientResponse
+    # gained a required `stream_writer` kwarg. Tracked upstream in
+    # https://github.com/pnuckowski/aioresponses/issues/289 (open). Until that
+    # ships, pin the test aiohttp below 3.14 so the mocked HTTP layer works.
+    # HA stable uses aiohttp 3.13.x, so this still matches the primary target.
+    # Remove this cap once aioresponses supports 3.14.
+    "aiohttp<3.14",
+    "aioresponses",
+    "black",
+    "flake8",
+    "mypy",
+    "pdoc3",
+]
+
+# Read the single source of truth for the version straight from the package.
+[tool.hatch.version]
+path = "imow/common/package_descriptions.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["imow"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/imow",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/LICENSE",
+]
+
+[tool.black]
+line-length = 88
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+files = ["imow"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

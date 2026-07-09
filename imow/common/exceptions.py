@@ -1,14 +1,22 @@
-class LoginError(Exception):
+class IMowError(Exception):
+    """Base class for all errors raised by ``imow-webapi``.
+
+    Consumers (e.g. the Home Assistant integration) can catch this to handle
+    any library-specific failure with a single ``except`` clause.
+    """
+
+
+class LoginError(IMowError):
     pass
 
 
-class ApiMaintenanceError(Exception):
+class ApiMaintenanceError(IMowError):
     pass
 
 
-class MessageNotFoundError(Exception):
+class MessageNotFoundError(IMowError):
     pass
 
 
-class LanguageNotFoundError(Exception):
+class LanguageNotFoundError(IMowError):
     pass
