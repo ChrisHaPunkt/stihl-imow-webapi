@@ -6,4 +6,6 @@ exclude =
     __pycache__,
     dist,
     docs,
-    .pytest_cache
+    .pytest_cache,
+    .venv,
+    venv
