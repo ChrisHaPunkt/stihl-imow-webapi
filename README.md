@@ -6,6 +6,7 @@
 [![PyPI downloads](https://img.shields.io/pypi/dm/imow-webapi?style=for-the-badge&logo=pypi&logoColor=ccc&label=downloads)](https://pypi.python.org/pypi/imow-webapi/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/imow-webapi?style=for-the-badge&logo=python&logoColor=ccc)](https://pypi.python.org/pypi/imow-webapi/)
 [![PyPI license](https://img.shields.io/pypi/l/imow-webapi?style=for-the-badge)](https://pypi.python.org/pypi/imow-webapi/)
+[![Buy Me A Coffee](https://img.shields.io/badge/buy%20me%20a-coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=000)](https://www.buymeacoffee.com/chrishapunkt)
 
 
 This unofficial Python API was created to provide an interface to interact with the STIHL iMow mower WebAPI. This wrapper is able to receive the current state
@@ -26,9 +27,7 @@ purposes. See deployment for notes on how to deploy the project on a live system
 
 API Documentation is available on: [https://chrishapunkt.github.io/stihl-imow-webapi/imow](https://chrishapunkt.github.io/stihl-imow-webapi/imow)
 
-If you want to  
-[!["Buy Me A Coffee"](
-https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=chrishapunkt&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/chrishapunkt)
+If you want to support this project, use the [Buy Me A Coffee](https://www.buymeacoffee.com/chrishapunkt) badge at the top of this page.
 
 
 ### Prerequisites
