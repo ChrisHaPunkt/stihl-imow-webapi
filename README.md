@@ -1,11 +1,11 @@
 # STIHL iMow unofficial Python API wrapper
 
-[![PyPI version shields.io](https://img.shields.io/pypi/v/imow-webapi)](https://pypi.python.org/pypi/imow-webapi/)
-[![Docs on GitHub pages](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](hhttps://chrishapunkt.github.io/stihl-imow-webapi/imow)
-[![CI](https://github.com/ChrisHaPunkt/stihl-imow-webapi/actions/workflows/python-package.yml/badge.svg?branch=master)](https://github.com/ChrisHaPunkt/stihl-imow-webapi/actions/workflows/python-package.yml)
-[![PyPI download total](https://img.shields.io/pypi/dm/imow-webapi)](https://pypi.python.org/pypi/imow-webapi/)
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/imow-webapi)](https://pypi.python.org/pypi/imow-webapi/)
-[![PyPI license](https://img.shields.io/pypi/l/imow-webapi)](https://pypi.python.org/pypi/imow-webapi/)
+[![PyPI version](https://img.shields.io/pypi/v/imow-webapi?style=for-the-badge&logo=pypi&logoColor=ccc)](https://pypi.python.org/pypi/imow-webapi/)
+[![Docs on GitHub pages](https://img.shields.io/badge/docs-GitHub%20Pages-blue?style=for-the-badge&logo=github&logoColor=ccc)](https://chrishapunkt.github.io/stihl-imow-webapi/imow)
+[![CI](https://img.shields.io/github/actions/workflow/status/ChrisHaPunkt/stihl-imow-webapi/python-package.yml?style=for-the-badge&logo=github&logoColor=ccc&branch=main)](https://github.com/ChrisHaPunkt/stihl-imow-webapi/actions/workflows/python-package.yml)
+[![PyPI downloads](https://img.shields.io/pypi/dm/imow-webapi?style=for-the-badge&logo=pypi&logoColor=ccc&label=downloads)](https://pypi.python.org/pypi/imow-webapi/)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/imow-webapi?style=for-the-badge&logo=python&logoColor=ccc)](https://pypi.python.org/pypi/imow-webapi/)
+[![PyPI license](https://img.shields.io/pypi/l/imow-webapi?style=for-the-badge)](https://pypi.python.org/pypi/imow-webapi/)
 
 
 This unofficial Python API was created to provide an interface to interact with the STIHL iMow mower WebAPI. This wrapper is able to receive the current state
